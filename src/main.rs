@@ -5,6 +5,7 @@ mod PrintTask;
 use PrintTask::{header, task};
 
 fn main() -> Result<()> {
+    //todo toml file
     header();
     //idk what to do about all these 'oks'.
     task(10, true, "AAAAAAA").ok();
