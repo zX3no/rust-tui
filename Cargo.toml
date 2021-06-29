@@ -7,3 +7,5 @@ edition = "2018"
 
 [dependencies]
 crossterm = "0.20"
+serde = "1.0"
+toml = "0.5"
