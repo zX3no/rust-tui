@@ -12,7 +12,7 @@ use crossterm::{
     terminal, ExecutableCommand, Result,
 };
 
-pub fn header() {
+pub fn header(completed_tasks: i32, total_tasks: i32) -> Result<()> {
     execute!(
         stdout(),
         Print(" "),
@@ -20,10 +20,13 @@ pub fn header() {
         Print("Tasks:"),
         ResetColor,
         SetForegroundColor(Color::DarkGrey),
-        Print(" [0/10]"),
+        Print(" ["),
+        Print(completed_tasks),
+        Print("/"),
+        Print(total_tasks),
+        Print("]"),
         ResetColor
     )
-    .ok();
 }
 
 pub fn task(id: i32, checked: bool, text: &str) -> Result<()> {
@@ -48,6 +51,7 @@ pub fn task(id: i32, checked: bool, text: &str) -> Result<()> {
             Print("√  "),
             SetForegroundColor(Color::DarkGrey),
             Print(text),
+            ResetColor
         )?;
     } else {
         if id < 10 {
@@ -63,7 +67,8 @@ pub fn task(id: i32, checked: bool, text: &str) -> Result<()> {
             Print("[ ]"),
             ResetColor,
             Print(" "),
-            Print(text)
+            Print(text),
+            ResetColor
         )?;
     }
     Ok(())
