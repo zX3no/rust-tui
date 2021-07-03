@@ -3,6 +3,7 @@ mod print_task;
 use crossterm::Result;
 use print_task::{header, task};
 use serde::{Serialize, Deserialize};
+use std::fs::File;
 
 #[allow(dead_code)]
 fn tasks() -> Result<()>{
@@ -35,8 +36,9 @@ struct Task{
 
 fn main() -> Result<()> {
     //tasks()?;
-
     let t = Task {item: String::from("This is a task."), id: 1, date: String::from("1/07/2021")};
+    let t2 = Task {item: String::from("This is a task."), id: 2, date: String::from("4/07/2021")};
+
     // Convert the Point to a JSON string.
     let serialized = serde_json::to_string(&t).unwrap();
 
@@ -48,5 +50,8 @@ fn main() -> Result<()> {
 
     // Prints deserialized = Point { x: 1, y: 2 }
     println!("deserialized = {:?}", deserialized);
+
+    serde_json::to_writer(&File::create("test.json")?, &t)?;
+
     Ok(())
 }
