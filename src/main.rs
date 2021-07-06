@@ -1,9 +1,10 @@
 mod print_task;
+mod config;
 
 use crossterm::Result;
 use print_task::{header, task};
 use serde::{Serialize, Deserialize};
-use std::fs::File;
+//use std::fs::File;
 
 #[allow(dead_code)]
 fn tasks() -> Result<()>{
@@ -18,8 +19,9 @@ fn tasks() -> Result<()>{
     task(9, true, "Takssks")?;
     Ok(())
 }
+
 //There will be two files
-//Completed and Ongoing
+//Done and Doing 
 //When a task is completed it will be moved to another file
 //Tasks will have an id but these id's will be changed when a task is removed
 //Task id's will always start from 1 and go up to 999
@@ -35,6 +37,8 @@ struct Task{
 }
 
 fn main() -> Result<()> {
+    config::create_config();
+    /*
     //tasks()?;
     let t = Task {item: String::from("This is a task."), id: 1, date: String::from("1/07/2021")};
     let t2 = Task {item: String::from("This is a task."), id: 2, date: String::from("4/07/2021")};
@@ -52,6 +56,6 @@ fn main() -> Result<()> {
     println!("deserialized = {:?}", deserialized);
 
     serde_json::to_writer(&File::create("test.json")?, &t)?;
-
+*/
     Ok(())
 }
