@@ -3,6 +3,9 @@ use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use toml::from_str;
 
+#[path = "./print_task.rs"]
+mod print_task;
+
 #[derive(Deserialize, Debug)]
 struct Task {
     item: String,
@@ -25,14 +28,11 @@ pub fn create_config()
 
     let task_table: HashMap<String, Vec<Task>> = from_str(t).unwrap();
     let items: &[Task] = &task_table["task"];
-    /*
-    for i in items.iter() {
-        println!("{}", i);
+
+    for x in 0..items.len(){
+        print_task::task(items[x].id, false, &items[x].item).ok();
     }
-    */
-
-    println!("{}", items[1].item);
-
+    
     //println!("{:?}", task_table);
     //println!("{:?}", items);
 }
