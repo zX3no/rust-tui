@@ -1,22 +1,8 @@
-mod print_task;
-mod config;
+mod print;
+mod tasks;
 
 use crossterm::Result;
-use print_task::{header, task};
-
-#[allow(dead_code)]
-fn tasks() -> Result<()>{
-    let completed_tasks = 5;
-    let total_tasks = 10;
-    //todo toml file
-    header(completed_tasks, total_tasks)?;
-    task(10, true, "AAAAAAA")?;
-    task(2, false, "Test")?;
-    task(15, false, "Make this very hard project")?;
-    task(999, false, "remember to do something")?;
-    task(9, true, "Takssks")?;
-    Ok(())
-}
+use print::{header};
 
 //There will be two files
 //Done and Doing 
@@ -26,7 +12,7 @@ fn tasks() -> Result<()>{
 
 fn main() -> Result<()> {
     header(0, 2)?;
-    config::read_file()?;
+    tasks::read_file()?;
   
     Ok(())
 }

@@ -1,13 +1,12 @@
-#[allow(unused_imports)]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize};
 use std::collections::HashMap;
 use toml::{from_str};
 
 use std::io::prelude::*;
 use std::fs::File;
 
-#[path = "./print_task.rs"]
-mod print_task;
+#[path = "./print.rs"]
+mod print;
 
 #[derive(Deserialize, Debug)]
 struct Task {
@@ -29,7 +28,7 @@ pub fn read_file() -> crossterm::Result<()> {
     //Iterate through items and print
     //TODO Sort and order them numerically
     for x in 0..items.len() {
-        print_task::task(items[x].id, false, &items[x].item).ok();
+        print::task(items[x].id, false, &items[x].item).ok();
     }
 
     Ok(())

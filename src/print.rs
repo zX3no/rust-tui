@@ -12,6 +12,7 @@ use crossterm::{
     terminal, ExecutableCommand, Result,
 };
 
+#[allow(dead_code)]
 pub fn header(completed_tasks: i32, total_tasks: i32) -> Result<()> {
     execute!(
         stdout(),
@@ -29,6 +30,7 @@ pub fn header(completed_tasks: i32, total_tasks: i32) -> Result<()> {
     )
 }
 
+#[allow(dead_code)]
 pub fn task(id: i32, checked: bool, text: &str) -> Result<()> {
     execute!(
         stdout(),
