@@ -1,7 +1,10 @@
 #[allow(unused_imports)]
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use toml::from_str;
+use toml::{from_str};
+
+use std::io::prelude::*;
+use std::fs::File;
 
 #[path = "./print_task.rs"]
 mod print_task;
@@ -13,26 +16,21 @@ struct Task {
     date: String
 }
 
-pub fn create_config()
-{
-    let t: &str = r#"
-        [[task]]
-        item = 'this is a sample task'
-        id = 1
-        date = '7/07/2021'
-        [[task]]
-        item = 'among us'
-        id = 2
-        date = '8/07/2021'
-    "#;
+pub fn read_file() -> crossterm::Result<()> {
+    //Get contents of doing.toml
+    let mut file = File::open("doing.toml").expect("Unable to open the file");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Unable to read the file");
 
-    let task_table: HashMap<String, Vec<Task>> = from_str(t).unwrap();
+    //Create a hashmap to access data
+    let task_table: HashMap<String, Vec<Task>> = from_str(&contents).unwrap();
     let items: &[Task] = &task_table["task"];
 
-    for x in 0..items.len(){
+    //Iterate through items and print
+    //TODO Sort and order them numerically
+    for x in 0..items.len() {
         print_task::task(items[x].id, false, &items[x].item).ok();
     }
-    
-    //println!("{:?}", task_table);
-    //println!("{:?}", items);
+
+    Ok(())
 }

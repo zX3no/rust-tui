@@ -25,8 +25,8 @@ fn tasks() -> Result<()>{
 //Task id's will always start from 1 and go up to 999
 
 fn main() -> Result<()> {
-    header(0, 2).ok();
-    config::create_config();
+    header(0, 2)?;
+    config::read_file()?;
   
     Ok(())
 }
