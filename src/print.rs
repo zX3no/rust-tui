@@ -1,15 +1,9 @@
-#[allow(unused_imports)]
-use std::io::{stdout, Write};
+use std::io::stdout;
 
-#[allow(unused_imports)]
-use std::string;
-
-#[allow(unused_imports)]
 use crossterm::{
-    event, execute,
     style::Attribute,
-    style::{Color, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor},
-    terminal, ExecutableCommand, Result,
+    style::{Color, Print, ResetColor, SetAttribute, SetForegroundColor},
+    execute, Result,
 };
 
 #[allow(dead_code)]
