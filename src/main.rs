@@ -3,17 +3,23 @@ mod tasks;
 use std::env;
 
 fn main() -> crossterm::Result<()> {
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
 
-    match args.len() {
-        3 => 
-        if args[1] == "add" {
-            tasks::write_task(&args[2]);
-        },
-        _ => (),
+    args.remove(0);
+
+    if args.len() >= 2 {
+        if args[0] == "add" {
+            args.remove(0);
+            let task: String = args.join(" ");
+            tasks::write_task(&task);
+        }
+    }
+    else if args.len() == 1 {
+        println!("Enter a task to add.");
+        //TODO how to return?
+        std::process::exit(0x0100);
     }
 
-    //If files exist check whats in them
     if tasks::file_exists() {
         tasks::read_file()?;
     }
