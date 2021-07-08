@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use toml::from_str;
 
 use std::io::prelude::*;
@@ -8,11 +8,18 @@ use std::collections::HashMap;
 #[path = "./print.rs"]
 mod print;
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Task {
     item: String,
     id: i32,
-    date: String
+}
+pub fn write_task(task: &String) {
+    //TODO add task to doing.toml
+    println!("adding task: \"{}\" to doing.toml", task);
+}
+pub fn file_exists() -> bool{
+    //TODO Create doing and done files
+    return true;
 }
 
 pub fn read_file() -> crossterm::Result<()> {
@@ -25,6 +32,7 @@ pub fn read_file() -> crossterm::Result<()> {
     let task_table: HashMap<String, Vec<Task>> = from_str(&contents).unwrap();
     let items: &[Task] = &task_table["task"];
 
+    //Change 0 to completed_tasks
     print::header(0, items.len() as i32)?;
 
     //Iterate through items and print

@@ -1,12 +1,9 @@
 [[task]]
 item = 'this is a sample task'
 id = 1
-date = '7/07/2021'
 [[task]]
 item = 'among us'
 id = 999
-date = '8/07/2021'
 [[task]]
 item = 'a a a a a a a a a a a a a a a'
 id = 21
-date = '9/07/2021'
