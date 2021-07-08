@@ -1,9 +1,9 @@
-use serde::{Deserialize};
-use std::collections::HashMap;
-use toml::{from_str};
+use serde::Deserialize;
+use toml::from_str;
 
 use std::io::prelude::*;
 use std::fs::File;
+use std::collections::HashMap;
 
 #[path = "./print.rs"]
 mod print;
@@ -25,10 +25,15 @@ pub fn read_file() -> crossterm::Result<()> {
     let task_table: HashMap<String, Vec<Task>> = from_str(&contents).unwrap();
     let items: &[Task] = &task_table["task"];
 
+    print::header(0, items.len() as i32)?;
+
     //Iterate through items and print
     //TODO Sort and order them numerically
+    //ID might be uneccasary since items can be accessed iteratively 
+
     for x in 0..items.len() {
-        print::task(items[x].id, false, &items[x].item).ok();
+        //print::task(items[x].id, false, &items[x].item)?;
+        print::task(x as i32 + 1, false, &items[x].item)?;
     }
 
     Ok(())

@@ -1,8 +1,7 @@
 use std::io::stdout;
 
 use crossterm::{
-    style::Attribute,
-    style::{Color, Print, ResetColor, SetAttribute, SetForegroundColor},
+    style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     execute, Result,
 };
 
@@ -21,7 +20,9 @@ pub fn header(completed_tasks: i32, total_tasks: i32) -> Result<()> {
         Print(total_tasks),
         Print("]"),
         ResetColor
-    )
+    )?;
+
+    Ok(())
 }
 
 #[allow(dead_code)]
