@@ -1,3 +1,11 @@
 [[task]]
 item = "example task"
 checked = false
+
+[[task]]
+item = "test"
+checked = true
+
+[[task]]
+item = "among us"
+checked = false
