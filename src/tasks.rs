@@ -11,7 +11,12 @@ mod print;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {
     item: String,
-    id: i32,
+    //TODO add date
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Data {
+    task: Vec<Task>
 }
 
 //Check if doing.toml exists
@@ -24,20 +29,35 @@ pub fn file_exists() -> bool {
     }
 }
 
-pub fn write_task(task: &String) {
-    //TODO add task to doing.toml
-    println!("adding task: \"{}\" to doing.toml", task);
+pub fn write_task(task: String) -> std::io::Result<()> {
+    //TODO opening, closing and writing to files might be slow
+    //change to async fucntion
+
+    let mut old_file = read_file("doing.toml");
+
+    let data = Data {
+        task: vec![Task {item: task}]
+    };
+    let toml = toml::to_string(&data).unwrap();
+
+    old_file.push_str(&toml);
+    let mut new_file = File::create("doing.toml")?;
+    new_file.write_all(&old_file.as_bytes())?;
+
+    Ok(())
 }
+
 pub fn delete_task(id: usize) -> std::io::Result<()> {
     let file = read_file("doing.toml");
-    let tasks: HashMap<String, Vec<Task>> = toml::from_str(&file).unwrap();
+    let mut tasks: Data = toml::from_str(&file).unwrap();
+    tasks.task.remove(id-1);
 
-    let mut items: Vec<Task> = tasks["task"].to_vec();
-    items.remove(id-1);
-    //tasks.remove(0);
+    let data = Data {
+        task: tasks.task 
+    };
 
-    let mut output = File::open("doing.toml")?;
-    let toml = toml::to_string(&items).unwrap();
+    let mut output = File::create("doing.toml")?;
+    let toml = toml::to_string(&data).unwrap();
     output.write_all(&toml.as_bytes())?;
 
     Ok(())

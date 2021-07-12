@@ -11,7 +11,7 @@ fn main() -> crossterm::Result<()> {
         if args[0] == "add" {
             args.remove(0);
             let task: String = args.join(" ");
-            tasks::write_task(&task);
+            tasks::write_task(task)?;
         }
         else if args[0] == "rm" {
             args.remove(0);
