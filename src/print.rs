@@ -1,8 +1,9 @@
-use std::io::stdout;
 use crossterm::{
+    execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
-    execute, Result,
+    Result,
 };
+use std::io::stdout;
 
 #[allow(dead_code)]
 pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {

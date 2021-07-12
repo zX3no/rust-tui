@@ -16,7 +16,7 @@ struct Task {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Data {
-    task: Vec<Task>,
+    tasks: Vec<Task>,
 }
 
 static FILE_TASK: &str = "tasks.toml";
@@ -33,13 +33,26 @@ fn get_id(args: &String) -> usize {
     return 999;
 }
 
-//could have a option parameter that specifies the directory
-//if it's blank it will choose tasks.toml
-fn write_file(mut data: &Data) -> std::io::Result<()> {
-    //TODO why do it destroy all my data?
-    let toml = toml::to_string(&mut data).unwrap();
-    let mut new_file = File::create(FILE_TASK)?;
-    new_file.write_all(&toml.as_bytes())?;
+fn get_tasks() -> Data {
+    let mut file = File::open(FILE_TASK).expect("Unable to open the file");
+    let mut contents = String::new();
+    let mut data = Data { tasks: Vec::new() };
+
+    file.read_to_string(&mut contents)
+        .expect("Unable to read the file");
+    if contents != "" {
+        data = toml::from_str(&contents).unwrap();
+    } else {
+        return data;
+    }
+
+    return data;
+}
+
+fn write_toml(file_name: &str, data: &Data) -> std::io::Result<()> {
+    let mut file = File::create(file_name)?;
+    let output = toml::to_string(&data).unwrap();
+    file.write_all(output.as_bytes())?;
 
     Ok(())
 }
@@ -47,93 +60,88 @@ fn write_file(mut data: &Data) -> std::io::Result<()> {
 pub fn check_task(task: &String) -> std::io::Result<()> {
     let id = get_id(&task);
 
-    let file = read_file(FILE_TASK);
-    let mut data: Data = toml::from_str(&file).unwrap();
+    let mut data = get_tasks();
 
     //Check task
-    data.task[id].checked = !data.task[id].checked;
+    data.tasks[id].checked = !data.tasks[id].checked;
 
-    let toml = toml::to_string(&mut data).unwrap();
-
-    let mut new_file = File::create(FILE_TASK)?;
-    new_file.write_all(&toml.as_bytes())?;
+    write_toml(FILE_TASK, &data)?;
 
     Ok(())
 }
 
 pub fn add_task(task: String) -> std::io::Result<()> {
-    let file = read_file(FILE_TASK);
-    let mut data: Data = toml::from_str(&file).unwrap();
+    let mut data = get_tasks();
 
-    data.task.push(Task {
+    data.tasks.push(Task {
         item: task,
         checked: false,
     });
 
-    write_file(&data)?;
+    write_toml(FILE_TASK, &data)?;
 
     Ok(())
 }
 
 pub fn delete_task(args: &String) -> std::io::Result<()> {
     let id = get_id(&args);
-    let file = read_file(FILE_TASK);
-    let mut data: Data = toml::from_str(&file).unwrap();
-    let size = data.task.len();
+    let mut data = get_tasks();
+    let size = data.tasks.len();
 
-    data.task.remove(id);
+    data.tasks.remove(id);
 
     if size > 1 {
-        write_file(&data)?;
+        write_toml(FILE_TASK, &data)?;
     }
 
     Ok(())
 }
 
 pub fn clear_tasks() -> std::io::Result<()> {
-    let file = read_file(FILE_TASK);
-    let mut data: Data = toml::from_str(&file).unwrap();
+    let mut old_file = std::fs::OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(FILE_OLD)
+        .unwrap();
 
-    //Write
-    //This is here because when you remove an item from a vector
-    //the size shrinks, the index moves out of bounds
-    //TODO simplfy
-    let mut index: Vec<usize> = Vec::new();
-    for i in 0..data.task.len() {
-        if !data.task[i].checked {
-            index.push(i);
+    let mut data_to_move: Data = Data { tasks: Vec::new() };
+
+    //Get finished tasks and put them in buffer
+    let mut tasks = get_tasks();
+    let mut indexs_to_delete: Vec<usize> = Vec::new();
+
+    //Copy checked tasks to new file
+    for i in 0..tasks.tasks.len() {
+        if tasks.tasks[i].checked {
+            data_to_move.tasks.push(tasks.tasks[i].clone());
+            indexs_to_delete.push(i.clone());
         }
     }
-
-    for elem in index {
-        data.task.remove(elem);
+    //Remove checked tasks
+    for i in indexs_to_delete {
+        tasks.tasks.remove(i);
     }
+    write_toml(FILE_TASK, &tasks)?;
 
-    //Get checked tasks from tasks.toml
-    //Get old tasks from old.toml
-    //Copy checked ones into old.toml
-
-    let old_file = read_file(FILE_OLD);
+    let output = toml::to_string(&data_to_move).unwrap();
+    old_file.write_all(output.as_bytes())?;
 
     Ok(())
 }
 
 pub fn print_tasks() {
-    let file = read_file(FILE_TASK);
+    let data = get_tasks();
 
-    //Check if file is empty
-    if file == "" {
+    if data.tasks.is_empty() {
         println!("No Tasks!");
         return;
     }
 
-    let data: Data = toml::from_str(&file).unwrap();
-
-    let total_tasks = data.task.len();
+    let total_tasks = data.tasks.len();
     let mut completed_tasks: usize = 0;
 
     //Check how many tasks are completed
-    for elem in data.task.iter() {
+    for elem in data.tasks.iter() {
         if elem.checked {
             completed_tasks += 1;
         }
@@ -142,23 +150,12 @@ pub fn print_tasks() {
     print::header(completed_tasks, total_tasks).ok();
 
     //Print all tasks
-    for i in 0..data.task.len() {
-        print::task(i as i32 + 1, data.task[i].checked, &data.task[i].item).ok();
+    for i in 0..data.tasks.len() {
+        print::task(i as i32 + 1, data.tasks[i].checked, &data.tasks[i].item).ok();
     }
 }
-
-pub fn read_file(file_name: &str) -> String {
-    let mut file = File::open(file_name).expect("Unable to open the file");
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents)
-        .expect("Unable to read the file");
-
-    return contents;
-}
-
 //Check if tasks.toml exists
-pub fn check_file() {
+pub fn check_files() {
     if !Path::new(FILE_TASK).exists() {
         File::create(FILE_TASK).ok();
     }

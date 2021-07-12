@@ -6,26 +6,24 @@ static COMMAND: usize = 1;
 static ARGUMENTS: usize = 2;
 
 fn main() -> crossterm::Result<()> {
-    tasks::check_file();  
+    tasks::check_files();
 
     let mut args: Vec<String> = std::env::args().collect();
 
     if args.len() >= 2 {
         match &args[COMMAND] as &str {
-            "add" => 
-            {
+            "add" => {
                 args.remove(0);
                 args.remove(0);
                 let task: String = args.join(" ");
-                tasks::add_task(task)?; 
-            },
+                tasks::add_task(task)?;
+            }
             "rm" => tasks::delete_task(&args[ARGUMENTS])?,
             "check" => tasks::check_task(&args[ARGUMENTS])?,
             "clear" => tasks::clear_tasks()?,
-            _ => ()
+            _ => (),
         };
     }
-
     tasks::print_tasks();
 
     Ok(())

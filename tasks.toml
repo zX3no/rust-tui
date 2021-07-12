@@ -1,11 +1,3 @@
-[[task]]
-item = "example task"
-checked = false
-
-[[task]]
+[[tasks]]
 item = "test"
-checked = true
-
-[[task]]
-item = "among us"
 checked = false
