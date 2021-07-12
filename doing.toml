@@ -1,9 +1,6 @@
 [[task]]
-item = 'this is a sample task'
+item = "x"
 id = 1
 [[task]]
-item = 'among us'
-id = 999
-[[task]]
-item = 'a a a a a a a a a a a a a a a'
-id = 21
+item = "y"
+id = 2

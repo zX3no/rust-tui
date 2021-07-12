@@ -13,15 +13,20 @@ fn main() -> crossterm::Result<()> {
             let task: String = args.join(" ");
             tasks::write_task(&task);
         }
-    }
-    else if args.len() == 1 {
-        println!("Enter a task to add.");
-        //TODO how to return?
-        std::process::exit(0x0100);
+        else if args[0] == "rm" {
+            args.remove(0);
+            if args[0].parse::<usize>().is_ok() {
+                let id: usize = args[0].parse().unwrap(); 
+                tasks::delete_task(id)?;
+            }
+            else {
+                println!("Invalid task number.");
+            }
+        }
     }
 
     if tasks::file_exists() {
-        tasks::read_file()?;
+        tasks::print_tasks();
     }
 
     Ok(())
