@@ -73,14 +73,25 @@ pub fn delete_task(id: usize) -> std::io::Result<()> {
 
 pub fn print_tasks() {
     let file = read_file("doing.toml");
+
     if file == "" {
         println!("No Tasks!");
         return;
     } 
+
     let data: Data = toml::from_str(&file).unwrap();
 
-    //Change 0 to completed_tasks
-    print::header(0, data.task.len() as i32).ok();
+    let total_tasks: i32 = data.task.len() as i32;
+    let mut completed_tasks: i32 = 0;
+
+    //Check how many tasks are completed
+    for x in 0..data.task.len() {
+        if data.task[x].checked {
+            completed_tasks += 1;
+        }
+    }
+
+    print::header(completed_tasks, total_tasks).ok();
 
     //Iterate through items and print
     //TODO Sort and order them numerically
