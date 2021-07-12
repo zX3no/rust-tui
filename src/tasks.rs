@@ -19,21 +19,26 @@ struct Data {
     task: Vec<Task>
 }
 
-//Check if doing.toml exists
-pub fn file_exists() -> bool {
-    if Path::new("doing.toml").exists() {
-        return true;
-    }
-    else {
-        return false;
-    }
+pub fn check_task(id: usize) -> std::io::Result<()> {
+    let old_file = read_file();
+    let mut data: Data = toml::from_str(&old_file).unwrap();
+
+    //Check task
+    data.task[id].checked = !data.task[id].checked;
+
+    let toml = toml::to_string(&mut data).unwrap();
+
+    let mut new_file = File::create("doing.toml")?;
+    new_file.write_all(&toml.as_bytes())?;
+
+    Ok(())
 }
 
-pub fn write_task(task: String) -> std::io::Result<()> {
+pub fn add_task(task: String) -> std::io::Result<()> {
     //TODO opening, closing and writing to files might be slow
     //change to async fucntion
 
-    let mut old_file = read_file("doing.toml");
+    let mut old_file = read_file();
 
     let data = Data {
         task: vec![Task {item: task, checked: false}]
@@ -50,12 +55,12 @@ pub fn write_task(task: String) -> std::io::Result<()> {
 
 pub fn delete_task(id: usize) -> std::io::Result<()> {
     //Get tasks out of doing.toml
-    let old_file = read_file("doing.toml");
+    let old_file = read_file();
     let mut data: Data = toml::from_str(&old_file).unwrap();
     let size = data.task.len();
 
     //Remove tasks
-    data.task.remove(id-1);
+    data.task.remove(id);
 
     //Create string from data
     let toml = toml::to_string(&mut data).unwrap();
@@ -72,8 +77,9 @@ pub fn delete_task(id: usize) -> std::io::Result<()> {
 }
 
 pub fn print_tasks() {
-    let file = read_file("doing.toml");
+    let file = read_file();
 
+    //Check if file is empty
     if file == "" {
         println!("No Tasks!");
         return;
@@ -81,8 +87,8 @@ pub fn print_tasks() {
 
     let data: Data = toml::from_str(&file).unwrap();
 
-    let total_tasks: i32 = data.task.len() as i32;
-    let mut completed_tasks: i32 = 0;
+    let total_tasks = data.task.len();
+    let mut completed_tasks: usize = 0;
 
     //Check how many tasks are completed
     for x in 0..data.task.len() {
@@ -91,22 +97,34 @@ pub fn print_tasks() {
         }
     }
 
+    //Print header
     print::header(completed_tasks, total_tasks).ok();
 
     //Iterate through items and print
     //TODO Sort and order them numerically
     //ID might be uneccasary since items can be accessed iteratively 
 
+    //Print all tasks
     for x in 0..data.task.len() {
         print::task(x as i32 + 1, data.task[x].checked, &data.task[x].item).ok();
     }
 }
 
-pub fn read_file(file_name: &str) -> String {
-    //Get contents of doing.toml
-    let mut file = File::open(file_name).expect("Unable to open the file");
+pub fn read_file() -> String {
+    //Get contents of doing.toml and put into string
+    let mut file = File::open("doing.toml").expect("Unable to open the file");
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Unable to read the file");
 
     return contents;
+}
+
+//Check if doing.toml exists
+pub fn file_exists() -> bool {
+    if Path::new("doing.toml").exists() {
+        return true;
+    }
+    else {
+        return false;
+    }
 }

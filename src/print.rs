@@ -4,7 +4,7 @@ use crossterm::{
     execute, Result,
 };
 #[allow(dead_code)]
-pub fn header(completed_tasks: i32, total_tasks: i32) -> Result<()> {
+pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
     execute!(
         stdout(),
         Print(" "),

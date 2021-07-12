@@ -7,17 +7,30 @@ fn main() -> crossterm::Result<()> {
 
     args.remove(0);
 
+    //TODO cleanup this mess
     if args.len() >= 2 {
         if args[0] == "add" {
             args.remove(0);
             let task: String = args.join(" ");
-            tasks::write_task(task)?;
+            tasks::add_task(task)?;
         }
         else if args[0] == "rm" {
+            //TODO allow users to remove multiple tasks at the same time
             args.remove(0);
             if args[0].parse::<usize>().is_ok() {
                 let id: usize = args[0].parse().unwrap(); 
-                tasks::delete_task(id)?;
+                tasks::delete_task(id-1)?;
+            }
+            else {
+                println!("Invalid task number.");
+            }
+        }
+        else if args[0] == "check" {
+            //TODO allow users to check multiple tasks at the same time
+            args.remove(0);
+            if args[0].parse::<usize>().is_ok() {
+                let id: usize = args[0].parse().unwrap();
+                tasks::check_task(id-1)?;
             }
             else {
                 println!("Invalid task number.");
