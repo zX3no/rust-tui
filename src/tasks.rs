@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use std::io::prelude::*;
 use std::fs::File;
-use std::collections::HashMap;
 use std::path::Path;
 
 #[path = "./print.rs"]
@@ -11,6 +10,7 @@ mod print;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {
     item: String,
+    checked: bool,
     //TODO add date
 }
 
@@ -36,8 +36,9 @@ pub fn write_task(task: String) -> std::io::Result<()> {
     let mut old_file = read_file("doing.toml");
 
     let data = Data {
-        task: vec![Task {item: task}]
+        task: vec![Task {item: task, checked: false}]
     };
+
     let toml = toml::to_string(&data).unwrap();
 
     old_file.push_str(&toml);
@@ -48,36 +49,45 @@ pub fn write_task(task: String) -> std::io::Result<()> {
 }
 
 pub fn delete_task(id: usize) -> std::io::Result<()> {
-    let file = read_file("doing.toml");
-    let mut tasks: Data = toml::from_str(&file).unwrap();
-    tasks.task.remove(id-1);
+    //Get tasks out of doing.toml
+    let old_file = read_file("doing.toml");
+    let mut data: Data = toml::from_str(&old_file).unwrap();
+    let size = data.task.len();
 
-    let data = Data {
-        task: tasks.task 
-    };
+    //Remove tasks
+    data.task.remove(id-1);
 
-    let mut output = File::create("doing.toml")?;
-    let toml = toml::to_string(&data).unwrap();
-    output.write_all(&toml.as_bytes())?;
+    //Create string from data
+    let toml = toml::to_string(&mut data).unwrap();
+
+    //Open file and write to it
+    //TODO why do it destroy all my data?
+    let mut new_file = File::create("doing.toml")?;
+
+    if size > 1 {
+        new_file.write_all(&toml.as_bytes())?;
+    }
 
     Ok(())
 }
 
 pub fn print_tasks() {
-    let tasks = read_file("doing.toml");
-    let task_table: HashMap<String, Vec<Task>> = toml::from_str(&tasks).unwrap();
-    let items: &[Task] = &task_table["task"];
+    let file = read_file("doing.toml");
+    if file == "" {
+        println!("No Tasks!");
+        return;
+    } 
+    let data: Data = toml::from_str(&file).unwrap();
 
     //Change 0 to completed_tasks
-    print::header(0, items.len() as i32).ok();
+    print::header(0, data.task.len() as i32).ok();
 
     //Iterate through items and print
     //TODO Sort and order them numerically
     //ID might be uneccasary since items can be accessed iteratively 
 
-    for x in 0..items.len() {
-        //print::task(items[x].id, false, &items[x].item)?;
-        print::task(x as i32 + 1, false, &items[x].item).ok();
+    for x in 0..data.task.len() {
+        print::task(x as i32 + 1, data.task[x].checked, &data.task[x].item).ok();
     }
 }
 

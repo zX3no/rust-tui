@@ -1,1 +1,7 @@
-task = []
+[[task]]
+item = "Among us"
+checked = false
+
+[[task]]
+item = "fortnite"
+checked = false
