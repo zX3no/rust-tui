@@ -5,3 +5,6 @@ checked = false
 [[task]]
 item = "fortnite"
 checked = false
+[[task]]
+item = "test"
+checked = true 
