@@ -26,6 +26,9 @@ pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
 
 #[allow(dead_code)]
 pub fn task(id: i32, checked: bool, text: &str) -> Result<()> {
+    //I could keep tasks as far left as possible until there are
+    //bigger more than 10 and more than 100
+    //TODO parse total_tasks as function parameter
     execute!(
         stdout(),
         Print("\n"),

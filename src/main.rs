@@ -1,43 +1,29 @@
 mod print;
 mod tasks;
 
+//static APPLICATION: usize = 0;
+static COMMAND: usize = 1;
+static ARGUMENTS: usize = 2;
+
 fn main() -> crossterm::Result<()> {
-    //TODO RENAME FROM DOING.TOML TO TASKS.TOML
     tasks::check_file();  
 
     let mut args: Vec<String> = std::env::args().collect();
 
-    args.remove(0);
-
-    //TODO cleanup this mess
     if args.len() >= 2 {
-        if args[0] == "add" {
-            args.remove(0);
-            let task: String = args.join(" ");
-            tasks::add_task(task)?;
-        }
-        else if args[0] == "rm" {
-            //TODO allow users to remove multiple tasks at the same time
-            args.remove(0);
-            if args[0].parse::<usize>().is_ok() {
-                let id: usize = args[0].parse().unwrap(); 
-                tasks::delete_task(id-1)?;
-            }
-            else {
-                println!("Invalid task number.");
-            }
-        }
-        else if args[0] == "check" {
-            //TODO allow users to check multiple tasks at the same time
-            args.remove(0);
-            if args[0].parse::<usize>().is_ok() {
-                let id: usize = args[0].parse().unwrap();
-                tasks::check_task(id-1)?;
-            }
-            else {
-                println!("Invalid task number.");
-            }
-        }
+        match &args[COMMAND] as &str {
+            "add" => 
+            {
+                args.remove(0);
+                args.remove(0);
+                let task: String = args.join(" ");
+                tasks::add_task(task)?; 
+            },
+            "rm" => tasks::delete_task(&args[ARGUMENTS])?,
+            "check" => tasks::check_task(&args[ARGUMENTS])?,
+            "clear" => tasks::clear_tasks()?,
+            _ => ()
+        };
     }
 
     tasks::print_tasks();

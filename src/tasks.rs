@@ -19,7 +19,30 @@ struct Data {
     task: Vec<Task>
 }
 
-pub fn check_task(id: usize) -> std::io::Result<()> {
+//TODO Change return type to option
+fn get_id(args: &String) -> usize {
+    if args.parse::<usize>().is_ok() {
+        let id: usize = args.parse().unwrap();
+        return id-1;
+    }
+    else {
+        println!("Invalid task number.");
+    }
+    return 999; 
+}
+
+fn write_file(mut data: &Data) -> std::io::Result<()> {
+    //TODO why do it destroy all my data?
+    let toml = toml::to_string(&mut data).unwrap();
+    let mut new_file = File::create("tasks.toml")?;
+    new_file.write_all(&toml.as_bytes())?;
+
+    Ok(())
+}
+
+pub fn check_task(task: &String) -> std::io::Result<()> {
+    let id = get_id(&task);
+
     let old_file = read_file();
     let mut data: Data = toml::from_str(&old_file).unwrap();
 
@@ -28,54 +51,55 @@ pub fn check_task(id: usize) -> std::io::Result<()> {
 
     let toml = toml::to_string(&mut data).unwrap();
 
-    let mut new_file = File::create("doing.toml")?;
+    let mut new_file = File::create("tasks.toml")?;
     new_file.write_all(&toml.as_bytes())?;
 
     Ok(())
 }
 
 pub fn add_task(task: String) -> std::io::Result<()> {
-    //TODO opening, closing and writing to files might be slow
-    //change to async fucntion
+    let file = read_file();
+    let mut data: Data = toml::from_str(&file).unwrap();
 
-    let mut old_file = read_file();
-
-    let data = Data {
-        task: vec![Task {item: task, checked: false}]
-    };
-
-    let toml = toml::to_string(&data).unwrap();
-
-    old_file.push_str(&toml);
-    let mut new_file = File::create("doing.toml")?;
-    new_file.write_all(&old_file.as_bytes())?;
+    data.task.push(Task {item: task, checked: false});
+    
+    write_file(&data)?;
 
     Ok(())
 }
 
-pub fn delete_task(id: usize) -> std::io::Result<()> {
-    //Get tasks out of doing.toml
-    let old_file = read_file();
-    let mut data: Data = toml::from_str(&old_file).unwrap();
+pub fn delete_task(args: &String) -> std::io::Result<()> {
+    let id = get_id(&args);
+    let file = read_file();
+    let mut data: Data = toml::from_str(&file).unwrap();
     let size = data.task.len();
 
-    //Remove tasks
     data.task.remove(id);
 
-    //Create string from data
-    let toml = toml::to_string(&mut data).unwrap();
-
-    //Open file and write to it
-    //TODO why do it destroy all my data?
-    let mut new_file = File::create("doing.toml")?;
-
     if size > 1 {
-        new_file.write_all(&toml.as_bytes())?;
+        write_file(&data)?;
     }
 
     Ok(())
 }
 
+pub fn clear_tasks() -> std::io::Result<()> {
+    //Get tasks out of tasks.toml
+    let old_file = read_file();
+    let mut data: Data = toml::from_str(&old_file).unwrap();
+
+    for elem in data.task.iter_mut() {
+        if !elem.checked {
+            //Delete all unchecked tasks
+            //TODO move to done.toml
+        }
+    }
+
+    //TODO write to done.toml
+    //write_file(&data)?;
+
+    Ok(())
+}
 pub fn print_tasks() {
     let file = read_file();
 
@@ -91,8 +115,8 @@ pub fn print_tasks() {
     let mut completed_tasks: usize = 0;
 
     //Check how many tasks are completed
-    for x in 0..data.task.len() {
-        if data.task[x].checked {
+    for elem in data.task.iter() {
+        if elem.checked {
             completed_tasks += 1;
         }
     }
@@ -106,22 +130,22 @@ pub fn print_tasks() {
 
     //Print all tasks
     for x in 0..data.task.len() {
-        print::task(x as i32 + 1, data.task[x].checked, &data.task[x].item).ok();
+            print::task(x as i32 + 1, data.task[x].checked, &data.task[x].item).ok();
     }
 }
 
 pub fn read_file() -> String {
-    //Get contents of doing.toml and put into string
-    let mut file = File::open("doing.toml").expect("Unable to open the file");
+    //Get contents of tasks.toml and put into string
+    let mut file = File::open("tasks.toml").expect("Unable to open the file");
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Unable to read the file");
 
     return contents;
 }
 
-//Check if doing.toml exists
+//Check if tasks.toml exists
 pub fn check_file() {
-    if !Path::new("doing.toml").exists() {
-        File::create("doing.toml").ok();
+    if !Path::new("tasks.toml").exists() {
+        File::create("tasks.toml").ok();
     }
 }
