@@ -3,6 +3,7 @@ use crossterm::{
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     execute, Result,
 };
+
 #[allow(dead_code)]
 pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
     execute!(

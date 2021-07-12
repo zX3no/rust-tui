@@ -1,15 +1,11 @@
 mod print;
 mod tasks;
 
-use std::env;
-use std::fs::File;
-
 fn main() -> crossterm::Result<()> {
-    if !tasks::file_exists() { 
-        File::create("doing.toml")?;
-    }
+    //TODO RENAME FROM DOING.TOML TO TASKS.TOML
+    tasks::check_file();  
 
-    let mut args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = std::env::args().collect();
 
     args.remove(0);
 

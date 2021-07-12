@@ -120,11 +120,8 @@ pub fn read_file() -> String {
 }
 
 //Check if doing.toml exists
-pub fn file_exists() -> bool {
-    if Path::new("doing.toml").exists() {
-        return true;
-    }
-    else {
-        return false;
+pub fn check_file() {
+    if !Path::new("doing.toml").exists() {
+        File::create("doing.toml").ok();
     }
 }
