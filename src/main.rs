@@ -1,8 +1,14 @@
 mod print;
 mod tasks;
+
 use std::env;
+use std::fs::File;
 
 fn main() -> crossterm::Result<()> {
+    if !tasks::file_exists() { 
+        File::create("doing.toml")?;
+    }
+
     let mut args: Vec<String> = env::args().collect();
 
     args.remove(0);
@@ -38,9 +44,7 @@ fn main() -> crossterm::Result<()> {
         }
     }
 
-    if tasks::file_exists() {
-        tasks::print_tasks();
-    }
+    tasks::print_tasks();
 
     Ok(())
 }
