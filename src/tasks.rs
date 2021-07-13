@@ -22,15 +22,17 @@ struct Data {
 static FILE_TASK: &str = "tasks.toml";
 static FILE_OLD: &str = "old.toml";
 
-//TODO Change return type to option
-fn get_id(args: &String) -> Option<usize> {
-    if args.parse::<usize>().is_ok() {
-        let id: usize = args.parse().unwrap();
-        return Some(id - 1);
-    } else {
-        println!("Invalid task number.");
+fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
+    for elem in args[2..].iter() {
+        if elem.parse::<usize>().is_ok() {
+            let temp: usize = elem.parse().unwrap();
+            id.push(temp - 1);
+        } else {
+            println!("Invalid task number.");
+            return false;
+        }
     }
-    return None;
+    return true;
 }
 
 fn get_tasks() -> Data {
@@ -49,7 +51,7 @@ fn get_tasks() -> Data {
     return data;
 }
 
-//change filename to option
+//TODO change from option to trait
 fn write_toml(file_name: Option<&str>, data: &Data) -> std::io::Result<()> {
     let mut file: File;
     match file_name {
@@ -76,26 +78,27 @@ fn append_toml(file_name: &str, data: &Data) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn check_task(task: &String) -> std::io::Result<()> {
-    let id = get_id(&task);
-    let i: usize;
-    match id {
-        Some(x) => i = x,
-        None => return Ok(()),
+pub fn check_task(args: Vec<String>) -> std::io::Result<()> {
+    let mut id: Vec<usize> = Vec::new();
+    if !get_id(&mut id, args) {
+        return Ok(());
     }
 
     let mut data = get_tasks();
 
-    data.tasks[i].checked = !data.tasks[i].checked;
+    for i in id {
+        data.tasks[i].checked = !data.tasks[i].checked;
+    }
 
     write_toml(None, &data)?;
 
     Ok(())
 }
 
-pub fn add_task(task: String) -> std::io::Result<()> {
+pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
+    let arguments: String = args[2..].join(" ");
     let task = Task {
-        item: task,
+        item: arguments,
         checked: false,
     };
     let data = Data { tasks: vec![task] };
@@ -104,20 +107,29 @@ pub fn add_task(task: String) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn delete_task(args: &String) -> std::io::Result<()> {
-    let id = get_id(&args);
-    let i: usize;
-    match id {
-        Some(x) => i = x,
-        None => return Ok(()),
+pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
+    let mut id: Vec<usize> = Vec::new();
+    if !get_id(&mut id, args) {
+        return Ok(());
     }
+
     let mut data = get_tasks();
     let size = data.tasks.len();
-
-    data.tasks.remove(i);
+    let mut indexes_removed = 0;
+    for i in id {
+        if i < size {
+            data.tasks.remove(i - indexes_removed);
+            indexes_removed += 1;
+        } else if i != 0 {
+            println!("There is no task {}.", i);
+            return Ok(());
+        }
+    }
 
     if size > 1 {
         write_toml(None, &data)?;
+    } else {
+        File::create(FILE_TASK)?;
     }
 
     Ok(())
@@ -127,21 +139,20 @@ pub fn clear_tasks() -> std::io::Result<()> {
     let mut data_to_append: Data = Data { tasks: Vec::new() };
 
     //Get finished tasks and put them in buffer
-    let mut tasks = get_tasks();
-    let mut indexs_to_delete: Vec<usize> = Vec::new();
+    let mut data = get_tasks();
+    let mut indexes_removed = 0;
 
     //Copy checked tasks to new file
-    for i in 0..tasks.tasks.len() {
-        if tasks.tasks[i].checked {
-            data_to_append.tasks.push(tasks.tasks[i].clone());
-            indexs_to_delete.push(i.clone());
+    for i in 0..data.tasks.len() {
+        if data.tasks[i - indexes_removed].checked {
+            data_to_append
+                .tasks
+                .push(data.tasks[i - indexes_removed].clone());
+            data.tasks.remove(i - indexes_removed);
+            indexes_removed += 1;
         }
     }
-    //Remove checked tasks
-    for i in indexs_to_delete {
-        tasks.tasks.remove(i);
-    }
-    write_toml(None, &tasks)?;
+    write_toml(None, &data)?;
 
     append_toml(FILE_OLD, &data_to_append)?;
 
@@ -174,11 +185,13 @@ pub fn print_tasks() {
     }
 }
 
-pub fn check_files() {
+pub fn check_files() -> std::io::Result<()> {
     if !Path::new(FILE_TASK).exists() {
-        File::create(FILE_TASK).ok();
+        File::create(FILE_TASK)?;
     }
     if !Path::new(FILE_OLD).exists() {
-        File::create(FILE_OLD).ok();
+        File::create(FILE_OLD)?;
     }
+
+    Ok(())
 }

@@ -1,28 +1,21 @@
 mod print;
 mod tasks;
 
-//static APPLICATION: usize = 0;
-static COMMAND: usize = 1;
-static ARGUMENTS: usize = 2;
-
 fn main() -> crossterm::Result<()> {
-    tasks::check_files();
+    tasks::check_files()?;
 
-    let mut args: Vec<String> = std::env::args().collect();
-
-    if args.len() >= 2 {
-        match &args[COMMAND] as &str {
-            "add" => {
-                args.remove(0);
-                args.remove(0);
-                let task: String = args.join(" ");
-                tasks::add_task(task)?;
-            }
-            "rm" => tasks::delete_task(&args[ARGUMENTS])?,
-            "check" => tasks::check_task(&args[ARGUMENTS])?,
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() >= 3 {
+        match &args[1] as &str {
+            "add" => tasks::add_task(args)?,
+            "rm" => tasks::delete_task(args)?,
+            "check" => tasks::check_task(args)?,
             "clear" => tasks::clear_tasks()?,
             _ => (),
         };
+    } else if args.len() == 2 {
+        println!("Missing arguments for \'{}\'.", args[1]);
+        return Ok(());
     }
     tasks::print_tasks();
 
