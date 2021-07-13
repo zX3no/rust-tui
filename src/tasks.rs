@@ -125,7 +125,7 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
             data.tasks.remove((i / 1) - indexes_removed);
             indexes_removed += 1;
         } else if i != 0 {
-            println!("There is no task {}.", i);
+            println!("There is no task {}.", i + 1);
             return Ok(());
         }
     }
@@ -196,8 +196,10 @@ pub fn print_tasks() -> std::io::Result<()> {
 
     //Print all tasks
     for i in 0..data.tasks.len() {
-        print::task(i as i32 + 1, data.tasks[i].checked, &data.tasks[i].item)?;
+        print::task(i + 1, data.tasks[i].checked, &data.tasks[i].item)?;
     }
+
+    print::footer(completed_tasks, total_tasks)?;
 
     Ok(())
 }
