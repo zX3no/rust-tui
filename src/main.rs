@@ -28,7 +28,7 @@ fn main() -> crossterm::Result<()> {
 
     Ok(())
 }
-//TODO give toml files a appdata directory
+//TODO give toml files an appdata directory
 
 //When a task is cleared it will be moved to another file
 //Date is annoying todo so i'll skip it for now

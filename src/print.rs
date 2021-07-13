@@ -26,7 +26,7 @@ pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
 }
 
 #[allow(dead_code)]
-pub fn task(id: usize, checked: bool, text: &str) -> Result<()> {
+pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<()> {
     //I could keep tasks as far left as possible until there are
     //bigger more than 10 and more than 100
     //TODO parse total_tasks as function parameter
@@ -38,12 +38,22 @@ pub fn task(id: usize, checked: bool, text: &str) -> Result<()> {
     )?;
 
     if checked {
-        if id < 10 {
-            execute!(stdout(), Print(".    "))?;
-        } else if id < 100 {
-            execute!(stdout(), Print(".   "))?;
-        } else {
+        if total_tasks < 10 {
             execute!(stdout(), Print(".  "))?;
+        } else if total_tasks < 100 {
+            if id < 10 {
+                execute!(stdout(), Print(".   "))?;
+            } else if id < 100 {
+                execute!(stdout(), Print(".  "))?;
+            }
+        } else {
+            if id < 10 {
+                execute!(stdout(), Print(".    "))?;
+            } else if id < 100 {
+                execute!(stdout(), Print(".   "))?;
+            } else {
+                execute!(stdout(), Print(".  "))?;
+            }
         }
         execute!(
             stdout(),
@@ -54,12 +64,22 @@ pub fn task(id: usize, checked: bool, text: &str) -> Result<()> {
             ResetColor
         )?;
     } else {
-        if id < 10 {
-            execute!(stdout(), Print(".   "))?;
-        } else if id < 100 {
-            execute!(stdout(), Print(".  "))?;
-        } else {
+        if total_tasks < 10 {
             execute!(stdout(), Print(". "))?;
+        } else if total_tasks < 100 {
+            if id < 10 {
+                execute!(stdout(), Print(".  "))?;
+            } else if id < 100 {
+                execute!(stdout(), Print(". "))?;
+            }
+        } else {
+            if id < 10 {
+                execute!(stdout(), Print(".   "))?;
+            } else if id < 100 {
+                execute!(stdout(), Print(".  "))?;
+            } else {
+                execute!(stdout(), Print(". "))?;
+            }
         }
         execute!(
             stdout(),

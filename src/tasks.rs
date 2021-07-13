@@ -196,7 +196,12 @@ pub fn print_tasks() -> std::io::Result<()> {
 
     //Print all tasks
     for i in 0..data.tasks.len() {
-        print::task(i + 1, data.tasks[i].checked, &data.tasks[i].item)?;
+        print::task(
+            i + 1,
+            data.tasks[i].checked,
+            &data.tasks[i].item,
+            total_tasks,
+        )?;
     }
 
     print::footer(completed_tasks, total_tasks)?;
