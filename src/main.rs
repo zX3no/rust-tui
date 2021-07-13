@@ -5,15 +5,7 @@ fn main() -> crossterm::Result<()> {
     tasks::check_files()?;
 
     let args: Vec<String> = std::env::args().collect();
-    if args.len() >= 3 {
-        match &args[1] as &str {
-            "add" => tasks::add_task(args)?,
-            "rm" => tasks::delete_task(args)?,
-            "check" => tasks::check_task(args)?,
-            "clear" => tasks::clear_tasks()?,
-            _ => (),
-        };
-    } else if args.len() == 2 {
+    if args.len() == 2 {
         match &args[1] as &str {
             "clear" => tasks::clear_tasks()?,
             _ => {
@@ -21,8 +13,18 @@ fn main() -> crossterm::Result<()> {
                 return Ok(());
             }
         };
+    } else if args.len() >= 3 {
+        match &args[1] as &str {
+            "add" => tasks::add_task(args)?,
+            "rm" => tasks::delete_task(args)?,
+            "check" => tasks::check_task(args)?,
+            _ => {
+                println!("Invalid command.");
+                return Ok(());
+            }
+        };
     }
-    tasks::print_tasks();
+    tasks::print_tasks()?;
 
     Ok(())
 }

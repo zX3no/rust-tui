@@ -114,11 +114,15 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
     }
 
     let mut data = get_tasks();
+
+    //since we're deleting tasks the size will change
     let size = data.tasks.len();
+    //this is annoying but again the size chagnes
     let mut indexes_removed = 0;
+
     for i in id {
         if i < size {
-            data.tasks.remove(i - indexes_removed);
+            data.tasks.remove((i / 1) - indexes_removed);
             indexes_removed += 1;
         } else if i != 0 {
             println!("There is no task {}.", i);
@@ -126,11 +130,12 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
         }
     }
 
-    if size > 1 {
-        write_toml(None, &data)?;
-    } else {
+    if data.tasks.len() == 0 {
         File::create(FILE_TASK)?;
+        return Ok(());
     }
+
+    write_toml(None, &data)?;
 
     Ok(())
 }
@@ -141,6 +146,15 @@ pub fn clear_tasks() -> std::io::Result<()> {
     //Get finished tasks and put them in buffer
     let mut data = get_tasks();
     let mut indexes_removed = 0;
+
+    //return if there are no tasks to clear
+    if data.tasks.len() == 0 {
+        return Ok(());
+    } else if data.tasks.len() <= 1 && data.tasks[0].checked {
+        //If there is one checked task left remove all the files contents;
+        File::create(FILE_TASK)?;
+        return Ok(());
+    }
 
     //Copy checked tasks to new file
     for i in 0..data.tasks.len() {
@@ -153,23 +167,19 @@ pub fn clear_tasks() -> std::io::Result<()> {
         }
     }
 
-    if data.tasks.len() <= 1 {
-        File::create(FILE_TASK)?;
-    } else {
-        write_toml(None, &data)?;
-    }
+    write_toml(None, &data)?;
 
     append_toml(FILE_OLD, &data_to_append)?;
 
     Ok(())
 }
 
-pub fn print_tasks() {
+pub fn print_tasks() -> std::io::Result<()> {
     let data = get_tasks();
 
     if data.tasks.is_empty() {
         println!("No Tasks!");
-        return;
+        return Ok(());
     }
 
     let total_tasks = data.tasks.len();
@@ -182,12 +192,14 @@ pub fn print_tasks() {
         }
     }
 
-    print::header(completed_tasks, total_tasks).ok();
+    print::header(completed_tasks, total_tasks)?;
 
     //Print all tasks
     for i in 0..data.tasks.len() {
-        print::task(i as i32 + 1, data.tasks[i].checked, &data.tasks[i].item).ok();
+        print::task(i as i32 + 1, data.tasks[i].checked, &data.tasks[i].item)?;
     }
+
+    Ok(())
 }
 
 pub fn check_files() -> std::io::Result<()> {
