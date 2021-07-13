@@ -23,14 +23,14 @@ static FILE_TASK: &str = "tasks.toml";
 static FILE_OLD: &str = "old.toml";
 
 //TODO Change return type to option
-fn get_id(args: &String) -> usize {
+fn get_id(args: &String) -> Option<usize> {
     if args.parse::<usize>().is_ok() {
         let id: usize = args.parse().unwrap();
-        return id - 1;
+        return Some(id - 1);
     } else {
         println!("Invalid task number.");
     }
-    return 999;
+    return None;
 }
 
 fn get_tasks() -> Data {
@@ -49,8 +49,27 @@ fn get_tasks() -> Data {
     return data;
 }
 
-fn write_toml(file_name: &str, data: &Data) -> std::io::Result<()> {
-    let mut file = File::create(file_name)?;
+//change filename to option
+fn write_toml(file_name: Option<&str>, data: &Data) -> std::io::Result<()> {
+    let mut file: File;
+    match file_name {
+        Some(name) => file = File::create(name).unwrap(),
+        None => file = File::create(FILE_TASK).unwrap(),
+    }
+
+    let output = toml::to_string(&data).unwrap();
+    file.write_all(output.as_bytes())?;
+
+    Ok(())
+}
+
+fn append_toml(file_name: &str, data: &Data) -> std::io::Result<()> {
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(file_name)
+        .unwrap();
+
     let output = toml::to_string(&data).unwrap();
     file.write_all(output.as_bytes())?;
 
@@ -59,52 +78,53 @@ fn write_toml(file_name: &str, data: &Data) -> std::io::Result<()> {
 
 pub fn check_task(task: &String) -> std::io::Result<()> {
     let id = get_id(&task);
+    let i: usize;
+    match id {
+        Some(x) => i = x,
+        None => return Ok(()),
+    }
 
     let mut data = get_tasks();
 
-    //Check task
-    data.tasks[id].checked = !data.tasks[id].checked;
+    data.tasks[i].checked = !data.tasks[i].checked;
 
-    write_toml(FILE_TASK, &data)?;
+    write_toml(None, &data)?;
 
     Ok(())
 }
 
 pub fn add_task(task: String) -> std::io::Result<()> {
-    let mut data = get_tasks();
-
-    data.tasks.push(Task {
+    let task = Task {
         item: task,
         checked: false,
-    });
-
-    write_toml(FILE_TASK, &data)?;
+    };
+    let data = Data { tasks: vec![task] };
+    append_toml(FILE_TASK, &data)?;
 
     Ok(())
 }
 
 pub fn delete_task(args: &String) -> std::io::Result<()> {
     let id = get_id(&args);
+    let i: usize;
+    match id {
+        Some(x) => i = x,
+        None => return Ok(()),
+    }
     let mut data = get_tasks();
     let size = data.tasks.len();
 
-    data.tasks.remove(id);
+    data.tasks.remove(i);
 
     if size > 1 {
-        write_toml(FILE_TASK, &data)?;
+        write_toml(None, &data)?;
     }
 
     Ok(())
 }
 
 pub fn clear_tasks() -> std::io::Result<()> {
-    let mut old_file = std::fs::OpenOptions::new()
-        .write(true)
-        .append(true)
-        .open(FILE_OLD)
-        .unwrap();
-
-    let mut data_to_move: Data = Data { tasks: Vec::new() };
+    let mut data_to_append: Data = Data { tasks: Vec::new() };
 
     //Get finished tasks and put them in buffer
     let mut tasks = get_tasks();
@@ -113,7 +133,7 @@ pub fn clear_tasks() -> std::io::Result<()> {
     //Copy checked tasks to new file
     for i in 0..tasks.tasks.len() {
         if tasks.tasks[i].checked {
-            data_to_move.tasks.push(tasks.tasks[i].clone());
+            data_to_append.tasks.push(tasks.tasks[i].clone());
             indexs_to_delete.push(i.clone());
         }
     }
@@ -121,10 +141,9 @@ pub fn clear_tasks() -> std::io::Result<()> {
     for i in indexs_to_delete {
         tasks.tasks.remove(i);
     }
-    write_toml(FILE_TASK, &tasks)?;
+    write_toml(None, &tasks)?;
 
-    let output = toml::to_string(&data_to_move).unwrap();
-    old_file.write_all(output.as_bytes())?;
+    append_toml(FILE_OLD, &data_to_append)?;
 
     Ok(())
 }
@@ -154,7 +173,7 @@ pub fn print_tasks() {
         print::task(i as i32 + 1, data.tasks[i].checked, &data.tasks[i].item).ok();
     }
 }
-//Check if tasks.toml exists
+
 pub fn check_files() {
     if !Path::new(FILE_TASK).exists() {
         File::create(FILE_TASK).ok();

@@ -1,3 +1,11 @@
 [[tasks]]
 item = "test"
 checked = false
+
+[[tasks]]
+item = "sus"
+checked = true
+
+[[tasks]]
+item = "s"
+checked = true
