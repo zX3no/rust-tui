@@ -152,7 +152,12 @@ pub fn clear_tasks() -> std::io::Result<()> {
             indexes_removed += 1;
         }
     }
-    write_toml(None, &data)?;
+
+    if data.tasks.len() <= 1 {
+        File::create(FILE_TASK)?;
+    } else {
+        write_toml(None, &data)?;
+    }
 
     append_toml(FILE_OLD, &data_to_append)?;
 

@@ -14,8 +14,13 @@ fn main() -> crossterm::Result<()> {
             _ => (),
         };
     } else if args.len() == 2 {
-        println!("Missing arguments for \'{}\'.", args[1]);
-        return Ok(());
+        match &args[1] as &str {
+            "clear" => tasks::clear_tasks()?,
+            _ => {
+                println!("Missing arguments for \'{}\'.", args[1]);
+                return Ok(());
+            }
+        };
     }
     tasks::print_tasks();
 
