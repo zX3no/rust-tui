@@ -6,18 +6,23 @@ fn main() -> crossterm::Result<()> {
     if args.len() == 2 {
         match &args[1] as &str {
             "clear" => tasks::clear_tasks()?,
+            "add" | "a" | "delete" | "rm" | "check" | "c" | "old" => {
+                println!("Missing arguments for \'{}\'", args[1]);
+                return Ok(());
+            }
             _ => {
-                println!("Missing arguments for \'{}\'.", args[1]);
+                println!("\'{}\' is not a command", args[1]);
                 return Ok(());
             }
         };
     } else if args.len() >= 3 {
         match &args[1] as &str {
             "add" | "a" => tasks::add_task(args)?,
-            "rm" | "delete" => tasks::delete_task(args)?,
+            "delete" | "rm" => tasks::delete_task(args)?,
             "check" | "c" => tasks::check_task(args)?,
+            "old" => (),
             _ => {
-                println!("Invalid command.");
+                println!("\'{}\' is not a command", args[1]);
                 return Ok(());
             }
         };
