@@ -2,7 +2,9 @@ mod print;
 mod tasks;
 fn main() -> crossterm::Result<()> {
     tasks::check_files()?;
-    let args: Vec<String> = std::env::args().collect();
+
+    let mut args: Vec<String> = std::env::args().collect();
+
     if args.len() == 2 {
         match &args[1] as &str {
             "clear" => tasks::clear_tasks()?,
@@ -22,11 +24,12 @@ fn main() -> crossterm::Result<()> {
             "check" | "c" => tasks::check_task(args)?,
             "old" => (),
             _ => {
-                println!("\'{}\' is not a command", args[1]);
-                return Ok(());
+                args.insert(0, "".to_string());
+                tasks::add_task(args)?;
             }
         };
     }
+
     tasks::print_tasks()?;
 
     Ok(())
