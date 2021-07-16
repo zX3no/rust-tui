@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[path = "./print.rs"]
 mod print;
@@ -19,8 +19,17 @@ struct Data {
     tasks: Vec<Task>,
 }
 
-static FILE_TASK: &str = "tasks.toml";
-static FILE_OLD: &str = "old.toml";
+fn file_task() -> PathBuf {
+    let mut dir = dirs::config_dir().unwrap();
+    dir.push("t\\tasks.toml");
+    return dir;
+}
+
+fn file_old() -> PathBuf {
+    let mut dir = dirs::config_dir().unwrap();
+    dir.push("t\\old.toml");
+    return dir;
+}
 
 fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
     for elem in args[2..].iter() {
@@ -36,12 +45,14 @@ fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
 }
 
 fn get_tasks() -> Data {
-    let mut file = File::open(FILE_TASK).expect("Unable to open the file");
+    let mut file = match File::open(&file_task()) {
+        Err(why) => panic!("couldn't open {}: ", why),
+        Ok(file) => file,
+    };
     let mut contents = String::new();
     let mut data = Data { tasks: Vec::new() };
 
-    file.read_to_string(&mut contents)
-        .expect("Unable to read the file");
+    file.read_to_string(&mut contents).unwrap();
     if contents != "" {
         data = toml::from_str(&contents).unwrap();
     } else {
@@ -51,21 +62,15 @@ fn get_tasks() -> Data {
     return data;
 }
 
-//TODO change from option to trait
-fn write_toml(file_name: Option<&str>, data: &Data) -> std::io::Result<()> {
-    let mut file: File;
-    match file_name {
-        Some(name) => file = File::create(name).unwrap(),
-        None => file = File::create(FILE_TASK).unwrap(),
-    }
-
+fn write_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
+    let mut file = File::create(file_name).unwrap();
     let output = toml::to_string(&data).unwrap();
     file.write_all(output.as_bytes())?;
 
     Ok(())
 }
 
-fn append_toml(file_name: &str, data: &Data) -> std::io::Result<()> {
+fn append_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .append(true)
@@ -90,7 +95,7 @@ pub fn check_task(args: Vec<String>) -> std::io::Result<()> {
         data.tasks[i].checked = !data.tasks[i].checked;
     }
 
-    write_toml(None, &data)?;
+    write_toml(file_task(), &data)?;
 
     Ok(())
 }
@@ -102,7 +107,7 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
         checked: false,
     };
     let data = Data { tasks: vec![task] };
-    append_toml(FILE_TASK, &data)?;
+    append_toml(file_task(), &data)?;
 
     Ok(())
 }
@@ -131,11 +136,11 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
     }
 
     if data.tasks.len() == 0 {
-        File::create(FILE_TASK)?;
+        File::create(file_task())?;
         return Ok(());
     }
 
-    write_toml(None, &data)?;
+    write_toml(file_task(), &data)?;
 
     Ok(())
 }
@@ -150,10 +155,6 @@ pub fn clear_tasks() -> std::io::Result<()> {
     //return if there are no tasks to clear
     if data.tasks.len() == 0 {
         return Ok(());
-    } else if data.tasks.len() <= 1 && data.tasks[0].checked {
-        //If there is one checked task left remove all the files contents;
-        File::create(FILE_TASK)?;
-        return Ok(());
     }
 
     //Copy checked tasks to new file
@@ -167,9 +168,13 @@ pub fn clear_tasks() -> std::io::Result<()> {
         }
     }
 
-    write_toml(None, &data)?;
+    if data.tasks.len() == 0 {
+        File::create(file_task())?;
+    } else {
+        write_toml(file_task(), &data)?;
+    }
 
-    append_toml(FILE_OLD, &data_to_append)?;
+    append_toml(file_old(), &data_to_append)?;
 
     Ok(())
 }
@@ -210,11 +215,18 @@ pub fn print_tasks() -> std::io::Result<()> {
 }
 
 pub fn check_files() -> std::io::Result<()> {
-    if !Path::new(FILE_TASK).exists() {
-        File::create(FILE_TASK)?;
+    let mut path = dirs::config_dir().unwrap();
+    path.push("t");
+    if !Path::new(&path).exists() {
+        std::fs::create_dir(&path)?;
     }
-    if !Path::new(FILE_OLD).exists() {
-        File::create(FILE_OLD)?;
+
+    if !Path::new(&file_task()).exists() {
+        File::create(&file_task())?;
+    }
+
+    if !Path::new(&file_old()).exists() {
+        File::create(&file_old())?;
     }
 
     Ok(())
