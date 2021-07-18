@@ -23,6 +23,8 @@ t
     Options
         none                Display a list of tasks.
         none+args           Create a task
+        none+number         Check/uncheck task
+
         check, c            Check/uncheck task
         add, a              Create a task
         clear               Clear checked tasks and archive them
@@ -30,6 +32,7 @@ t
     Examples
         t                   Display tasks
         t example task      Creates a task 'example task'
+        t 1 2 3             Checks task 1, 2 and 3
         t add example task  Creates a task 'example task'
         t check 1           Checks task 1
         t clear             Clears all checked task
