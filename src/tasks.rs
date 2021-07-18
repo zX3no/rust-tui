@@ -31,7 +31,7 @@ fn file_old() -> PathBuf {
     return dir;
 }
 
-fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
+fn get_id(id: &mut Vec<usize>, args: &Vec<String>) -> bool {
     for elem in args[2..].iter() {
         if elem.parse::<usize>().is_ok() {
             let temp: usize = elem.parse().unwrap();
@@ -83,9 +83,9 @@ fn append_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn check_task(args: Vec<String>) -> std::io::Result<()> {
+pub fn check_task(args: &Vec<String>) -> std::io::Result<()> {
     let mut id: Vec<usize> = Vec::new();
-    if !get_id(&mut id, args) {
+    if !get_id(&mut id, &args) {
         return Ok(());
     }
 
@@ -114,7 +114,7 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
 
 pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
     let mut id: Vec<usize> = Vec::new();
-    if !get_id(&mut id, args) {
+    if !get_id(&mut id, &args) {
         return Ok(());
     }
 
