@@ -15,10 +15,10 @@ cargo install --path .
 ### Usage:
 
 ```
-t 
+t help 
 
     Usage
-        t [<options> ...]
+        t [<options> <args>] 
 
     Options
         none                Display a list of tasks.
@@ -28,6 +28,8 @@ t
         check, c            Check/uncheck task
         add, a              Create a task
         clear               Clear checked tasks and archive them
+        old                 Displays previously completed tasks
+        help
     
     Examples
         t                   Display tasks
@@ -36,6 +38,7 @@ t
         t add example task  Creates a task 'example task'
         t check 1           Checks task 1
         t clear             Clears all checked task
+        t old               Displays previously completed tasks
 ```
 
 Config Directory:
@@ -44,6 +47,6 @@ Windows: `%appdata%/t`
 
 ### TODO
 
-Write help menu / move to better argument handler
+Move to better argument handler
 
 Add support for notes

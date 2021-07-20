@@ -1,5 +1,6 @@
 mod print;
 mod tasks;
+
 fn main() -> crossterm::Result<()> {
     tasks::check_files()?;
 
@@ -12,8 +13,16 @@ fn main() -> crossterm::Result<()> {
         } else {
             match &args[1] as &str {
                 "clear" => tasks::clear_tasks()?,
-                "add" | "a" | "delete" | "rm" | "check" | "c" | "old" => {
+                "old" => {
+                    tasks::print_old_tasks()?;
+                    return Ok(());
+                }
+                "add" | "a" | "delete" | "rm" | "check" | "c" => {
                     println!("Missing arguments for \'{}\'", args[1]);
+                    return Ok(());
+                }
+                "help" => {
+                    print::help();
                     return Ok(());
                 }
                 _ => {
@@ -31,7 +40,14 @@ fn main() -> crossterm::Result<()> {
                 "add" | "a" => tasks::add_task(args)?,
                 "delete" | "rm" => tasks::delete_task(args)?,
                 "check" | "c" => tasks::check_task(&args)?,
-                "old" => (),
+                "help" => {
+                    print::help();
+                    return Ok(());
+                }
+                "old" => {
+                    tasks::print_old_tasks()?;
+                    return Ok(());
+                }
                 _ => {
                     args.insert(0, "".to_string());
                     tasks::add_task(args)?;

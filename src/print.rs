@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crossterm::{
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
@@ -5,7 +6,6 @@ use crossterm::{
 };
 use std::io::stdout;
 
-#[allow(dead_code)]
 pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
     execute!(
         stdout(),
@@ -25,7 +25,6 @@ pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
     Ok(())
 }
 
-#[allow(dead_code)]
 pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<()> {
     //I could keep tasks as far left as possible until there are
     //bigger more than 10 and more than 100
@@ -95,7 +94,6 @@ pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<
     Ok(())
 }
 
-#[allow(dead_code)]
 pub fn footer(completed_tasks: usize, total_tasks: usize) -> Result<()> {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     execute!(
@@ -121,4 +119,32 @@ pub fn footer(completed_tasks: usize, total_tasks: usize) -> Result<()> {
         ResetColor,
     )?;
     Ok(())
+}
+pub fn help() {
+    println!(
+        "
+Usage
+    t [<options> <args>]
+
+Options
+    none                Display a list of tasks.
+    none+args           Create a task
+    none+number         Check/uncheck task
+
+    check, c            Check/uncheck task
+    add, a              Create a task
+    clear               Clear checked tasks and archive them
+    old                 Displays previously completed tasks
+    help                
+
+Examples
+    t                   Display tasks
+    t example task      Creates a task 'example task'
+    t 1 2 3             Checks task 1, 2 and 3
+    t add example task  Creates a task 'example task'
+    t check 1           Checks task 1
+    t clear             Clears all checked task
+    t old               Displays previously completed tasks
+    "
+    );
 }

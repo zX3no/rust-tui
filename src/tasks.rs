@@ -214,6 +214,36 @@ pub fn print_tasks() -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn print_old_tasks() -> std::io::Result<()> {
+    let mut file = match File::open(&file_old()) {
+        Err(why) => panic!("couldn't open {}: ", why),
+        Ok(file) => file,
+    };
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents).unwrap();
+
+    if contents != "" {
+        let data: Data = toml::from_str(&contents).unwrap();
+        let total_tasks = data.tasks.len();
+
+        for i in 0..data.tasks.len() {
+            print::task(
+                i + 1,
+                data.tasks[i].checked,
+                &data.tasks[i].item,
+                total_tasks,
+            )?;
+        }
+    } else {
+        println!("Tasks archive is empty.");
+        return Ok(());
+    }
+
+    Ok(())
+}
+
 pub fn check_files() -> std::io::Result<()> {
     let mut path = dirs::config_dir().unwrap();
     path.push("t");
