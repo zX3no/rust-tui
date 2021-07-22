@@ -15,7 +15,7 @@ cargo install --path .
 ### Usage:
 
 ```
-t help 
+t h
 
     Usage
         t [<options> <args>] 
@@ -25,20 +25,20 @@ t help
         none+args           Create a task
         none+number         Check/uncheck task
 
-        check, c            Check/uncheck task
-        add, a              Create a task
-        clear               Clear checked tasks and archive them
-        old                 Displays previously completed tasks
-        help
+        c                   Check/uncheck task
+        a                   Create a task
+        cls                 Clear checked tasks and archive them
+        o                   Displays previously completed tasks
+        h                   Displays the help page
     
     Examples
-        t                   Display tasks
+        t                   Displays tasks
         t example task      Creates a task 'example task'
         t 1 2 3             Checks task 1, 2 and 3
-        t add example task  Creates a task 'example task'
-        t check 1           Checks task 1
-        t clear             Clears all checked task
-        t old               Displays previously completed tasks
+        t c 1               Checks task 1
+        t cls               Clears all checked task
+        t o                 Displays previously completed tasks
+        t h                 Displays the help page
 ```
 
 Config Directory:
