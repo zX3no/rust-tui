@@ -6,12 +6,13 @@ use crossterm::{
 };
 use std::io::stdout;
 
-pub fn header(completed_tasks: usize, total_tasks: usize) -> Result<()> {
+pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) -> Result<()> {
     execute!(
         stdout(),
         Print(" "),
         SetAttribute(Attribute::Underlined),
-        Print("Tasks:"),
+        Print(board),
+        Print(":"),
         ResetColor,
         SetForegroundColor(Color::DarkGrey),
         Print(" ["),

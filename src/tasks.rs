@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
@@ -11,6 +12,7 @@ mod print;
 struct Task {
     item: String,
     checked: bool,
+    board_name: String,
     //TODO add date
 }
 
@@ -105,6 +107,7 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
     let task = Task {
         item: arguments,
         checked: false,
+        board_name: "Tasks".to_string(),
     };
     let data = Data { tasks: vec![task] };
     append_toml(file_task(), &data)?;
@@ -144,7 +147,7 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
 
     Ok(())
 }
-
+//TODO this is broken
 pub fn clear_tasks() -> std::io::Result<()> {
     let mut data_to_append: Data = Data { tasks: Vec::new() };
 
@@ -187,29 +190,50 @@ pub fn print_tasks() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let total_tasks = data.tasks.len();
-    let mut completed_tasks: usize = 0;
+    let mut board_completed: HashMap<&str, usize> = HashMap::new();
+    let mut board_total: HashMap<&str, usize> = HashMap::new();
+    let mut board_list: Vec<&str> = Vec::new();
 
-    //Check how many tasks are completed
+    let tasks_total = data.tasks.len();
+    let mut tasks_completed = 0;
+
     for elem in data.tasks.iter() {
+        board_list.push(elem.board_name.as_str());
         if elem.checked {
-            completed_tasks += 1;
+            tasks_completed += 1;
         }
     }
 
-    print::header(completed_tasks, total_tasks)?;
+    //Remove repeated elements
+    board_list.dedup();
 
-    //Print all tasks
-    for i in 0..data.tasks.len() {
-        print::task(
-            i + 1,
-            data.tasks[i].checked,
-            &data.tasks[i].item,
-            total_tasks,
-        )?;
+    for board in &board_list {
+        let mut bc = 0;
+        let mut bt = 0;
+        for elem in data.tasks.iter() {
+            if elem.board_name == *board {
+                bt += 1;
+            }
+            if elem.checked {
+                bc += 1;
+            }
+        }
+        board_completed.insert(board, bc);
+        board_total.insert(board, bt);
     }
 
-    print::footer(completed_tasks, total_tasks)?;
+    for board in board_list {
+        print::header(board_completed[board], board_total[board], board)?;
+        let mut i = 0;
+        for elem in data.tasks.iter() {
+            if elem.board_name == board {
+                i += 1;
+                print::task(i, elem.checked, elem.item.as_str(), board_total[board])?;
+            }
+        }
+    }
+
+    print::footer(tasks_completed, tasks_total)?;
 
     Ok(())
 }
