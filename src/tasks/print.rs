@@ -168,6 +168,7 @@ Options
 
     c                       Check/uncheck task
     a                       Create a task
+    n                       Create a note
     cls                     Clear checked tasks and archive them
     o                       Displays previously completed tasks
     d                       Deletes a task
@@ -179,6 +180,7 @@ Examples
     t !TODO example task    Create a task in a board called 'TODO'        
     t a example task        Creates a task 'example task'
     t a !TODO example task  Create a task in a board called 'TODO'        
+    t n example note        Create note 'example note'
     t 1 2 3                 Checks task 1, 2 and 3
     t c 1                   Checks task 1
     t cls                   Clears all checked task
