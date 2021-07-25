@@ -17,7 +17,7 @@ fn main() -> crossterm::Result<()> {
                     tasks::print_old_tasks()?;
                     return Ok(());
                 }
-                "d" => {
+                "d" | "b" | "a" => {
                     println!("Missing arguments for \'{}\'", args[1]);
                     return Ok(());
                 }
@@ -37,6 +37,7 @@ fn main() -> crossterm::Result<()> {
             tasks::check_task(&args)?;
         } else {
             match &args[1] as &str {
+                "a" => tasks::add_task(args)?,
                 "d" => tasks::delete_task(args)?,
                 "c" => tasks::check_task(&args)?,
                 "h" => {

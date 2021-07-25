@@ -103,12 +103,23 @@ pub fn check_task(args: &Vec<String>) -> std::io::Result<()> {
 }
 
 pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
-    let arguments: String = args[2..].join(" ");
+    let arguments: String;
+    let mut board_name: String = "Tasks".to_string();
+
+    //Get the board_name and task data
+    if args[2].contains("!") {
+        board_name = args[2].clone().replace("!", "");
+        arguments = args[3..].join(" ");
+    } else {
+        arguments = args[2..].join(" ");
+    }
+
     let task = Task {
         item: arguments,
         checked: false,
-        board_name: "Tasks".to_string(),
+        board_name: board_name,
     };
+
     let data = Data { tasks: vec![task] };
     append_toml(file_task(), &data)?;
 
@@ -147,7 +158,6 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
 
     Ok(())
 }
-//TODO this is broken
 pub fn clear_tasks() -> std::io::Result<()> {
     let mut data_to_append: Data = Data { tasks: Vec::new() };
 
@@ -197,6 +207,7 @@ pub fn print_tasks() -> std::io::Result<()> {
     let tasks_total = data.tasks.len();
     let mut tasks_completed = 0;
 
+    //Get a list of all boards
     for elem in data.tasks.iter() {
         board_list.push(elem.board_name.as_str());
         if elem.checked {
@@ -207,30 +218,33 @@ pub fn print_tasks() -> std::io::Result<()> {
     //Remove repeated elements
     board_list.dedup();
 
+    //Get total and completed tasks for each board
     for board in &board_list {
         let mut bc = 0;
         let mut bt = 0;
         for elem in data.tasks.iter() {
             if elem.board_name == *board {
                 bt += 1;
-            }
-            if elem.checked {
-                bc += 1;
+                if elem.checked {
+                    bc += 1;
+                }
             }
         }
         board_completed.insert(board, bc);
         board_total.insert(board, bt);
     }
 
+    //Print each board
+    let mut index = 0;
     for board in board_list {
         print::header(board_completed[board], board_total[board], board)?;
-        let mut i = 0;
         for elem in data.tasks.iter() {
             if elem.board_name == board {
-                i += 1;
-                print::task(i, elem.checked, elem.item.as_str(), board_total[board])?;
+                index += 1;
+                print::task(index, elem.checked, elem.item.as_str(), board_total[board])?;
             }
         }
+        println!();
     }
 
     print::footer(tasks_completed, tasks_total)?;

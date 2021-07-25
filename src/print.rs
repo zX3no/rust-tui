@@ -100,7 +100,6 @@ pub fn footer(completed_tasks: usize, total_tasks: usize) -> Result<()> {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
-        Print("\n"),
         Print("  "),
         Print(percent),
         Print("% of all tasks completed\n"),
