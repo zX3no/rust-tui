@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
@@ -216,7 +217,7 @@ pub fn print_tasks() -> std::io::Result<()> {
     }
 
     //Remove repeated elements
-    board_list.dedup();
+    board_list = board_list.into_iter().unique().collect();
 
     //Get total and completed tasks for each board
     for board in &board_list {
