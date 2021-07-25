@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -6,14 +7,14 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
-#[path = "./print.rs"]
-mod print;
+pub mod print;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {
     item: String,
     checked: bool,
     board_name: String,
+    note: bool,
     //TODO add date
 }
 
@@ -101,6 +102,7 @@ pub fn check_task(args: &Vec<String>) -> std::io::Result<()> {
     let mut data = get_tasks();
 
     for i in id {
+        //could check for notes here but who cares
         data.tasks[i].checked = !data.tasks[i].checked;
     }
 
@@ -125,6 +127,7 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
         item: arguments,
         checked: false,
         board_name: board_name,
+        note: false,
     };
 
     let data = Data { tasks: vec![task] };
@@ -248,7 +251,11 @@ pub fn print_tasks() -> std::io::Result<()> {
         for elem in data.tasks.iter() {
             if elem.board_name == board {
                 index += 1;
-                print::task(index, elem.checked, elem.item.as_str(), board_total[board])?;
+                if elem.note {
+                    print::note(index, elem.item.as_str(), board_total[board])?;
+                } else {
+                    print::task(index, elem.checked, elem.item.as_str(), board_total[board])?;
+                }
             }
         }
         println!();
@@ -285,6 +292,22 @@ pub fn print_old_tasks() -> std::io::Result<()> {
         println!("Tasks archive is empty.");
         return Ok(());
     }
+
+    Ok(())
+}
+
+pub fn add_note(args: Vec<String>) -> std::io::Result<()> {
+    let arguments = args[2..].join(" ");
+
+    let task = Task {
+        item: arguments,
+        checked: false,
+        board_name: "Tasks".to_string(),
+        note: true,
+    };
+
+    let data = Data { tasks: vec![task] };
+    append_toml(file_task(), &data)?;
 
     Ok(())
 }

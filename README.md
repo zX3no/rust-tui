@@ -55,5 +55,3 @@ Windows: `%appdata%/t`
 Show some examples of what tasks, boards and notes look like
 
 Move to better argument handler
-
-Add support for notes

@@ -1,4 +1,3 @@
-mod print;
 mod tasks;
 
 fn main() -> crossterm::Result<()> {
@@ -22,7 +21,7 @@ fn main() -> crossterm::Result<()> {
                     return Ok(());
                 }
                 "h" => {
-                    print::help();
+                    tasks::print::help();
                     return Ok(());
                 }
                 _ => {
@@ -40,8 +39,9 @@ fn main() -> crossterm::Result<()> {
                 "a" => tasks::add_task(args)?,
                 "d" => tasks::delete_task(args)?,
                 "c" => tasks::check_task(&args)?,
+                "n" => tasks::add_note(args)?,
                 "h" => {
-                    print::help();
+                    tasks::print::help();
                     return Ok(());
                 }
                 "o" => {

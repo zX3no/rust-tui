@@ -26,10 +26,45 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) -> Result
     Ok(())
 }
 
+pub fn note(id: usize, text: &str, total_tasks: usize) -> Result<()> {
+    execute!(
+        stdout(),
+        SetForegroundColor(Color::DarkGrey),
+        Print("   "),
+        Print(id)
+    )?;
+
+    if total_tasks < 10 {
+        execute!(stdout(), Print(". "))?;
+    } else if total_tasks < 100 {
+        if id < 10 {
+            execute!(stdout(), Print(".  "))?;
+        } else if id < 100 {
+            execute!(stdout(), Print(". "))?;
+        }
+    } else {
+        if id < 10 {
+            execute!(stdout(), Print(".   "))?;
+        } else if id < 100 {
+            execute!(stdout(), Print(".  "))?;
+        } else {
+            execute!(stdout(), Print(". "))?;
+        }
+    }
+    execute!(
+        stdout(),
+        SetForegroundColor(Color::DarkMagenta),
+        Print(" •  "),
+        ResetColor,
+        Print(text),
+    )?;
+    execute!(stdout(), Print("\n"),)?;
+    Ok(())
+}
+
 pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<()> {
     //I could keep tasks as far left as possible until there are
     //bigger more than 10 and more than 100
-    //TODO parse total_tasks as function parameter
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
