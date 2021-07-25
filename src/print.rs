@@ -135,6 +135,7 @@ Options
     a                   Create a task
     cls                 Clear checked tasks and archive them
     o                   Displays previously completed tasks
+    d                   Deletes a task
     h                   Displays the help page
 
 Examples
@@ -144,6 +145,7 @@ Examples
     t c 1               Checks task 1
     t cls               Clears all checked task
     t o                 Displays previously completed tasks
+    t d 1               Deletes task number 1
     t h                 Displays the help page
     "
     );
