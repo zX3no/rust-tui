@@ -17,6 +17,12 @@ struct Task {
     //TODO add date
 }
 
+impl PartialEq for Task {
+    fn eq(&self, other: &Self) -> bool {
+        self.item == other.item
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Data {
     tasks: Vec<Task>,
@@ -283,6 +289,46 @@ pub fn print_old_tasks() -> std::io::Result<()> {
     Ok(())
 }
 
+//TODO this funciton is only used once
+fn get_boards() -> Vec<String> {
+    let data = get_tasks();
+
+    let mut board_list: Vec<String> = Vec::new();
+
+    //Get a list of all boards
+    for elem in data.tasks.iter() {
+        board_list.push(elem.board_name.clone());
+    }
+
+    board_list = board_list.into_iter().unique().collect();
+    return board_list;
+}
+
+fn sort_tasks() {
+    let old_data = get_tasks();
+
+    if old_data.tasks.len() == 0 {
+        return;
+    }
+
+    let mut new_data = Data { tasks: Vec::new() };
+
+    let board_list = get_boards();
+
+    for board in board_list {
+        for elem in old_data.tasks.iter() {
+            if elem.board_name == board {
+                new_data.tasks.push(elem.clone());
+            }
+        }
+    }
+
+    //Only write to file if tasks need to be sorted
+    if !itertools::equal(&old_data.tasks, &new_data.tasks) {
+        write_toml(file_task(), &new_data).ok();
+    }
+}
+
 pub fn check_files() -> std::io::Result<()> {
     let mut path = dirs::config_dir().unwrap();
     path.push("t");
@@ -292,6 +338,8 @@ pub fn check_files() -> std::io::Result<()> {
 
     if !Path::new(&file_task()).exists() {
         File::create(&file_task())?;
+    } else {
+        sort_tasks();
     }
 
     if !Path::new(&file_old()).exists() {
