@@ -244,6 +244,9 @@ pub fn print_tasks() -> std::io::Result<()> {
         board_total.insert(board, bt);
     }
 
+    //Remove the default board, we will print this last
+    board_list.retain(|&x| x != "Tasks");
+
     //Print each board
     let mut notes_total = 0;
     let mut index = 0;
@@ -253,15 +256,35 @@ pub fn print_tasks() -> std::io::Result<()> {
             if elem.board_name == board {
                 index += 1;
                 if elem.note {
-                    print::note(index, elem.item.as_str(), board_total[board])?;
+                    print::note(index, elem.item.as_str(), tasks_total)?;
                     notes_total += 1;
                 } else {
-                    print::task(index, elem.checked, elem.item.as_str(), board_total[board])?;
+                    print::task(index, elem.checked, elem.item.as_str(), tasks_total)?;
                 }
             }
         }
         println!();
     }
+    print::header(board_completed["Tasks"], board_total["Tasks"], "Tasks")?;
+
+    for elem in data.tasks.iter() {
+        if elem.board_name == "Tasks" {
+            index += 1;
+            if elem.note {
+                print::note(index, elem.item.as_str(), tasks_total)?;
+                notes_total += 1;
+            } else {
+                print::task(
+                    index,
+                    elem.checked,
+                    elem.item.as_str(),
+                    board_total["Tasks"],
+                )?;
+            }
+        }
+    }
+    println!();
+
     //Don't count the notes
     tasks_total = tasks_total - notes_total;
 
@@ -293,7 +316,7 @@ pub fn print_old_tasks() -> std::io::Result<()> {
             )?;
         }
     } else {
-        println!("Tasks archive is empty.");
+        println!("Task archive is empty.");
         return Ok(());
     }
 
@@ -328,6 +351,8 @@ fn get_boards() -> Vec<String> {
     }
 
     board_list = board_list.into_iter().unique().collect();
+
+    board_list.retain(|x| x != "Tasks");
     return board_list;
 }
 
@@ -347,6 +372,12 @@ fn sort_tasks() {
             if elem.board_name == board {
                 new_data.tasks.push(elem.clone());
             }
+        }
+    }
+
+    for elem in old_data.tasks.iter() {
+        if elem.board_name == "Tasks" {
+            new_data.tasks.push(elem.clone());
         }
     }
 

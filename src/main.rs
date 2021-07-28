@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crossterm::{
     cursor, queue,
     terminal::{Clear, ClearType},
@@ -60,8 +61,14 @@ fn main() -> crossterm::Result<()> {
         }
     }
 
-    //TODO fix flickering
-    queue!(stdout(), Clear(ClearType::All), cursor::MoveTo(0, 0),)?;
+    //TODO fix flickering and clearing the current line
+    // queue!(
+    //     stdout(),
+    //     cursor::MoveTo(1, 0),
+    //     Clear(ClearType::FromCursorUp),
+    //     Clear(ClearType::FromCursorDown),
+    //     cursor::MoveTo(0, 0),
+    // )?;
 
     tasks::print_tasks()?;
 
