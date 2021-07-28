@@ -59,6 +59,7 @@ fn main() -> crossterm::Result<()> {
             };
         }
     }
+
     //TODO fix flickering
     queue!(stdout(), Clear(ClearType::All), cursor::MoveTo(0, 0),)?;
 

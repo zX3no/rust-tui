@@ -2,7 +2,7 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
