@@ -130,7 +130,7 @@ pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<
     Ok(())
 }
 
-pub fn footer(completed_tasks: usize, total_tasks: usize) -> Result<()> {
+pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) -> Result<()> {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     execute!(
         stdout(),
@@ -150,7 +150,11 @@ pub fn footer(completed_tasks: usize, total_tasks: usize) -> Result<()> {
         SetForegroundColor(Color::Magenta),
         Print(total_tasks - completed_tasks),
         SetForegroundColor(Color::DarkGrey),
-        Print(" pending"),
+        Print(" pending · "),
+        SetForegroundColor(Color::Blue),
+        Print(total_notes),
+        SetForegroundColor(Color::DarkGrey),
+        Print(" notes"),
         ResetColor,
     )?;
     Ok(())

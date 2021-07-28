@@ -214,7 +214,7 @@ pub fn print_tasks() -> std::io::Result<()> {
     let mut board_total: HashMap<&str, usize> = HashMap::new();
     let mut board_list: Vec<&str> = Vec::new();
 
-    let tasks_total = data.tasks.len();
+    let mut tasks_total = data.tasks.len();
     let mut tasks_completed = 0;
 
     //Get a list of all boards
@@ -245,6 +245,7 @@ pub fn print_tasks() -> std::io::Result<()> {
     }
 
     //Print each board
+    let mut notes_total = 0;
     let mut index = 0;
     for board in board_list {
         print::header(board_completed[board], board_total[board], board)?;
@@ -253,6 +254,7 @@ pub fn print_tasks() -> std::io::Result<()> {
                 index += 1;
                 if elem.note {
                     print::note(index, elem.item.as_str(), board_total[board])?;
+                    notes_total += 1;
                 } else {
                     print::task(index, elem.checked, elem.item.as_str(), board_total[board])?;
                 }
@@ -260,8 +262,10 @@ pub fn print_tasks() -> std::io::Result<()> {
         }
         println!();
     }
+    //Don't count the notes
+    tasks_total = tasks_total - notes_total;
 
-    print::footer(tasks_completed, tasks_total)?;
+    print::footer(tasks_completed, tasks_total, notes_total)?;
 
     Ok(())
 }

@@ -1,10 +1,14 @@
+use crossterm::{
+    cursor, queue,
+    terminal::{Clear, ClearType},
+};
+use std::io::stdout;
 mod tasks;
 
 fn main() -> crossterm::Result<()> {
     tasks::check_files()?;
 
     let mut args: Vec<String> = std::env::args().collect();
-
     if args.len() == 2 {
         if args[1].parse::<usize>().is_ok() {
             args.insert(0, "".to_string());
@@ -55,6 +59,8 @@ fn main() -> crossterm::Result<()> {
             };
         }
     }
+    //TODO fix flickering
+    queue!(stdout(), Clear(ClearType::All), cursor::MoveTo(0, 0),)?;
 
     tasks::print_tasks()?;
 
