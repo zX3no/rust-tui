@@ -42,14 +42,12 @@ pub fn note(id: usize, text: &str, total_tasks: usize) -> Result<()> {
         } else if id < 100 {
             execute!(stdout(), Print(". "))?;
         }
+    } else if id < 10 {
+        execute!(stdout(), Print(".   "))?;
+    } else if id < 100 {
+        execute!(stdout(), Print(".  "))?;
     } else {
-        if id < 10 {
-            execute!(stdout(), Print(".   "))?;
-        } else if id < 100 {
-            execute!(stdout(), Print(".  "))?;
-        } else {
-            execute!(stdout(), Print(". "))?;
-        }
+        execute!(stdout(), Print(". "))?;
     }
     execute!(
         stdout(),
@@ -81,14 +79,12 @@ pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<
             } else if id < 100 {
                 execute!(stdout(), Print(".  "))?;
             }
+        } else if id < 10 {
+            execute!(stdout(), Print(".    "))?;
+        } else if id < 100 {
+            execute!(stdout(), Print(".   "))?;
         } else {
-            if id < 10 {
-                execute!(stdout(), Print(".    "))?;
-            } else if id < 100 {
-                execute!(stdout(), Print(".   "))?;
-            } else {
-                execute!(stdout(), Print(".  "))?;
-            }
+            execute!(stdout(), Print(".  "))?;
         }
         execute!(
             stdout(),
@@ -107,14 +103,12 @@ pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<
             } else if id < 100 {
                 execute!(stdout(), Print(". "))?;
             }
+        } else if id < 10 {
+            execute!(stdout(), Print(".   "))?;
+        } else if id < 100 {
+            execute!(stdout(), Print(".  "))?;
         } else {
-            if id < 10 {
-                execute!(stdout(), Print(".   "))?;
-            } else if id < 100 {
-                execute!(stdout(), Print(".  "))?;
-            } else {
-                execute!(stdout(), Print(". "))?;
-            }
+            execute!(stdout(), Print(". "))?;
         }
         execute!(
             stdout(),

@@ -32,16 +32,18 @@ struct Data {
 fn file_task() -> PathBuf {
     let mut dir = dirs::config_dir().unwrap();
     dir.push("t\\tasks.toml");
-    return dir;
+
+    dir
 }
 
 fn file_old() -> PathBuf {
     let mut dir = dirs::config_dir().unwrap();
     dir.push("t\\old.toml");
-    return dir;
+
+    dir
 }
 
-fn get_id(id: &mut Vec<usize>, args: &Vec<String>) -> bool {
+fn get_id(id: &mut Vec<usize>, args: &[String]) -> bool {
     for elem in args[2..].iter() {
         if elem.parse::<usize>().is_ok() {
             let temp: usize = elem.parse().unwrap();
@@ -51,7 +53,8 @@ fn get_id(id: &mut Vec<usize>, args: &Vec<String>) -> bool {
             return false;
         }
     }
-    return true;
+
+    true
 }
 
 fn get_tasks() -> Data {
@@ -63,13 +66,13 @@ fn get_tasks() -> Data {
     let mut data = Data { tasks: Vec::new() };
 
     file.read_to_string(&mut contents).unwrap();
-    if contents != "" {
+    if !contents.is_empty() {
         data = toml::from_str(&contents).unwrap();
     } else {
         return data;
     }
 
-    return data;
+    data
 }
 
 fn write_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
@@ -93,7 +96,7 @@ fn append_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn check_task(args: &Vec<String>) -> std::io::Result<()> {
+pub fn check_task(args: &[String]) -> std::io::Result<()> {
     let mut id: Vec<usize> = Vec::new();
     if !get_id(&mut id, &args) {
         return Ok(());
@@ -113,11 +116,11 @@ pub fn check_task(args: &Vec<String>) -> std::io::Result<()> {
 
 pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
     let arguments: String;
-    let mut board_name: String = "Tasks".to_string();
+    let mut name: String = "Tasks".to_string();
 
     //Get the board_name and task data
-    if args[2].contains("!") {
-        board_name = args[2].clone().replace("!", "");
+    if args[2].contains('!') {
+        name = args[2].clone().replace('!', "");
         arguments = args[3..].join(" ");
     } else {
         arguments = args[2..].join(" ");
@@ -126,7 +129,7 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
     let task = Task {
         item: arguments,
         checked: false,
-        board_name: board_name,
+        board_name: name,
         note: false,
     };
 
@@ -151,7 +154,7 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
 
     for i in id {
         if i < size {
-            data.tasks.remove((i / 1) - indexes_removed);
+            data.tasks.remove(i - indexes_removed);
             indexes_removed += 1;
         } else if i != 0 {
             println!("There is no task {}.", i + 1);
@@ -159,7 +162,7 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
         }
     }
 
-    if data.tasks.len() == 0 {
+    if data.tasks.is_empty() {
         File::create(file_task())?;
         return Ok(());
     }
@@ -176,7 +179,7 @@ pub fn clear_tasks() -> std::io::Result<()> {
     let mut indexes_removed = 0;
 
     //return if there are no tasks to clear
-    if data.tasks.len() == 0 {
+    if data.tasks.is_empty() {
         return Ok(());
     }
 
@@ -191,7 +194,7 @@ pub fn clear_tasks() -> std::io::Result<()> {
         }
     }
 
-    if data.tasks.len() == 0 {
+    if data.tasks.is_empty() {
         File::create(file_task())?;
     } else {
         write_toml(file_task(), &data)?;
@@ -286,7 +289,7 @@ pub fn print_tasks() -> std::io::Result<()> {
     println!();
 
     //Don't count the notes
-    tasks_total = tasks_total - notes_total;
+    tasks_total -= notes_total;
 
     print::footer(tasks_completed, tasks_total, notes_total)?;
 
@@ -303,7 +306,7 @@ pub fn print_old_tasks() -> std::io::Result<()> {
 
     file.read_to_string(&mut contents).unwrap();
 
-    if contents != "" {
+    if !contents.is_empty() {
         let data: Data = toml::from_str(&contents).unwrap();
         let total_tasks = data.tasks.len();
 
@@ -353,13 +356,14 @@ fn get_boards() -> Vec<String> {
     board_list = board_list.into_iter().unique().collect();
 
     board_list.retain(|x| x != "Tasks");
-    return board_list;
+
+    board_list
 }
 
 fn sort_tasks() {
     let old_data = get_tasks();
 
-    if old_data.tasks.len() == 0 {
+    if old_data.tasks.is_empty() {
         return;
     }
 
