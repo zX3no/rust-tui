@@ -7,15 +7,18 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
-pub mod print;
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 
+mod date_format;
+pub mod print;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {
     item: String,
     checked: bool,
     board_name: String,
     note: bool,
-    //TODO add date
+    #[serde(with = "date_format")]
+    date: DateTime<Utc>,
 }
 
 impl PartialEq for Task {
@@ -125,12 +128,14 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
     } else {
         arguments = args[2..].join(" ");
     }
-
+    let now: DateTime<Utc> = Utc::now();
+    dbg!(&now);
     let task = Task {
         item: arguments,
         checked: false,
         board_name: name,
         note: false,
+        date: now,
     };
 
     let data = Data { tasks: vec![task] };
@@ -219,6 +224,7 @@ pub fn print_tasks() -> std::io::Result<()> {
 
     let mut tasks_total = data.tasks.len();
     let mut tasks_completed = 0;
+    let now: DateTime<Utc> = Utc::now();
 
     //Get a list of all boards
     for elem in data.tasks.iter() {
@@ -233,8 +239,9 @@ pub fn print_tasks() -> std::io::Result<()> {
 
     //Get total and completed tasks for each board
     for board in &board_list {
-        let mut bc = 0;
-        let mut bt = 0;
+        //boards completed and board total
+        let (mut bc, mut bt) = (0, 0);
+
         for elem in data.tasks.iter() {
             if elem.board_name == *board {
                 bt += 1;
@@ -243,6 +250,8 @@ pub fn print_tasks() -> std::io::Result<()> {
                 }
             }
         }
+
+        //push the name and value into a hashmap
         board_completed.insert(board, bc);
         board_total.insert(board, bt);
     }
@@ -250,29 +259,35 @@ pub fn print_tasks() -> std::io::Result<()> {
     //Remove the default board, we will print this last
     board_list.retain(|&x| x != "Tasks");
 
-    //Print each board
+    //Print all the custom boards
     let mut notes_total = 0;
     let mut index = 0;
     for board in board_list {
         print::header(board_completed[board], board_total[board], board)?;
         for elem in data.tasks.iter() {
+            let day = (now - elem.date).num_days();
             if elem.board_name == board {
                 index += 1;
                 if elem.note {
                     print::note(index, elem.item.as_str(), tasks_total)?;
                     notes_total += 1;
                 } else {
-                    print::task(index, elem.checked, elem.item.as_str(), tasks_total)?;
+                    print::task(index, elem.checked, elem.item.as_str(), day, tasks_total)?;
                 }
             }
         }
         println!();
     }
+
+    //Print the header for the default board
     print::header(board_completed["Tasks"], board_total["Tasks"], "Tasks")?;
 
+    //Print the default board
     for elem in data.tasks.iter() {
         if elem.board_name == "Tasks" {
             index += 1;
+
+            let day = (now - elem.date).num_days();
             if elem.note {
                 print::note(index, elem.item.as_str(), tasks_total)?;
                 notes_total += 1;
@@ -281,11 +296,13 @@ pub fn print_tasks() -> std::io::Result<()> {
                     index,
                     elem.checked,
                     elem.item.as_str(),
+                    day,
                     board_total["Tasks"],
                 )?;
             }
         }
     }
+
     println!();
 
     //Don't count the notes
@@ -306,15 +323,18 @@ pub fn print_old_tasks() -> std::io::Result<()> {
 
     file.read_to_string(&mut contents).unwrap();
 
+    let now: DateTime<Utc> = Utc::now();
     if !contents.is_empty() {
         let data: Data = toml::from_str(&contents).unwrap();
         let total_tasks = data.tasks.len();
-
+        //how long ago the task was added in days
         for i in 0..data.tasks.len() {
+            let day = (now - data.tasks[i].date).num_days();
             print::task(
                 i + 1,
                 data.tasks[i].checked,
                 &data.tasks[i].item,
+                day,
                 total_tasks,
             )?;
         }
@@ -328,12 +348,14 @@ pub fn print_old_tasks() -> std::io::Result<()> {
 
 pub fn add_note(args: Vec<String>) -> std::io::Result<()> {
     let arguments = args[2..].join(" ");
+    let now: DateTime<Utc> = Utc::now();
 
     let task = Task {
         item: arguments,
         checked: false,
         board_name: "Tasks".to_string(),
         note: true,
+        date: now,
     };
 
     let data = Data { tasks: vec![task] };

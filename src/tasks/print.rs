@@ -1,11 +1,12 @@
 #![allow(dead_code)]
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use crossterm::{
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     Result,
 };
+use dirs::executable_dir;
 use std::io::stdout;
-
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) -> Result<()> {
     execute!(
         stdout(),
@@ -34,23 +35,25 @@ pub fn note(id: usize, text: &str, total_tasks: usize) -> Result<()> {
         Print(id)
     )?;
 
+    let mut spacing: &str = "";
     if total_tasks < 10 {
-        execute!(stdout(), Print(". "))?;
+        spacing = ". ";
     } else if total_tasks < 100 {
         if id < 10 {
-            execute!(stdout(), Print(".  "))?;
+            spacing = ".  ";
         } else if id < 100 {
-            execute!(stdout(), Print(". "))?;
+            spacing = ". ";
         }
     } else if id < 10 {
-        execute!(stdout(), Print(".   "))?;
+        spacing = ".   ";
     } else if id < 100 {
-        execute!(stdout(), Print(".  "))?;
+        spacing = ".  ";
     } else {
-        execute!(stdout(), Print(". "))?;
+        spacing = ". ";
     }
     execute!(
         stdout(),
+        Print(spacing),
         SetForegroundColor(Color::DarkMagenta),
         Print(" •  "),
         ResetColor,
@@ -60,34 +63,33 @@ pub fn note(id: usize, text: &str, total_tasks: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<()> {
-    //I could keep tasks as far left as possible until there are
-    //bigger more than 10 and more than 100
+pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) -> Result<()> {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
         Print("   "),
         Print(id)
     )?;
-
+    let mut spacing: &str = "";
     if checked {
         if total_tasks < 10 {
-            execute!(stdout(), Print(".  "))?;
+            spacing = ".  ";
         } else if total_tasks < 100 {
             if id < 10 {
-                execute!(stdout(), Print(".   "))?;
+                spacing = ".   ";
             } else if id < 100 {
-                execute!(stdout(), Print(".  "))?;
+                spacing = ".  ";
             }
         } else if id < 10 {
-            execute!(stdout(), Print(".    "))?;
+            spacing = ".    ";
         } else if id < 100 {
-            execute!(stdout(), Print(".   "))?;
+            spacing = ".   ";
         } else {
-            execute!(stdout(), Print(".  "))?;
+            spacing = ".  ";
         }
         execute!(
             stdout(),
+            Print(spacing),
             SetForegroundColor(Color::Green),
             Print("√  "),
             SetForegroundColor(Color::DarkGrey),
@@ -96,22 +98,23 @@ pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<
         )?;
     } else {
         if total_tasks < 10 {
-            execute!(stdout(), Print(". "))?;
+            spacing = ". ";
         } else if total_tasks < 100 {
             if id < 10 {
-                execute!(stdout(), Print(".  "))?;
+                spacing = ".  ";
             } else if id < 100 {
-                execute!(stdout(), Print(". "))?;
+                spacing = ". ";
             }
         } else if id < 10 {
-            execute!(stdout(), Print(".   "))?;
+            spacing = ".   ";
         } else if id < 100 {
-            execute!(stdout(), Print(".  "))?;
+            spacing = ".  ";
         } else {
-            execute!(stdout(), Print(". "))?;
+            spacing = ". ";
         }
         execute!(
             stdout(),
+            Print(spacing),
             SetForegroundColor(Color::DarkMagenta),
             Print("[ ]"),
             ResetColor,
@@ -119,6 +122,16 @@ pub fn task(id: usize, checked: bool, text: &str, total_tasks: usize) -> Result<
             Print(text),
             ResetColor
         )?;
+        if days > 0 {
+            execute!(
+                stdout(),
+                Print(" "),
+                SetForegroundColor(Color::DarkGrey),
+                Print(days),
+                Print("d"),
+                ResetColor,
+            )?;
+        }
     }
     execute!(stdout(), Print("\n"),)?;
     Ok(())
