@@ -2,73 +2,63 @@
 use crossterm::{
     cursor, queue,
     terminal::{Clear, ClearType},
+    Result,
 };
 use std::io::stdout;
+use tasks::check_files;
 mod tasks;
 
-fn main() -> crossterm::Result<()> {
+fn single_argument(arg: &str) -> Result<bool> {
+    match arg {
+        "cls" => {
+            tasks::clear_tasks()?;
+            return Ok(true);
+        }
+        "o" => tasks::print_old_tasks()?,
+        "d" | "b" | "a" => println!("Missing arguments for \'{}\'", arg),
+        "h" => tasks::print::help(),
+        _ => {
+            tasks::add_task(vec![arg.to_string()])?;
+            return Ok(true);
+        }
+    };
+
+    Ok(false)
+}
+
+fn multiple_arugments(args: Vec<String>) -> Result<()> {
+    match &args[0] as &str {
+        "a" => tasks::add_task(args)?,
+        "d" => tasks::delete_task(args)?,
+        "c" => tasks::check_task(&args)?,
+        "n" => tasks::add_note(args)?,
+        _ => tasks::add_task(args)?,
+    };
+    Ok(())
+}
+
+fn main() -> Result<()> {
     tasks::check_files()?;
 
-    let mut args: Vec<String> = std::env::args().collect();
-    if args.len() == 2 {
-        if args[1].parse::<usize>().is_ok() {
-            args.insert(0, "".to_string());
-            tasks::check_task(&args)?;
-        } else {
-            match &args[1] as &str {
-                "cls" => tasks::clear_tasks()?,
-                "o" => {
-                    tasks::print_old_tasks()?;
-                    return Ok(());
-                }
-                "d" | "b" | "a" => {
-                    println!("Missing arguments for \'{}\'", args[1]);
-                    return Ok(());
-                }
-                "h" => {
-                    tasks::print::help();
-                    return Ok(());
-                }
-                _ => {
-                    println!("\'{}\' is not a command", args[1]);
-                    return Ok(());
-                }
-            };
-        }
-    } else if args.len() >= 3 {
-        if args[1].parse::<usize>().is_ok() {
-            args.insert(0, "".to_string());
-            tasks::check_task(&args)?;
-        } else {
-            match &args[1] as &str {
-                "a" => tasks::add_task(args)?,
-                "d" => tasks::delete_task(args)?,
-                "c" => tasks::check_task(&args)?,
-                "n" => tasks::add_note(args)?,
-                "h" => {
-                    tasks::print::help();
-                    return Ok(());
-                }
-                "o" => {
-                    tasks::print_old_tasks()?;
-                    return Ok(());
-                }
-                _ => {
-                    args.insert(0, "".to_string());
-                    tasks::add_task(args)?;
-                }
-            };
-        }
+    let args: Vec<String> = std::env::args().skip(1).collect();
+
+    if args.is_empty() {
+        tasks::print_tasks()?;
+        return Ok(());
     }
 
-    //TODO fix flickering and clearing the current line
-    // queue!(
-    //     stdout(),
-    //     cursor::MoveTo(1, 0),
-    //     Clear(ClearType::FromCursorUp),
-    //     Clear(ClearType::FromCursorDown),
-    //     cursor::MoveTo(0, 0),
-    // )?;
+    if args[0].parse::<usize>().is_ok() {
+        tasks::check_task(&args)?;
+    }
+
+    match args.len() {
+        1 => {
+            if let false = single_argument(args[0].as_str())? {
+                return Ok(());
+            }
+        }
+        _ => multiple_arugments(args)?,
+    }
 
     tasks::print_tasks()?;
 

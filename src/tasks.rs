@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
-
+use std::io::Result;
 mod date_format;
 pub mod print;
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -32,6 +32,9 @@ struct Data {
     tasks: Vec<Task>,
 }
 
+const COMMAND: usize = 0;
+const ARGUMENT: usize = 1;
+
 fn file_task() -> PathBuf {
     let mut dir = dirs::config_dir().unwrap();
     dir.push("t\\tasks.toml");
@@ -47,7 +50,7 @@ fn file_old() -> PathBuf {
 }
 
 fn get_id(id: &mut Vec<usize>, args: &[String]) -> bool {
-    for elem in args[2..].iter() {
+    for elem in args[ARGUMENT..].iter() {
         if elem.parse::<usize>().is_ok() {
             let temp: usize = elem.parse().unwrap();
             id.push(temp - 1);
@@ -78,7 +81,7 @@ fn get_tasks() -> Data {
     data
 }
 
-fn write_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
+fn write_toml(file_name: PathBuf, data: &Data) -> Result<()> {
     let mut file = File::create(file_name).unwrap();
     let output = toml::to_string(&data).unwrap();
     file.write_all(output.as_bytes())?;
@@ -86,7 +89,7 @@ fn write_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
     Ok(())
 }
 
-fn append_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
+fn append_toml(file_name: PathBuf, data: &Data) -> Result<()> {
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .append(true)
@@ -99,9 +102,9 @@ fn append_toml(file_name: PathBuf, data: &Data) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn check_task(args: &[String]) -> std::io::Result<()> {
+pub fn check_task(args: &[String]) -> Result<()> {
     let mut id: Vec<usize> = Vec::new();
-    if !get_id(&mut id, &args) {
+    if !get_id(&mut id, args) {
         return Ok(());
     }
 
@@ -117,19 +120,18 @@ pub fn check_task(args: &[String]) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
+pub fn add_task(args: Vec<String>) -> Result<()> {
     let arguments: String;
     let mut name: String = "Tasks".to_string();
 
     //Get the board_name and task data
-    if args[2].contains('!') {
-        name = args[2].clone().replace('!', "");
-        arguments = args[3..].join(" ");
+    if args[COMMAND].contains('!') {
+        name = args[COMMAND].clone().replace('!', "");
+        arguments = args[ARGUMENT..].join(" ");
     } else {
-        arguments = args[2..].join(" ");
+        arguments = args[COMMAND..].join(" ");
     }
     let now: DateTime<Utc> = Utc::now();
-    dbg!(&now);
     let task = Task {
         item: arguments,
         checked: false,
@@ -144,7 +146,7 @@ pub fn add_task(args: Vec<String>) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
+pub fn delete_task(args: Vec<String>) -> Result<()> {
     let mut id: Vec<usize> = Vec::new();
     if !get_id(&mut id, &args) {
         return Ok(());
@@ -176,7 +178,7 @@ pub fn delete_task(args: Vec<String>) -> std::io::Result<()> {
 
     Ok(())
 }
-pub fn clear_tasks() -> std::io::Result<()> {
+pub fn clear_tasks() -> Result<()> {
     let mut data_to_append: Data = Data { tasks: Vec::new() };
 
     //Get finished tasks and put them in buffer
@@ -210,7 +212,7 @@ pub fn clear_tasks() -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn print_tasks() -> std::io::Result<()> {
+pub fn print_tasks() -> Result<()> {
     let data = get_tasks();
 
     if data.tasks.is_empty() {
@@ -313,7 +315,7 @@ pub fn print_tasks() -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn print_old_tasks() -> std::io::Result<()> {
+pub fn print_old_tasks() -> Result<()> {
     let mut file = match File::open(&file_old()) {
         Err(why) => panic!("couldn't open {}: ", why),
         Ok(file) => file,
@@ -346,8 +348,8 @@ pub fn print_old_tasks() -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn add_note(args: Vec<String>) -> std::io::Result<()> {
-    let arguments = args[2..].join(" ");
+pub fn add_note(args: Vec<String>) -> Result<()> {
+    let arguments = args[ARGUMENT..].join(" ");
     let now: DateTime<Utc> = Utc::now();
 
     let task = Task {
