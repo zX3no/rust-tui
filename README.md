@@ -52,15 +52,14 @@ t h
 
 ```
 
-Config Directory:
+### Config Directory:
 
 Windows: `%appdata%/t`
 
 ### TODO
+
 Task.rs is way too big
 
 Figure out how to clear the console and delete the history and prevent flickering
 
 Show some examples of what tasks, boards and notes look like
-
-Move to better argument handler
