@@ -7,7 +7,14 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
-use std::io::Result;
+use std::io::{stdout, Result};
+
+use crossterm::{
+    cursor::{DisableBlinking, Hide, MoveTo},
+    execute,
+    terminal::{Clear, ClearType},
+};
+
 mod date_format;
 pub mod print;
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -33,6 +40,17 @@ struct Data {
 
 const COMMAND: usize = 0;
 const ARGUMENT: usize = 1;
+
+fn clear() {
+    execute!(
+        stdout(),
+        Hide,
+        DisableBlinking,
+        MoveTo(0, 0),
+        Clear(ClearType::All)
+    )
+    .ok();
+}
 
 fn file_task() -> PathBuf {
     let mut dir = dirs::config_dir().unwrap();
@@ -286,9 +304,12 @@ pub fn print_tasks() -> Result<()> {
     //Remove the default board, we will print this last
     board_list.retain(|&x| x != "Tasks");
 
-    //Print all the custom boards
     let mut notes_total = 0;
     let mut index = 0;
+
+    clear();
+
+    //Print all the custom boards
     for board in board_list {
         print::header(board_completed[board], board_total[board], board)?;
         for elem in data.tasks.iter() {
@@ -313,7 +334,6 @@ pub fn print_tasks() -> Result<()> {
     for elem in data.tasks.iter() {
         if elem.board_name == "Tasks" {
             index += 1;
-
             let day = (now - elem.date).num_days();
             if elem.note {
                 print::note(index, elem.item.as_str(), tasks_total)?;
