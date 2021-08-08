@@ -35,17 +35,21 @@ t h
 
     Examples                     
         t                       Displays tasks
-        t example task          Creates task 'example task'
-        t !TODO example task    Create task in a board called 'TODO'        
-        t a example task        Create task 'example task'
-        t a !TODO example task  Create task in a board called 'TODO'        
+        t example task          Creates a task 'example task'
+        t !TODO example task    Create a task in a board called 'TODO'        
+        t a example task        Creates a task 'example task'
+        t a !TODO example task  Create a task in a board called 'TODO'        
         t n example note        Create note 'example note'
         t 1 2 3                 Checks task 1, 2 and 3
         t c 1                   Checks task 1
+        t 1 - 3                 Checks task 1, 2 and 3
+        t c 1 - 3               Checks task 1, 2 and 3
         t cls                   Clears all checked task
         t o                     Displays previously completed tasks
         t d 1                   Deletes task number 1
-        t h                     Displays the help page
+        t d 1 - 3               Deletes task 1, 2 and 3
+        t h                     Displays the help page"
+
 ```
 
 Config Directory:
