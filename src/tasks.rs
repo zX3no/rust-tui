@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use std::io::{stdout, Result};
 
 use crossterm::{
-    cursor::{DisableBlinking, Hide, MoveTo},
+    cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
     execute,
     terminal::{Clear, ClearType},
 };
@@ -357,6 +357,7 @@ pub fn print_tasks() -> Result<()> {
 
     print::footer(tasks_completed, tasks_total, notes_total)?;
 
+    execute!(stdout(), Show, EnableBlinking)?;
     Ok(())
 }
 

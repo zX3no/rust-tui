@@ -1,9 +1,4 @@
-use std::io::stdout;
-
-use crossterm::{
-    cursor::{EnableBlinking, Show},
-    execute, Result,
-};
+use crossterm::Result;
 mod tasks;
 
 fn single_argument(arg: &str) -> Result<bool> {
@@ -59,8 +54,6 @@ fn main() -> Result<()> {
     }
 
     tasks::print_tasks()?;
-
-    execute!(stdout(), Show, EnableBlinking)?;
 
     Ok(())
 }
