@@ -30,7 +30,7 @@ fn multiple_arugments(args: Vec<String>) -> Result<()> {
     match &args[0] as &str {
         "a" => tasks::add_task(args)?,
         "d" => tasks::delete_task(args)?,
-        "c" => tasks::check_task(&args)?,
+        "c" => tasks::check_task(args)?,
         "n" => tasks::add_note(args)?,
         _ => tasks::add_task(args)?,
     };
@@ -48,16 +48,16 @@ fn main() -> Result<()> {
     }
 
     if args[0].parse::<usize>().is_ok() {
-        tasks::check_task(&args)?;
-    }
-
-    match args.len() {
-        1 => {
-            if let false = single_argument(args[0].as_str())? {
-                return Ok(());
+        tasks::check_task(args)?;
+    } else {
+        match args.len() {
+            1 => {
+                if let false = single_argument(args[0].as_str())? {
+                    return Ok(());
+                }
             }
+            _ => multiple_arugments(args)?,
         }
-        _ => multiple_arugments(args)?,
     }
 
     tasks::print_tasks()?;

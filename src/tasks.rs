@@ -3,6 +3,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use hashbrown::HashMap;
+use std::env::consts::ARCH;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
@@ -49,18 +50,29 @@ fn file_old() -> PathBuf {
     dir
 }
 
-fn get_id(id: &mut Vec<usize>, args: &[String]) -> bool {
-    for elem in args[ARGUMENT..].iter() {
-        if elem.parse::<usize>().is_ok() {
-            let temp: usize = elem.parse().unwrap();
-            id.push(temp - 1);
-        } else {
-            println!("Invalid task number.");
-            return false;
+fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
+    if args.len() == 3 && args[COMMAND + 1] == *"-" {
+        if args[0].parse::<usize>().is_ok() && args[2].parse::<usize>().is_ok() {
+            let (x, y) = (
+                args[0].parse::<usize>().unwrap(),
+                args[2].parse::<usize>().unwrap(),
+            );
+            for i in x..y + 1 {
+                id.push(i - 1);
+            }
+        }
+    } else {
+        for elem in args[COMMAND..].iter() {
+            if elem.parse::<usize>().is_ok() {
+                let temp: usize = elem.parse().unwrap();
+                id.push(temp - 1);
+            } else {
+                println!("Invalid task number.");
+                return false;
+            }
         }
     }
-
-    true
+    return true;
 }
 
 fn get_tasks() -> Data {
@@ -102,8 +114,11 @@ fn append_toml(file_name: PathBuf, data: &Data) -> Result<()> {
     Ok(())
 }
 
-pub fn check_task(args: &[String]) -> Result<()> {
+pub fn check_task(mut args: Vec<String>) -> Result<()> {
     let mut id: Vec<usize> = Vec::new();
+    if args[COMMAND] == *"c" {
+        args.remove(0);
+    }
     if !get_id(&mut id, args) {
         return Ok(());
     }
@@ -120,7 +135,12 @@ pub fn check_task(args: &[String]) -> Result<()> {
     Ok(())
 }
 
-pub fn add_task(args: Vec<String>) -> Result<()> {
+pub fn add_task(mut args: Vec<String>) -> Result<()> {
+    //remove the command
+    if args[COMMAND] == *"a" {
+        args.remove(0);
+    }
+
     let arguments: String;
     let mut name: String = "Tasks".to_string();
 
@@ -146,9 +166,13 @@ pub fn add_task(args: Vec<String>) -> Result<()> {
     Ok(())
 }
 
-pub fn delete_task(args: Vec<String>) -> Result<()> {
+pub fn delete_task(mut args: Vec<String>) -> Result<()> {
     let mut id: Vec<usize> = Vec::new();
-    if !get_id(&mut id, &args) {
+    if args[COMMAND] == *"d" {
+        args.remove(0);
+    }
+
+    if !get_id(&mut id, args) {
         return Ok(());
     }
 
@@ -178,6 +202,7 @@ pub fn delete_task(args: Vec<String>) -> Result<()> {
 
     Ok(())
 }
+
 pub fn clear_tasks() -> Result<()> {
     let mut data_to_append: Data = Data { tasks: Vec::new() };
 
@@ -231,7 +256,7 @@ pub fn print_tasks() -> Result<()> {
     //Get a list of all boards
     for elem in data.tasks.iter() {
         board_list.push(elem.board_name.as_str());
-        if elem.checked {
+        if elem.checked && !elem.note {
             tasks_completed += 1;
         }
     }
