@@ -49,7 +49,9 @@ fn file_old() -> PathBuf {
 }
 
 fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
+    //if use input is like: "1 - 3"
     if args.len() == 3 && args[COMMAND + 1] == *"-" {
+        //check for numbers
         if args[0].parse::<usize>().is_ok() && args[2].parse::<usize>().is_ok() {
             let (x, y) = (
                 args[0].parse::<usize>().unwrap(),
@@ -60,7 +62,7 @@ fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
             }
         }
     } else {
-        for elem in args[COMMAND..].iter() {
+        for elem in args.iter() {
             if elem.parse::<usize>().is_ok() {
                 let temp: usize = elem.parse().unwrap();
                 id.push(temp - 1);
