@@ -1,22 +1,21 @@
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-
-use hashbrown::HashMap;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::{Path, PathBuf};
-
 use chrono::{DateTime, Utc};
-use std::io::{stdout, Result};
-
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
     execute,
     terminal::{Clear, ClearType},
 };
+use hashbrown::HashMap;
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::{stdout, Result};
+use std::path::{Path, PathBuf};
 
 mod date_format;
 pub mod print;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {
     item: String,
@@ -41,6 +40,7 @@ struct Data {
 const COMMAND: usize = 0;
 const ARGUMENT: usize = 1;
 
+#[allow(dead_code)]
 fn clear() {
     execute!(
         stdout(),

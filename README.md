@@ -60,6 +60,6 @@ Windows: `%appdata%/t`
 
 Task.rs is way too big
 
-Figure out how to clear the console and delete the history and prevent flickering
+Console gets cleared but the history does not
 
 Show some examples of what tasks, boards and notes look like
