@@ -1,11 +1,9 @@
 #![allow(dead_code)]
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use crossterm::{
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     Result,
 };
-use dirs::executable_dir;
 use std::io::stdout;
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) -> Result<()> {
     execute!(

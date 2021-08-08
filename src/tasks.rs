@@ -1,14 +1,12 @@
-#![allow(dead_code)]
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use hashbrown::HashMap;
-use std::env::consts::ARCH;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use std::io::Result;
 mod date_format;
 pub mod print;

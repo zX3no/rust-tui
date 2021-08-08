@@ -1,4 +1,4 @@
-## t
+# t
 
 t is a simple task manager written in rust.
 

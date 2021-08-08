@@ -1,11 +1,4 @@
-#![allow(unused_imports)]
-use crossterm::{
-    cursor, queue,
-    terminal::{Clear, ClearType},
-    Result,
-};
-use std::io::stdout;
-use tasks::check_files;
+use crossterm::Result;
 mod tasks;
 
 fn single_argument(arg: &str) -> Result<bool> {
