@@ -19,15 +19,19 @@ fn single_argument(arg: &str) -> Result<bool> {
     Ok(false)
 }
 
-fn multiple_arugments(args: Vec<String>) -> Result<()> {
+fn multiple_arugments(args: Vec<String>) -> Result<bool> {
     match &args[0] as &str {
         "a" => tasks::add_task(args)?,
         "d" => tasks::delete_task(args)?,
-        "c" => tasks::check_task(args)?,
+        "c" => {
+            if let false = tasks::check_task(args)? {
+                return Ok(false);
+            }
+        }
         "n" => tasks::add_note(args)?,
         _ => tasks::add_task(args)?,
     };
-    Ok(())
+    Ok(true)
 }
 
 fn main() -> Result<()> {
@@ -41,7 +45,9 @@ fn main() -> Result<()> {
     }
 
     if args[0].parse::<usize>().is_ok() {
-        tasks::check_task(args)?;
+        if let false = tasks::check_task(args)? {
+            return Ok(());
+        }
     } else {
         match args.len() {
             1 => {
@@ -49,7 +55,11 @@ fn main() -> Result<()> {
                     return Ok(());
                 }
             }
-            _ => multiple_arugments(args)?,
+            _ => {
+                if let false = multiple_arugments(args)? {
+                    return Ok(());
+                }
+            }
         }
     }
 

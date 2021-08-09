@@ -119,25 +119,29 @@ fn append_toml(file_name: PathBuf, data: &Data) -> Result<()> {
     Ok(())
 }
 
-pub fn check_task(mut args: Vec<String>) -> Result<()> {
+pub fn check_task(mut args: Vec<String>) -> Result<bool> {
     let mut id: Vec<usize> = Vec::new();
     if args[COMMAND] == *"c" {
         args.remove(0);
     }
     if !get_id(&mut id, args) {
-        return Ok(());
+        return Ok(false);
     }
 
     let mut data = get_tasks();
 
     for i in id {
-        //could check for notes here but who cares
-        data.tasks[i].checked = !data.tasks[i].checked;
+        if i > data.tasks.len() - 1 {
+            println!("Cannot check task '{}' because it does not exist!", i + 1);
+            return Ok(false);
+        } else {
+            data.tasks[i].checked = !data.tasks[i].checked;
+        }
     }
 
     write_toml(file_task(), &data)?;
 
-    Ok(())
+    Ok(true)
 }
 
 pub fn add_task(mut args: Vec<String>) -> Result<()> {
@@ -449,11 +453,11 @@ fn sort_tasks() {
 }
 
 fn file_task() -> PathBuf {
-    return dirs::config_dir().unwrap().join(r"t/tasks.toml");
+    dirs::config_dir().unwrap().join(r"t/tasks.toml")
 }
 
 fn file_old() -> PathBuf {
-    return dirs::config_dir().unwrap().join(r"t/old.toml");
+    dirs::config_dir().unwrap().join(r"t/old.toml")
 }
 
 pub fn check_files() -> std::io::Result<()> {
