@@ -53,14 +53,6 @@ fn clear() {
     .ok();
 }
 
-fn file_task() -> PathBuf {
-    return dirs::config_dir().unwrap().join("t\\tasks.toml");
-}
-
-fn file_old() -> PathBuf {
-    return dirs::config_dir().unwrap().join("t\\old.toml");
-}
-
 fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
     //if use input is like: "1 - 3"
     if args.len() == 3 && args[COMMAND + 1] == *"-" {
@@ -454,6 +446,14 @@ fn sort_tasks() {
     if !itertools::equal(&old_data.tasks, &new_data.tasks) {
         write_toml(file_task(), &new_data).ok();
     }
+}
+
+fn file_task() -> PathBuf {
+    return dirs::config_dir().unwrap().join(r"t/tasks.toml");
+}
+
+fn file_old() -> PathBuf {
+    return dirs::config_dir().unwrap().join(r"t/old.toml");
 }
 
 pub fn check_files() -> std::io::Result<()> {
