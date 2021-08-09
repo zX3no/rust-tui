@@ -53,33 +53,6 @@ fn clear() {
     .ok();
 }
 
-fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
-    //if use input is like: "1 - 3"
-    if args.len() == 3 && args[COMMAND + 1] == *"-" {
-        //check for numbers
-        if args[0].parse::<usize>().is_ok() && args[2].parse::<usize>().is_ok() {
-            let (x, y) = (
-                args[0].parse::<usize>().unwrap(),
-                args[2].parse::<usize>().unwrap(),
-            );
-            for i in x..y + 1 {
-                id.push(i - 1);
-            }
-        }
-    } else {
-        for elem in args.iter() {
-            if elem.parse::<usize>().is_ok() {
-                let temp: usize = elem.parse().unwrap();
-                id.push(temp - 1);
-            } else {
-                println!("Invalid task number.");
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 fn get_tasks() -> Data {
     let mut file = match File::open(&file_task()) {
         Err(why) => panic!("couldn't open {}: ", why),
@@ -119,6 +92,34 @@ fn append_toml(file_name: PathBuf, data: &Data) -> Result<()> {
     Ok(())
 }
 
+fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
+    //if use input is like: "1 - 3"
+    if args.len() == 3 && args[COMMAND + 1] == *"-" {
+        //check for numbers
+        if args[0].parse::<usize>().is_ok() && args[2].parse::<usize>().is_ok() {
+            let (x, y) = (
+                args[0].parse::<usize>().unwrap(),
+                args[2].parse::<usize>().unwrap(),
+            );
+            for i in x..y + 1 {
+                id.push(i - 1);
+            }
+        }
+    } else {
+        for elem in args.iter() {
+            if elem.parse::<usize>().is_ok() {
+                let temp: usize = elem.parse().unwrap();
+                id.push(temp - 1);
+            } else {
+                //negative numbers are apparently not numbers
+                println!("'{}' is not a valid number!", elem);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 pub fn check_task(mut args: Vec<String>) -> Result<bool> {
     let mut id: Vec<usize> = Vec::new();
     if args[COMMAND] == *"c" {
@@ -132,7 +133,7 @@ pub fn check_task(mut args: Vec<String>) -> Result<bool> {
 
     for i in id {
         if i > data.tasks.len() - 1 {
-            println!("Cannot check task '{}' because it does not exist!", i + 1);
+            println!("'{}' is not a task!", i + 1);
             return Ok(false);
         } else {
             data.tasks[i].checked = !data.tasks[i].checked;
@@ -175,14 +176,14 @@ pub fn add_task(mut args: Vec<String>) -> Result<()> {
     Ok(())
 }
 
-pub fn delete_task(mut args: Vec<String>) -> Result<()> {
+pub fn delete_task(mut args: Vec<String>) -> Result<bool> {
     let mut id: Vec<usize> = Vec::new();
     if args[COMMAND] == *"d" {
         args.remove(0);
     }
 
     if !get_id(&mut id, args) {
-        return Ok(());
+        return Ok(false);
     }
 
     let mut data = get_tasks();
@@ -197,19 +198,19 @@ pub fn delete_task(mut args: Vec<String>) -> Result<()> {
             data.tasks.remove(i - indexes_removed);
             indexes_removed += 1;
         } else if i != 0 {
-            println!("There is no task {}.", i + 1);
-            return Ok(());
+            println!("'{}' is not a task!", i + 1);
+            return Ok(false);
         }
     }
 
     if data.tasks.is_empty() {
         File::create(file_task())?;
-        return Ok(());
+        return Ok(true);
     }
 
     write_toml(file_task(), &data)?;
 
-    Ok(())
+    Ok(true)
 }
 
 pub fn clear_tasks() -> Result<()> {

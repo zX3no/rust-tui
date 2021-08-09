@@ -22,7 +22,11 @@ fn single_argument(arg: &str) -> Result<bool> {
 fn multiple_arugments(args: Vec<String>) -> Result<bool> {
     match &args[0] as &str {
         "a" => tasks::add_task(args)?,
-        "d" => tasks::delete_task(args)?,
+        "d" => {
+            if let false = tasks::delete_task(args)? {
+                return Ok(false);
+            }
+        }
         "c" => {
             if let false = tasks::check_task(args)? {
                 return Ok(false);
