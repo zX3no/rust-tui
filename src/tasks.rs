@@ -463,17 +463,26 @@ fn sort_tasks() {
 
 pub fn check_files() -> std::io::Result<()> {
     let mut path = dirs::config_dir().unwrap();
-    path.push("t");
+    //check if the config dir exists
     if !Path::new(&path).exists() {
         std::fs::create_dir(&path)?;
     }
 
+    path.push("t");
+
+    //check if config/t exists
+    if !Path::new(&path).exists() {
+        std::fs::create_dir(&path)?;
+    }
+
+    //check if tasks.toml exists
     if !Path::new(&file_task()).exists() {
         File::create(&file_task())?;
     } else {
         sort_tasks();
     }
 
+    //check if old.toml exists
     if !Path::new(&file_old()).exists() {
         File::create(&file_old())?;
     }
