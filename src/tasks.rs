@@ -54,17 +54,11 @@ fn clear() {
 }
 
 fn file_task() -> PathBuf {
-    let mut dir = dirs::config_dir().unwrap();
-    dir.push("t\\tasks.toml");
-
-    dir
+    return dirs::config_dir().unwrap().join("t\\tasks.toml");
 }
 
 fn file_old() -> PathBuf {
-    let mut dir = dirs::config_dir().unwrap();
-    dir.push("t\\old.toml");
-
-    dir
+    return dirs::config_dir().unwrap().join("t\\old.toml");
 }
 
 fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
@@ -478,7 +472,7 @@ pub fn check_files() -> std::io::Result<()> {
 
     //check if tasks.toml exists
     if !Path::new(&file_task()).exists() {
-        File::create(&file_task())?;
+        File::create(file_task())?;
     } else {
         sort_tasks();
     }
