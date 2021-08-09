@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
     execute,
+    style::Print,
     terminal::{Clear, ClearType},
 };
 use hashbrown::HashMap;
@@ -357,7 +358,7 @@ pub fn print_tasks() -> Result<()> {
 
     print::footer(tasks_completed, tasks_total, notes_total)?;
 
-    execute!(stdout(), Show, EnableBlinking)?;
+    execute!(stdout(), Print("\n"), Show, EnableBlinking)?;
     Ok(())
 }
 
