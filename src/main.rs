@@ -9,7 +9,7 @@ fn single_argument(arg: &str) -> Result<bool> {
         }
         "o" => tasks::print_old_tasks()?,
         "d" | "b" | "a" => println!("Missing arguments for \'{}\'", arg),
-        "h" => tasks::print::help(),
+        "h" | "--help" => tasks::print::help(),
         _ => {
             tasks::add_task(vec![arg.to_string()])?;
             return Ok(true);
