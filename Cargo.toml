@@ -1,5 +1,5 @@
 [package]
-name = "t"
+name = "t-cli"
 version = "0.1.0"
 authors = ["Bay"]
 description = "A simple CLI task manager"
@@ -7,7 +7,10 @@ edition = "2018"
 repository = "https://github.com/zX3no/t"
 readme = "README.md"
 license = "MIT"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "t"
+path = "src/main.rs"
 
 [dependencies]
 toml = "0.5"
