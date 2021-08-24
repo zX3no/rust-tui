@@ -7,9 +7,7 @@ It was designed to be a faster version of [taskbook.](https://github.com/klaussi
 ### Install :
 
 ```
-git clone https://github.com/zX3no/t
-cd t
-cargo install --path .
+cargo install t-cli
 ```
 
 ### Usage:
