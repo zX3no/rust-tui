@@ -55,6 +55,7 @@ t h
 ### Config Directory:
 
 Windows: `%appdata%/t`
+Linux: `~/.config/t`
 
 ### TODO
 

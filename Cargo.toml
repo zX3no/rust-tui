@@ -8,6 +8,9 @@ repository = "https://github.com/zX3no/t"
 readme = "README.md"
 license = "MIT"
 
+[profile.release]
+debug = true
+
 [[bin]]
 name = "t"
 path = "src/main.rs"
