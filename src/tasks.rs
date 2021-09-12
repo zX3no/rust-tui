@@ -489,3 +489,9 @@ pub fn check_files() -> std::io::Result<()> {
 
     Ok(())
 }
+
+pub fn backup() {
+    let data = get_tasks();
+    let path = dirs::config_dir().unwrap().join(r"t/backup.toml");
+    write_toml(path, &data).unwrap();
+}
