@@ -254,7 +254,7 @@ pub fn tasks() {
     let data = get_tasks();
 
     if data.tasks.is_empty() {
-        println!("No Tasks!");
+        print::help_message();
         return;
     }
 

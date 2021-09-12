@@ -5,6 +5,19 @@ use crossterm::{
 };
 use std::io::stdout;
 
+pub fn help_message() {
+    execute!(
+        stdout(),
+        Print("You have no tasks!"),
+        Print(" Try adding one with:"),
+        SetAttribute(Attribute::Italic),
+        SetForegroundColor(Color::Cyan),
+        Print(" t 'this⠀is⠀a⠀task'"),
+        ResetColor,
+    )
+    .unwrap()
+}
+
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     execute!(
         stdout(),

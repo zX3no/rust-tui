@@ -25,16 +25,16 @@ fn single_argument(arg: &str) {
 
     match arg {
         "cls" => tasks::clear_tasks(),
-        "o" => tasks::old_tasks(),
-        "b" => config::backup(),
+        "o" | "old" => tasks::old_tasks(),
+        "b" | "backup" => config::backup(),
         "d" | "n" | "a" | "c" => {
             println!("Missing arguments for \'{}\'", arg);
             return;
         }
-        "h" | "--help" => print::help(),
-        _ => (),
-        //todo maybe reimpliment?
-        //tasks::add_task(vec![arg.to_string()]),
+        "h" | "--help" | "help" => print::help(),
+        //this seems dumb because why would you want a one word task?
+        //'this is one task' is technically a single argument
+        _ => tasks::add_task(vec![arg.to_string()]),
     };
 
     tasks::tasks();
