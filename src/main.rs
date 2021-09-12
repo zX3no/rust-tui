@@ -1,42 +1,52 @@
 use crossterm::Result;
+
 mod tasks;
 
-fn single_argument(arg: &str) -> Result<bool> {
+fn single_argument(arg: &str) -> bool {
+    if arg.len() == 3 {
+        let first: usize = arg[0..1].parse().unwrap();
+        let dash = &arg[1..2];
+        let last: usize = arg[2..3].parse().unwrap();
+
+        if dash == "-" {
+            return tasks::check_task(vec![first, last], true);
+        }
+    }
+
+    if let Ok(number) = arg.parse::<usize>() {
+        return tasks::check_task(vec![number], false);
+    }
+
     match arg {
         "cls" => {
-            tasks::clear_tasks()?;
-            return Ok(true);
+            tasks::clear_tasks();
+            return true;
         }
-        "o" => tasks::print_old_tasks()?,
+        "o" => tasks::print_old_tasks(),
         "b" => tasks::backup(),
         "d" | "n" | "a" => println!("Missing arguments for \'{}\'", arg),
         "h" | "--help" => tasks::print::help(),
         _ => {
-            tasks::add_task(vec![arg.to_string()])?;
-            return Ok(true);
+            tasks::add_task(vec![arg.to_string()]);
+            return true;
         }
     };
 
-    Ok(false)
+    return false;
 }
 
-fn multiple_arugments(args: Vec<String>) -> Result<bool> {
+fn multiple_arugments(args: Vec<String>) -> bool {
     match &args[0] as &str {
-        "a" => tasks::add_task(args)?,
+        "a" => tasks::add_task(args),
         "d" => {
-            if let false = tasks::delete_task(args)? {
-                return Ok(false);
+            if !tasks::delete_task(args) {
+                return true;
             }
         }
-        "c" => {
-            if let false = tasks::check_task(args)? {
-                return Ok(false);
-            }
-        }
-        "n" => tasks::add_note(args)?,
-        _ => tasks::add_task(args)?,
+        "n" => tasks::add_note(args),
+        _ => tasks::add_task(args),
     };
-    Ok(true)
+    return false;
 }
 
 fn main() -> Result<()> {
@@ -44,31 +54,25 @@ fn main() -> Result<()> {
 
     let args: Vec<String> = std::env::args().skip(1).collect();
 
-    if args.is_empty() {
-        tasks::print_tasks()?;
-        return Ok(());
-    }
-
-    if args[0].parse::<usize>().is_ok() {
-        if let false = tasks::check_task(args)? {
-            return Ok(());
+    match args.len() {
+        0 => {
+            //empty
         }
-    } else {
-        match args.len() {
-            1 => {
-                if let false = single_argument(args[0].as_str())? {
-                    return Ok(());
-                }
+        1 => {
+            //check if we want to print tasks
+            if single_argument(args[0].as_str()) {
+                return Ok(());
             }
-            _ => {
-                if let false = multiple_arugments(args)? {
-                    return Ok(());
-                }
+        }
+        _ => {
+            //check if we want to print tasks
+            if multiple_arugments(args) {
+                return Ok(());
             }
         }
     }
 
-    tasks::print_tasks()?;
+    tasks::print_tasks();
 
     Ok(())
 }

@@ -2,10 +2,10 @@
 use crossterm::{
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
-    Result,
 };
 use std::io::stdout;
-pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) -> Result<()> {
+
+pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     execute!(
         stdout(),
         Print(" "),
@@ -20,18 +20,16 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) -> Result
         Print(total_tasks),
         Print("]\n"),
         ResetColor
-    )?;
-
-    Ok(())
+    ).unwrap();
 }
 
-pub fn note(id: usize, text: &str, total_tasks: usize) -> Result<()> {
+pub fn note(id: usize, text: &str, total_tasks: usize) {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
         Print("   "),
         Print(id)
-    )?;
+    ).unwrap();
 
     let mut spacing: &str = "";
     if total_tasks < 10 {
@@ -56,18 +54,19 @@ pub fn note(id: usize, text: &str, total_tasks: usize) -> Result<()> {
         Print(" •  "),
         ResetColor,
         Print(text),
-    )?;
-    execute!(stdout(), Print("\n"),)?;
-    Ok(())
+    )
+    .unwrap();
+    execute!(stdout(), Print("\n"),).unwrap();
 }
 
-pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) -> Result<()> {
+pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
         Print("   "),
         Print(id)
-    )?;
+    )
+    .unwrap();
     let mut spacing: &str = "";
     if checked {
         if total_tasks < 10 {
@@ -93,7 +92,8 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
             SetForegroundColor(Color::DarkGrey),
             Print(text),
             ResetColor
-        )?;
+        )
+        .unwrap();
     } else {
         if total_tasks < 10 {
             spacing = ". ";
@@ -119,7 +119,8 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
             Print(" "),
             Print(text),
             ResetColor
-        )?;
+        )
+        .unwrap();
         if days > 0 {
             execute!(
                 stdout(),
@@ -128,14 +129,14 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
                 Print(days),
                 Print("d"),
                 ResetColor,
-            )?;
+            )
+            .unwrap();
         }
     }
-    execute!(stdout(), Print("\n"),)?;
-    Ok(())
+    execute!(stdout(), Print("\n")).unwrap();
 }
 
-pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) -> Result<()> {
+pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     execute!(
         stdout(),
@@ -144,7 +145,8 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) ->
         Print(percent),
         Print("% of all tasks completed\n"),
         ResetColor,
-    )?;
+    )
+    .unwrap();
     execute!(
         stdout(),
         Print("  "),
@@ -161,8 +163,8 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) ->
         SetForegroundColor(Color::DarkGrey),
         Print(" notes"),
         ResetColor,
-    )?;
-    Ok(())
+    )
+    .unwrap();
 }
 pub fn help() {
     println!(

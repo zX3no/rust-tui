@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{stdout, Result};
+use std::io::stdout;
 use std::path::{Path, PathBuf};
 
 mod date_format;
@@ -71,15 +71,13 @@ fn get_tasks() -> Data {
     data
 }
 
-fn write_toml(file_name: PathBuf, data: &Data) -> Result<()> {
+fn write_toml(file_name: PathBuf, data: &Data) {
     let mut file = File::create(file_name).unwrap();
     let output = toml::to_string(&data).unwrap();
-    file.write_all(output.as_bytes())?;
-
-    Ok(())
+    file.write_all(output.as_bytes()).unwrap();
 }
 
-fn append_toml(file_name: PathBuf, data: &Data) -> Result<()> {
+fn append_toml(file_name: PathBuf, data: &Data) {
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .append(true)
@@ -87,9 +85,7 @@ fn append_toml(file_name: PathBuf, data: &Data) -> Result<()> {
         .unwrap();
 
     let output = toml::to_string(&data).unwrap();
-    file.write_all(output.as_bytes())?;
-
-    Ok(())
+    file.write_all(output.as_bytes()).unwrap();
 }
 
 fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
@@ -120,32 +116,40 @@ fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
     return true;
 }
 
-pub fn check_task(mut args: Vec<String>) -> Result<bool> {
-    let mut id: Vec<usize> = Vec::new();
-    if args[COMMAND] == *"c" {
-        args.remove(0);
-    }
-    if !get_id(&mut id, args) {
-        return Ok(false);
-    }
-
+pub fn check_task(numbers: Vec<usize>, range: bool) -> bool {
     let mut data = get_tasks();
+    if range {
+        let (start, end) = (*numbers.first().unwrap(), *numbers.last().unwrap());
 
-    for i in id {
-        if i > data.tasks.len() - 1 {
-            println!("'{}' is not a task!", i + 1);
-            return Ok(false);
-        } else {
-            data.tasks[i].checked = !data.tasks[i].checked;
+        if start == 0 {
+            println!("'0' is not a task!");
+        }
+
+        for id in start..end + 1 {
+            if id > data.tasks.len() {
+                println!("'{}' is not a task!", id);
+                return true;
+            } else {
+                data.tasks[id - 1].checked = !data.tasks[id - 1].checked;
+            }
+        }
+    } else {
+        for id in numbers {
+            if id > data.tasks.len() {
+                println!("'{}' is not a task!", id);
+                return true;
+            } else {
+                data.tasks[id - 1].checked = !data.tasks[id - 1].checked;
+            }
         }
     }
 
-    write_toml(file_task(), &data)?;
+    write_toml(file_task(), &data);
 
-    Ok(true)
+    return false;
 }
 
-pub fn add_task(mut args: Vec<String>) -> Result<()> {
+pub fn add_task(mut args: Vec<String>) {
     //remove the command
     if args[COMMAND] == *"a" {
         args.remove(0);
@@ -171,19 +175,17 @@ pub fn add_task(mut args: Vec<String>) -> Result<()> {
     };
 
     let data = Data { tasks: vec![task] };
-    append_toml(file_task(), &data)?;
-
-    Ok(())
+    append_toml(file_task(), &data);
 }
 
-pub fn delete_task(mut args: Vec<String>) -> Result<bool> {
+pub fn delete_task(mut args: Vec<String>) -> bool {
     let mut id: Vec<usize> = Vec::new();
     if args[COMMAND] == *"d" {
         args.remove(0);
     }
 
     if !get_id(&mut id, args) {
-        return Ok(false);
+        return false;
     }
 
     let mut data = get_tasks();
@@ -199,21 +201,21 @@ pub fn delete_task(mut args: Vec<String>) -> Result<bool> {
             indexes_removed += 1;
         } else if i != 0 {
             println!("'{}' is not a task!", i + 1);
-            return Ok(false);
+            return false;
         }
     }
 
     if data.tasks.is_empty() {
-        File::create(file_task())?;
-        return Ok(true);
+        File::create(file_task()).unwrap();
+        return true;
     }
 
-    write_toml(file_task(), &data)?;
+    write_toml(file_task(), &data);
 
-    Ok(true)
+    return true;
 }
 
-pub fn clear_tasks() -> Result<()> {
+pub fn clear_tasks() {
     let mut data_to_append: Data = Data { tasks: Vec::new() };
 
     //Get finished tasks and put them in buffer
@@ -222,7 +224,7 @@ pub fn clear_tasks() -> Result<()> {
 
     //return if there are no tasks to clear
     if data.tasks.is_empty() {
-        return Ok(());
+        return;
     }
 
     //Copy checked tasks to new file
@@ -237,22 +239,20 @@ pub fn clear_tasks() -> Result<()> {
     }
 
     if data.tasks.is_empty() {
-        File::create(file_task())?;
+        File::create(file_task()).unwrap();
     } else {
-        write_toml(file_task(), &data)?;
+        write_toml(file_task(), &data);
     }
 
-    append_toml(file_old(), &data_to_append)?;
-
-    Ok(())
+    append_toml(file_old(), &data_to_append);
 }
 
-pub fn print_tasks() -> Result<()> {
+pub fn print_tasks() {
     let data = get_tasks();
 
     if data.tasks.is_empty() {
         println!("No Tasks!");
-        return Ok(());
+        return;
     }
 
     let mut board_completed: HashMap<&str, usize> = HashMap::new();
@@ -303,16 +303,16 @@ pub fn print_tasks() -> Result<()> {
 
     //Print all the custom boards
     for board in board_list {
-        print::header(board_completed[board], board_total[board], board)?;
+        print::header(board_completed[board], board_total[board], board);
         for elem in data.tasks.iter() {
             let day = (now - elem.date).num_days();
             if elem.board_name == board {
                 index += 1;
                 if elem.note {
-                    print::note(index, elem.item.as_str(), tasks_total)?;
+                    print::note(index, elem.item.as_str(), tasks_total);
                     notes_total += 1;
                 } else {
-                    print::task(index, elem.checked, elem.item.as_str(), day, tasks_total)?;
+                    print::task(index, elem.checked, elem.item.as_str(), day, tasks_total);
                 }
             }
         }
@@ -320,7 +320,7 @@ pub fn print_tasks() -> Result<()> {
     }
 
     //Print the header for the default board
-    print::header(board_completed["Tasks"], board_total["Tasks"], "Tasks")?;
+    print::header(board_completed["Tasks"], board_total["Tasks"], "Tasks");
 
     //Print the default board
     for elem in data.tasks.iter() {
@@ -328,7 +328,7 @@ pub fn print_tasks() -> Result<()> {
             index += 1;
             let day = (now - elem.date).num_days();
             if elem.note {
-                print::note(index, elem.item.as_str(), tasks_total)?;
+                print::note(index, elem.item.as_str(), tasks_total);
                 notes_total += 1;
             } else {
                 print::task(
@@ -337,7 +337,7 @@ pub fn print_tasks() -> Result<()> {
                     elem.item.as_str(),
                     day,
                     board_total["Tasks"],
-                )?;
+                );
             }
         }
     }
@@ -347,13 +347,12 @@ pub fn print_tasks() -> Result<()> {
     //Don't count the notes
     tasks_total -= notes_total;
 
-    print::footer(tasks_completed, tasks_total, notes_total)?;
+    print::footer(tasks_completed, tasks_total, notes_total);
 
-    execute!(stdout(), Print("\n"), Show, EnableBlinking)?;
-    Ok(())
+    execute!(stdout(), Print("\n"), Show, EnableBlinking).unwrap();
 }
 
-pub fn print_old_tasks() -> Result<()> {
+pub fn print_old_tasks() {
     let mut file = match File::open(&file_old()) {
         Err(why) => panic!("couldn't open {}: ", why),
         Ok(file) => file,
@@ -376,17 +375,14 @@ pub fn print_old_tasks() -> Result<()> {
                 &data.tasks[i].item,
                 day,
                 total_tasks,
-            )?;
+            );
         }
     } else {
         println!("Task archive is empty.");
-        return Ok(());
     }
-
-    Ok(())
 }
 
-pub fn add_note(args: Vec<String>) -> Result<()> {
+pub fn add_note(args: Vec<String>) {
     let arguments = args[ARGUMENT..].join(" ");
     let now: DateTime<Utc> = Utc::now();
 
@@ -399,9 +395,7 @@ pub fn add_note(args: Vec<String>) -> Result<()> {
     };
 
     let data = Data { tasks: vec![task] };
-    append_toml(file_task(), &data)?;
-
-    Ok(())
+    append_toml(file_task(), &data);
 }
 
 //TODO this funciton is only used once
@@ -449,7 +443,7 @@ fn sort_tasks() {
 
     //Only write to file if tasks need to be sorted
     if !itertools::equal(&old_data.tasks, &new_data.tasks) {
-        write_toml(file_task(), &new_data).ok();
+        write_toml(file_task(), &new_data);
     }
 }
 
@@ -493,5 +487,5 @@ pub fn check_files() -> std::io::Result<()> {
 pub fn backup() {
     let data = get_tasks();
     let path = dirs::config_dir().unwrap().join(r"t/backup.toml");
-    write_toml(path, &data).unwrap();
+    write_toml(path, &data);
 }
