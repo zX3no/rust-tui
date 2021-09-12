@@ -1,3 +1,4 @@
+mod config;
 mod date_format;
 mod print;
 mod tasks;
@@ -9,10 +10,8 @@ fn single_argument(arg: &str) {
             if let Ok(last) = arg[2..3].parse::<usize>() {
                 let dash = &arg[1..2];
 
-                if dash == "-" {
-                    if tasks::check_task(vec![first, last], true) {
-                        return;
-                    }
+                if dash == "-" && tasks::check_task(vec![first, last], true) {
+                    return;
                 }
             }
         }
@@ -26,8 +25,8 @@ fn single_argument(arg: &str) {
 
     match arg {
         "cls" => tasks::clear_tasks(),
-        "o" => tasks::print_old_tasks(),
-        "b" => tasks::backup(),
+        "o" => tasks::old_tasks(),
+        "b" => config::backup(),
         "d" | "n" | "a" | "c" => {
             println!("Missing arguments for \'{}\'", arg);
             return;
@@ -38,7 +37,7 @@ fn single_argument(arg: &str) {
         //tasks::add_task(vec![arg.to_string()]),
     };
 
-    tasks::print_tasks();
+    tasks::tasks();
 }
 
 fn multiple_arugments(args: Vec<String>) {
@@ -65,26 +64,24 @@ fn multiple_arugments(args: Vec<String>) {
         "n" => tasks::add_note(args),
         _ => {
             //if we have numbers and none of the other arguments are called
-            if !numbers.is_empty() {
-                if tasks::check_task(numbers, false) {
-                    return;
-                }
+            if !numbers.is_empty() && tasks::check_task(numbers, false) {
+                return;
             }
 
             tasks::add_task(args);
         }
     };
 
-    tasks::print_tasks();
+    tasks::tasks();
 }
 
 fn main() {
-    tasks::check_files().unwrap();
+    config::check_files().unwrap();
 
     let args: Vec<String> = std::env::args().skip(1).collect();
 
     match args.len() {
-        0 => tasks::print_tasks(),
+        0 => tasks::tasks(),
         1 => single_argument(args[0].as_str()),
         _ => multiple_arugments(args),
     }

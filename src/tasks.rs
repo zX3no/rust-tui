@@ -1,3 +1,4 @@
+#![allow(clippy::needless_return)]
 use chrono::{DateTime, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
@@ -12,19 +13,20 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdout;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
+use crate::config::Config;
 use crate::date_format;
 use crate::print;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Task {
-    item: String,
-    checked: bool,
-    board_name: String,
-    note: bool,
+pub struct Task {
+    pub item: String,
+    pub checked: bool,
+    pub board_name: String,
+    pub note: bool,
     #[serde(with = "date_format")]
-    date: DateTime<Utc>,
+    pub date: DateTime<Utc>,
 }
 
 impl PartialEq for Task {
@@ -34,8 +36,8 @@ impl PartialEq for Task {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Data {
-    tasks: Vec<Task>,
+pub struct Data {
+    pub tasks: Vec<Task>,
 }
 
 const COMMAND: usize = 0;
@@ -53,8 +55,8 @@ fn clear() {
     .ok();
 }
 
-fn get_tasks() -> Data {
-    let mut file = match File::open(&file_task()) {
+pub fn get_tasks() -> Data {
+    let mut file = match File::open(&Config::current()) {
         Err(why) => panic!("couldn't open {}: ", why),
         Ok(file) => file,
     };
@@ -71,7 +73,7 @@ fn get_tasks() -> Data {
     data
 }
 
-fn write_toml(file_name: PathBuf, data: &Data) {
+pub fn write_toml(file_name: PathBuf, data: &Data) {
     let mut file = File::create(file_name).unwrap();
     let output = toml::to_string(&data).unwrap();
     file.write_all(output.as_bytes()).unwrap();
@@ -145,7 +147,7 @@ pub fn check_task(numbers: Vec<usize>, range: bool) -> bool {
         }
     }
 
-    write_toml(file_task(), &data);
+    write_toml(Config::current(), &data);
 
     return false;
 }
@@ -176,7 +178,7 @@ pub fn add_task(mut args: Vec<String>) {
     };
 
     let data = Data { tasks: vec![task] };
-    append_toml(file_task(), &data);
+    append_toml(Config::current(), &data);
 }
 
 pub fn delete_task(mut args: Vec<String>) -> bool {
@@ -207,11 +209,11 @@ pub fn delete_task(mut args: Vec<String>) -> bool {
     }
 
     if data.tasks.is_empty() {
-        File::create(file_task()).unwrap();
+        File::create(Config::current()).unwrap();
         return true;
     }
 
-    write_toml(file_task(), &data);
+    write_toml(Config::current(), &data);
 
     return false;
 }
@@ -240,15 +242,15 @@ pub fn clear_tasks() {
     }
 
     if data.tasks.is_empty() {
-        File::create(file_task()).unwrap();
+        File::create(Config::current()).unwrap();
     } else {
-        write_toml(file_task(), &data);
+        write_toml(Config::current(), &data);
     }
 
-    append_toml(file_old(), &data_to_append);
+    append_toml(Config::old(), &data_to_append);
 }
 
-pub fn print_tasks() {
+pub fn tasks() {
     let data = get_tasks();
 
     if data.tasks.is_empty() {
@@ -353,8 +355,8 @@ pub fn print_tasks() {
     execute!(stdout(), Print("\n"), Show, EnableBlinking).unwrap();
 }
 
-pub fn print_old_tasks() {
-    let mut file = match File::open(&file_old()) {
+pub fn old_tasks() {
+    let mut file = match File::open(&Config::old()) {
         Err(why) => panic!("couldn't open {}: ", why),
         Ok(file) => file,
     };
@@ -396,97 +398,5 @@ pub fn add_note(args: Vec<String>) {
     };
 
     let data = Data { tasks: vec![task] };
-    append_toml(file_task(), &data);
-}
-
-//TODO this funciton is only used once
-fn get_boards() -> Vec<String> {
-    let data = get_tasks();
-
-    let mut board_list: Vec<String> = Vec::new();
-
-    //Get a list of all boards
-    for elem in data.tasks.iter() {
-        board_list.push(elem.board_name.clone());
-    }
-
-    board_list = board_list.into_iter().unique().collect();
-
-    board_list.retain(|x| x != "Tasks");
-
-    board_list
-}
-
-fn sort_tasks() {
-    let old_data = get_tasks();
-
-    if old_data.tasks.is_empty() {
-        return;
-    }
-
-    let mut new_data = Data { tasks: Vec::new() };
-
-    let board_list = get_boards();
-
-    for board in board_list {
-        for elem in old_data.tasks.iter() {
-            if elem.board_name == board {
-                new_data.tasks.push(elem.clone());
-            }
-        }
-    }
-
-    for elem in old_data.tasks.iter() {
-        if elem.board_name == "Tasks" {
-            new_data.tasks.push(elem.clone());
-        }
-    }
-
-    //Only write to file if tasks need to be sorted
-    if !itertools::equal(&old_data.tasks, &new_data.tasks) {
-        write_toml(file_task(), &new_data);
-    }
-}
-
-fn file_task() -> PathBuf {
-    dirs::config_dir().unwrap().join(r"t/tasks.toml")
-}
-
-fn file_old() -> PathBuf {
-    dirs::config_dir().unwrap().join(r"t/old.toml")
-}
-
-pub fn check_files() -> std::io::Result<()> {
-    let mut path = dirs::config_dir().unwrap();
-    //check if the config dir exists
-    if !Path::new(&path).exists() {
-        std::fs::create_dir(&path)?;
-    }
-
-    path.push("t");
-
-    //check if config/t exists
-    if !Path::new(&path).exists() {
-        std::fs::create_dir(&path)?;
-    }
-
-    //check if tasks.toml exists
-    if !Path::new(&file_task()).exists() {
-        File::create(file_task())?;
-    } else {
-        sort_tasks();
-    }
-
-    //check if old.toml exists
-    if !Path::new(&file_old()).exists() {
-        File::create(&file_old())?;
-    }
-
-    Ok(())
-}
-
-pub fn backup() {
-    let data = get_tasks();
-    let path = dirs::config_dir().unwrap().join(r"t/backup.toml");
-    write_toml(path, &data);
+    append_toml(Config::current(), &data);
 }
