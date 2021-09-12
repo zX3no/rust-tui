@@ -31,7 +31,9 @@ fn single_argument(arg: &str) {
             return;
         }
         "h" | "--help" => tasks::print::help(),
-        _ => tasks::add_task(vec![arg.to_string()]),
+        _ => (),
+        //todo maybe reimpliment?
+        //tasks::add_task(vec![arg.to_string()]),
     };
 
     tasks::print_tasks();

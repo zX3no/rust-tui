@@ -88,6 +88,7 @@ fn append_toml(file_name: PathBuf, data: &Data) {
     file.write_all(output.as_bytes()).unwrap();
 }
 
+//todo update
 fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
     //if use input is like: "1 - 3"
     if args.len() == 3 && args[COMMAND + 1] == *"-" {
