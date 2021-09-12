@@ -36,6 +36,14 @@ fn single_argument(arg: &str) -> bool {
 }
 
 fn multiple_arugments(args: Vec<String>) -> bool {
+    //get all the numbers
+    let mut numbers: Vec<usize> = Vec::new();
+    for num in &args {
+        if let Ok(num) = num.parse::<usize>() {
+            numbers.push(num);
+        }
+    }
+
     match &args[0] as &str {
         "a" => tasks::add_task(args),
         "d" => {
@@ -44,7 +52,14 @@ fn multiple_arugments(args: Vec<String>) -> bool {
             }
         }
         "n" => tasks::add_note(args),
-        _ => tasks::add_task(args),
+        _ => {
+            //if we have numbers and none of the other arguments are called
+            if !numbers.is_empty() {
+                return tasks::check_task(numbers, false);
+            }
+
+            tasks::add_task(args);
+        }
     };
     return false;
 }
