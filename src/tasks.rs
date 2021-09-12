@@ -14,8 +14,8 @@ use std::io::prelude::*;
 use std::io::stdout;
 use std::path::{Path, PathBuf};
 
-mod date_format;
-pub mod print;
+use crate::date_format;
+use crate::print;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Task {

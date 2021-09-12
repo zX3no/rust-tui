@@ -1,3 +1,5 @@
+mod date_format;
+mod print;
 mod tasks;
 
 fn single_argument(arg: &str) {
@@ -30,7 +32,7 @@ fn single_argument(arg: &str) {
             println!("Missing arguments for \'{}\'", arg);
             return;
         }
-        "h" | "--help" => tasks::print::help(),
+        "h" | "--help" => print::help(),
         _ => (),
         //todo maybe reimpliment?
         //tasks::add_task(vec![arg.to_string()]),
