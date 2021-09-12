@@ -185,7 +185,7 @@ pub fn delete_task(mut args: Vec<String>) -> bool {
     }
 
     if !get_id(&mut id, args) {
-        return false;
+        return true;
     }
 
     let mut data = get_tasks();
@@ -201,7 +201,7 @@ pub fn delete_task(mut args: Vec<String>) -> bool {
             indexes_removed += 1;
         } else if i != 0 {
             println!("'{}' is not a task!", i + 1);
-            return false;
+            return true;
         }
     }
 
@@ -212,7 +212,7 @@ pub fn delete_task(mut args: Vec<String>) -> bool {
 
     write_toml(file_task(), &data);
 
-    return true;
+    return false;
 }
 
 pub fn clear_tasks() {

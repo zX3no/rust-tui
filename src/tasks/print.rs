@@ -20,7 +20,8 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
         Print(total_tasks),
         Print("]\n"),
         ResetColor
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 pub fn note(id: usize, text: &str, total_tasks: usize) {
@@ -29,7 +30,8 @@ pub fn note(id: usize, text: &str, total_tasks: usize) {
         SetForegroundColor(Color::DarkGrey),
         Print("   "),
         Print(id)
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut spacing: &str = "";
     if total_tasks < 10 {
@@ -195,8 +197,8 @@ Examples
     t n example note        Create note 'example note'
     t 1 2 3                 Checks task 1, 2 and 3
     t c 1                   Checks task 1
-    t 1 - 3                 Checks task 1, 2 and 3
-    t c 1 - 3               Checks task 1, 2 and 3
+    t 1-3                   Checks task 1, 2 and 3
+    t c 1-3                 Checks task 1, 2 and 3
     t cls                   Clears all checked task
     t o                     Displays previously completed tasks
     t d 1                   Deletes task number 1
