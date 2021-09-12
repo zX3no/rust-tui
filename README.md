@@ -42,8 +42,8 @@ t h
         t n example note        Create note 'example note'
         t 1 2 3                 Checks task 1, 2 and 3
         t c 1                   Checks task 1
-        t 1 - 3                 Checks task 1, 2 and 3
-        t c 1 - 3               Checks task 1, 2 and 3
+        t 1-3                   Checks task 1, 2 and 3
+        t c 1-3                 Checks task 1, 2 and 3
         t cls                   Clears all checked task
         t o                     Displays previously completed tasks
         t d 1                   Deletes task number 1
@@ -56,11 +56,3 @@ t h
 
 Windows: `%appdata%/t`
 Linux: `~/.config/t`
-
-### TODO
-
-Task.rs is way too big
-
-Console gets cleared but the history does not
-
-Show some examples of what tasks, boards and notes look like
