@@ -338,24 +338,6 @@ pub fn tasks() {
 
     clear_console();
 
-    //Print all the custom boards
-    for board in board_list {
-        print::header(board_completed[board], board_total[board], board);
-        for elem in data.tasks.iter() {
-            let day = (now - elem.date).num_days();
-            if elem.board_name == board {
-                index += 1;
-                if elem.note {
-                    print::note(index, elem.item.as_str(), tasks_total);
-                    notes_total += 1;
-                } else {
-                    print::task(index, elem.checked, elem.item.as_str(), day, tasks_total);
-                }
-            }
-        }
-        println!();
-    }
-
     //Print the header for the default board
     print::header(board_completed["Tasks"], board_total["Tasks"], "Tasks");
 
@@ -380,6 +362,24 @@ pub fn tasks() {
     }
 
     println!();
+
+    //Print all the custom boards
+    for board in board_list {
+        print::header(board_completed[board], board_total[board], board);
+        for elem in data.tasks.iter() {
+            let day = (now - elem.date).num_days();
+            if elem.board_name == board {
+                index += 1;
+                if elem.note {
+                    print::note(index, elem.item.as_str(), tasks_total);
+                    notes_total += 1;
+                } else {
+                    print::task(index, elem.checked, elem.item.as_str(), day, tasks_total);
+                }
+            }
+        }
+        println!();
+    }
 
     //Don't count the notes
     tasks_total -= notes_total;
