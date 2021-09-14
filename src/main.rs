@@ -3,6 +3,21 @@ mod date_format;
 mod print;
 mod tasks;
 
+fn arguments_missing() -> bool {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.len() == 1 {
+        match &args[0] as &str {
+            "a" | "d" | "n" | "c" => {
+                //TODO change this to print::missing_argument();
+                eprintln!("Missing arguments for '{}'", &args[0]);
+                return true;
+            }
+            _ => (),
+        }
+    }
+    return false;
+}
+
 fn arguments(args: Vec<String>) {
     let mut numbers = false;
 
@@ -22,27 +37,15 @@ fn arguments(args: Vec<String>) {
         }
     }
 
+    if arguments_missing() {
+        return;
+    }
+
     match &args[0] as &str {
-        "a" => {
-            if tasks::add_task(args) {
-                return;
-            }
-        }
-        "d" => {
-            if tasks::delete_task(args) {
-                return;
-            }
-        }
-        "c" => {
-            if tasks::check_task(args) {
-                return;
-            }
-        }
-        "n" => {
-            if tasks::add_note(args) {
-                return;
-            }
-        }
+        "a" => tasks::add_task(args),
+        "d" => tasks::delete_task(args),
+        "c" => tasks::check_task(args),
+        "n" => tasks::add_note(args),
         "cls" => tasks::clear_tasks(),
         "o" | "old" => tasks::old_tasks(),
         "b" | "backup" => config::backup(),
@@ -59,6 +62,7 @@ fn arguments(args: Vec<String>) {
     tasks::tasks();
 }
 
+#[quit::main]
 fn main() {
     config::check_files().unwrap();
 

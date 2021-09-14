@@ -15,7 +15,6 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdout;
 use std::path::PathBuf;
-use std::process;
 
 use crate::config::Config;
 use crate::date_format;
@@ -42,7 +41,6 @@ pub struct Data {
     pub tasks: Vec<Task>,
 }
 
-#[allow(dead_code)]
 fn clear() {
     execute!(
         stdout(),
@@ -51,22 +49,13 @@ fn clear() {
         MoveTo(0, 0),
         Clear(ClearType::All)
     )
-    .ok();
+    .unwrap()
 }
 
-fn missing_arguments() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.len() == 1 {
-        match &args[0] as &str {
-            "a" | "d" | "n" | "c" => {
-                //TODO change this to print::missing_argument();
-                println!("Missing arguments for '{}'", &args[0]);
-                process::exit(0x0001);
-            }
-            _ => (),
-        }
-    }
-}
+//TODO shouldn't this be optional?
+//I feel like there are some weird cases were an empty stuct is made
+//but no data gets put in it
+//option might help
 
 pub fn get_tasks() -> Data {
     let mut file = match File::open(&Config::current()) {
@@ -83,7 +72,7 @@ pub fn get_tasks() -> Data {
         return data;
     }
 
-    data
+    return data;
 }
 
 pub fn write_toml(file_name: PathBuf, data: &Data) {
@@ -103,7 +92,7 @@ fn append_toml(file_name: PathBuf, data: &Data) {
     file.write_all(output.as_bytes()).unwrap();
 }
 
-fn get_numbers(args: Vec<String>) -> Vec<usize> {
+fn get_numbers(args: &Vec<String>) -> Vec<usize> {
     let mut numbers: Vec<usize> = Vec::new();
 
     let re = Regex::new(
@@ -148,7 +137,7 @@ fn get_numbers(args: Vec<String>) -> Vec<usize> {
         }
     }
 
-    for num in &args {
+    for num in args {
         if let Ok(num) = num.parse::<usize>() {
             numbers.push(num - 1);
         }
@@ -157,9 +146,7 @@ fn get_numbers(args: Vec<String>) -> Vec<usize> {
     return numbers;
 }
 
-pub fn add_task(args: Vec<String>) -> bool {
-    missing_arguments();
-
+pub fn add_task(args: Vec<String>) {
     let mut name: String = "Tasks".to_string();
     let arguments: String;
     let command = &args[0];
@@ -185,13 +172,9 @@ pub fn add_task(args: Vec<String>) -> bool {
     let data = Data { tasks: vec![task] };
 
     append_toml(Config::current(), &data);
-
-    return false;
 }
 
-pub fn add_note(args: Vec<String>) -> bool {
-    missing_arguments();
-
+pub fn add_note(args: Vec<String>) {
     let arguments = args[1..].join(" ");
     let now: DateTime<Utc> = Utc::now();
 
@@ -205,41 +188,34 @@ pub fn add_note(args: Vec<String>) -> bool {
 
     let data = Data { tasks: vec![task] };
     append_toml(Config::current(), &data);
-
-    return false;
 }
 
-pub fn check_task(args: Vec<String>) -> bool {
-    missing_arguments();
-
-    let numbers = get_numbers(args);
+pub fn check_task(args: Vec<String>) {
+    let numbers = get_numbers(&args);
 
     if numbers.is_empty() {
-        return true;
+        eprintln!("{} is not a valid number.", args[1]);
+        quit::with_code(0);
     }
 
     let mut data = get_tasks();
 
     for id in numbers {
         if id > data.tasks.len() {
-            println!("'{}' is not a task!", id);
-            return true;
+            eprintln!("'{}' is not a task!", id);
+            quit::with_code(0);
         }
         data.tasks[id].checked = !data.tasks[id].checked;
     }
 
     write_toml(Config::current(), &data);
-
-    return false;
 }
 
-pub fn delete_task(args: Vec<String>) -> bool {
-    missing_arguments();
-
-    let numbers = get_numbers(args);
+pub fn delete_task(args: Vec<String>) {
+    let numbers = get_numbers(&args);
 
     if numbers.is_empty() {
-        return true;
+        quit::with_code(1);
     }
 
     let mut data = get_tasks();
@@ -254,19 +230,17 @@ pub fn delete_task(args: Vec<String>) -> bool {
             data.tasks.remove(id - indexes_removed);
             indexes_removed += 1;
         } else if id != 0 {
-            println!("'{}' is not a task!", id);
-            return true;
+            eprintln!("'{}' is not a task!", id);
+            quit::with_code(0);
         }
     }
 
     if data.tasks.is_empty() {
         File::create(Config::current()).unwrap();
-        return true;
+        quit::with_code(0);
     }
 
     write_toml(Config::current(), &data);
-
-    return false;
 }
 
 pub fn clear_tasks() {
@@ -432,6 +406,6 @@ pub fn old_tasks() {
             );
         }
     } else {
-        println!("Task archive is empty.");
+        eprintln!("Task archive is empty.");
     }
 }
