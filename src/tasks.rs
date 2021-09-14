@@ -52,6 +52,14 @@ fn clear() {
     .unwrap()
 }
 
+//TODO update macro to include a message
+//fuck!("You forgot to add an argument!")
+macro_rules! fuck {
+    () => {
+        quit::with_code(0);
+    };
+}
+
 //TODO shouldn't this be optional?
 //I feel like there are some weird cases were an empty stuct is made
 //but no data gets put in it
@@ -195,7 +203,7 @@ pub fn check_task(args: Vec<String>) {
 
     if numbers.is_empty() {
         eprintln!("{} is not a valid number.", args[1]);
-        quit::with_code(0);
+        fuck!();
     }
 
     let mut data = get_tasks();
@@ -203,7 +211,7 @@ pub fn check_task(args: Vec<String>) {
     for id in numbers {
         if id > data.tasks.len() {
             eprintln!("'{}' is not a task!", id);
-            quit::with_code(0);
+            fuck!();
         }
         data.tasks[id].checked = !data.tasks[id].checked;
     }
@@ -231,13 +239,13 @@ pub fn delete_task(args: Vec<String>) {
             indexes_removed += 1;
         } else if id != 0 {
             eprintln!("'{}' is not a task!", id);
-            quit::with_code(0);
+            fuck!();
         }
     }
 
     if data.tasks.is_empty() {
         File::create(Config::current()).unwrap();
-        quit::with_code(0);
+        fuck!();
     }
 
     write_toml(Config::current(), &data);
