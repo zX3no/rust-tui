@@ -3,49 +3,31 @@ mod date_format;
 mod print;
 mod tasks;
 
-fn single_argument(arg: &str) {
+fn arguments(args: Vec<String>) {
     let mut numbers = false;
 
-    for char in arg.chars() {
-        if char.is_numeric() {
-            numbers = true;
-            continue;
-        }
-    }
-
-    match arg {
-        "cls" => tasks::clear_tasks(),
-        "o" | "old" => tasks::old_tasks(),
-        "b" | "backup" => config::backup(),
-        "d" | "n" | "a" | "c" => {
-            println!("Missing arguments for \'{}\'", arg);
-            return;
-        }
-        "h" | "--help" | "help" => print::help(),
-        _ => {
-            if numbers {
-                tasks::check_task(vec![arg.to_string()]);
-            } else {
-                tasks::add_task(vec![arg.to_string()])
+    if args.len() > 1 {
+        for num in &args {
+            if let Ok(_) = num.parse::<usize>() {
+                numbers = true;
+                continue;
             }
         }
-    };
-
-    tasks::tasks();
-}
-
-fn multiple_arugments(args: Vec<String>) {
-    let mut numbers = false;
-
-    for num in &args {
-        if let Ok(_) = num.parse::<usize>() {
-            numbers = true;
-            continue;
+    } else {
+        for char in args[0].chars() {
+            if char.is_numeric() {
+                numbers = true;
+                continue;
+            }
         }
     }
 
     match &args[0] as &str {
-        "a" => tasks::add_task(args),
+        "a" => {
+            if tasks::add_task(args) {
+                return;
+            }
+        }
         "d" => {
             if tasks::delete_task(args) {
                 return;
@@ -56,12 +38,18 @@ fn multiple_arugments(args: Vec<String>) {
                 return;
             }
         }
-        "n" => tasks::add_note(args),
+        "n" => {
+            if tasks::add_note(args) {
+                return;
+            }
+        }
+        "cls" => tasks::clear_tasks(),
+        "o" | "old" => tasks::old_tasks(),
+        "b" | "backup" => config::backup(),
+        "h" | "--help" | "help" => print::help(),
         _ => {
             if numbers {
-                if tasks::check_task(args) {
-                    return;
-                }
+                tasks::check_task(args);
             } else {
                 tasks::add_task(args);
             }
@@ -70,6 +58,7 @@ fn multiple_arugments(args: Vec<String>) {
 
     tasks::tasks();
 }
+
 fn main() {
     config::check_files().unwrap();
 
@@ -77,7 +66,6 @@ fn main() {
 
     match args.len() {
         0 => tasks::tasks(),
-        1 => single_argument(args[0].as_str()),
-        _ => multiple_arugments(args),
+        _ => arguments(args),
     }
 }

@@ -15,6 +15,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdout;
 use std::path::PathBuf;
+use std::process;
 
 use crate::config::Config;
 use crate::date_format;
@@ -41,9 +42,6 @@ pub struct Data {
     pub tasks: Vec<Task>,
 }
 
-const COMMAND: usize = 0;
-const ARGUMENT: usize = 1;
-
 #[allow(dead_code)]
 fn clear() {
     execute!(
@@ -54,6 +52,20 @@ fn clear() {
         Clear(ClearType::All)
     )
     .ok();
+}
+
+fn missing_arguments() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.len() == 1 {
+        match &args[0] as &str {
+            "a" | "d" | "n" | "c" => {
+                //TODO change this to print::missing_argument();
+                println!("Missing arguments for '{}'", &args[0]);
+                process::exit(0x0001);
+            }
+            _ => (),
+        }
+    }
 }
 
 pub fn get_tasks() -> Data {
@@ -145,21 +157,19 @@ fn get_numbers(args: Vec<String>) -> Vec<usize> {
     return numbers;
 }
 
-pub fn add_task(mut args: Vec<String>) {
-    //remove the command
-    if &args[COMMAND] == "a" {
-        args.remove(0);
-    }
+pub fn add_task(args: Vec<String>) -> bool {
+    missing_arguments();
 
     let mut name: String = "Tasks".to_string();
     let arguments: String;
+    let command = &args[0];
 
     //Get the board_name and task data
-    if args[COMMAND].contains('!') {
-        name = args[COMMAND].clone().replace('!', "");
-        arguments = args[ARGUMENT..].join(" ");
+    if command.contains('!') {
+        name = command.replace('!', "");
+        arguments = args[1..].join(" ");
     } else {
-        arguments = args[COMMAND..].join(" ");
+        arguments = args[0..].join(" ");
     }
 
     let now: DateTime<Utc> = Utc::now();
@@ -175,9 +185,33 @@ pub fn add_task(mut args: Vec<String>) {
     let data = Data { tasks: vec![task] };
 
     append_toml(Config::current(), &data);
+
+    return false;
+}
+
+pub fn add_note(args: Vec<String>) -> bool {
+    missing_arguments();
+
+    let arguments = args[1..].join(" ");
+    let now: DateTime<Utc> = Utc::now();
+
+    let task = Task {
+        item: arguments,
+        checked: false,
+        board_name: "Tasks".to_string(),
+        note: true,
+        date: now,
+    };
+
+    let data = Data { tasks: vec![task] };
+    append_toml(Config::current(), &data);
+
+    return false;
 }
 
 pub fn check_task(args: Vec<String>) -> bool {
+    missing_arguments();
+
     let numbers = get_numbers(args);
 
     if numbers.is_empty() {
@@ -200,6 +234,8 @@ pub fn check_task(args: Vec<String>) -> bool {
 }
 
 pub fn delete_task(args: Vec<String>) -> bool {
+    missing_arguments();
+
     let numbers = get_numbers(args);
 
     if numbers.is_empty() {
@@ -398,20 +434,4 @@ pub fn old_tasks() {
     } else {
         println!("Task archive is empty.");
     }
-}
-
-pub fn add_note(args: Vec<String>) {
-    let arguments = args[ARGUMENT..].join(" ");
-    let now: DateTime<Utc> = Utc::now();
-
-    let task = Task {
-        item: arguments,
-        checked: false,
-        board_name: "Tasks".to_string(),
-        note: true,
-        date: now,
-    };
-
-    let data = Data { tasks: vec![task] };
-    append_toml(Config::current(), &data);
 }
