@@ -11,10 +11,10 @@ use itertools::Itertools;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdout;
 use std::path::PathBuf;
-use std::{convert::TryInto, fs::File};
 
 use crate::config::Config;
 use crate::date_format;
@@ -91,68 +91,6 @@ fn append_toml(file_name: PathBuf, data: &Data) {
     file.write_all(output.as_bytes()).unwrap();
 }
 
-pub fn check_task(numbers: Vec<usize>, range: bool) -> bool {
-    let mut data = get_tasks();
-    if range {
-        let (start, end) = (*numbers.first().unwrap(), *numbers.last().unwrap());
-
-        if start == 0 {
-            println!("'0' is not a task!");
-        }
-
-        for id in start..end + 1 {
-            if id > data.tasks.len() {
-                println!("'{}' is not a task!", id);
-                return true;
-            } else {
-                data.tasks[id - 1].checked = !data.tasks[id - 1].checked;
-            }
-        }
-    } else {
-        for id in numbers {
-            if id > data.tasks.len() {
-                println!("'{}' is not a task!", id);
-                return true;
-            } else {
-                data.tasks[id - 1].checked = !data.tasks[id - 1].checked;
-            }
-        }
-    }
-
-    write_toml(Config::current(), &data);
-
-    return false;
-}
-
-pub fn add_task(mut args: Vec<String>) {
-    //remove the command
-    if args[COMMAND] == *"a" {
-        args.remove(0);
-    }
-
-    let arguments: String;
-    let mut name: String = "Tasks".to_string();
-
-    //Get the board_name and task data
-    if args[COMMAND].contains('!') {
-        name = args[COMMAND].clone().replace('!', "");
-        arguments = args[ARGUMENT..].join(" ");
-    } else {
-        arguments = args[COMMAND..].join(" ");
-    }
-    let now: DateTime<Utc> = Utc::now();
-    let task = Task {
-        item: arguments,
-        checked: false,
-        board_name: name,
-        note: false,
-        date: now,
-    };
-
-    let data = Data { tasks: vec![task] };
-    append_toml(Config::current(), &data);
-}
-
 fn get_numbers(args: Vec<String>) -> Vec<usize> {
     let mut numbers: Vec<usize> = Vec::new();
 
@@ -165,19 +103,37 @@ fn get_numbers(args: Vec<String>) -> Vec<usize> {
     )
     .unwrap();
 
-    if let Some(caps) = re.captures(&args[ARGUMENT]) {
-        let first = caps["first"].parse::<usize>().unwrap();
-        let last = caps["last"].parse::<usize>().unwrap();
+    if args.len() == 1 {
+        if let Some(caps) = re.captures(&args[0]) {
+            let first = caps["first"].parse::<usize>().unwrap();
+            let last = caps["last"].parse::<usize>().unwrap();
 
-        if first > last {
+            if first > last {
+                return numbers;
+            }
+
+            for num in first - 1..last {
+                numbers.push(num);
+            }
+
             return numbers;
         }
+    }
+    if args.len() >= 2 {
+        if let Some(caps) = re.captures(&args[1]) {
+            let first = caps["first"].parse::<usize>().unwrap();
+            let last = caps["last"].parse::<usize>().unwrap();
 
-        for num in first - 1..last {
-            dbg!(&num);
-            numbers.push(num);
+            if first > last {
+                return numbers;
+            }
+
+            for num in first - 1..last {
+                numbers.push(num);
+            }
+
+            return numbers;
         }
-        return numbers;
     }
 
     for num in &args {
@@ -187,6 +143,60 @@ fn get_numbers(args: Vec<String>) -> Vec<usize> {
     }
 
     return numbers;
+}
+
+pub fn add_task(mut args: Vec<String>) {
+    //remove the command
+    if &args[COMMAND] == "a" {
+        args.remove(0);
+    }
+
+    let mut name: String = "Tasks".to_string();
+    let arguments: String;
+
+    //Get the board_name and task data
+    if args[COMMAND].contains('!') {
+        name = args[COMMAND].clone().replace('!', "");
+        arguments = args[ARGUMENT..].join(" ");
+    } else {
+        arguments = args[COMMAND..].join(" ");
+    }
+
+    let now: DateTime<Utc> = Utc::now();
+
+    let task = Task {
+        item: arguments,
+        checked: false,
+        board_name: name,
+        note: false,
+        date: now,
+    };
+
+    let data = Data { tasks: vec![task] };
+
+    append_toml(Config::current(), &data);
+}
+
+pub fn check_task(args: Vec<String>) -> bool {
+    let numbers = get_numbers(args);
+
+    if numbers.is_empty() {
+        return true;
+    }
+
+    let mut data = get_tasks();
+
+    for id in numbers {
+        if id > data.tasks.len() {
+            println!("'{}' is not a task!", id);
+            return true;
+        }
+        data.tasks[id].checked = !data.tasks[id].checked;
+    }
+
+    write_toml(Config::current(), &data);
+
+    return false;
 }
 
 pub fn delete_task(args: Vec<String>) -> bool {

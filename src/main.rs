@@ -4,20 +4,12 @@ mod print;
 mod tasks;
 
 fn single_argument(arg: &str) {
-    //todo implement for delete
-    if arg.len() == 3 {
-        if let Ok(first) = arg[0..1].parse::<usize>() {
-            if let Ok(last) = arg[2..3].parse::<usize>() {
-                if &arg[1..2] == "-" && tasks::check_task(vec![first, last], true) {
-                    return;
-                }
-            }
-        }
-    }
+    let mut numbers = false;
 
-    if let Ok(number) = arg.parse::<usize>() {
-        if tasks::check_task(vec![number], false) {
-            return;
+    for char in arg.chars() {
+        if char.is_numeric() {
+            numbers = true;
+            continue;
         }
     }
 
@@ -30,20 +22,25 @@ fn single_argument(arg: &str) {
             return;
         }
         "h" | "--help" | "help" => print::help(),
-        //this seems dumb because why would you want a one word task?
-        //'this is one task' is technically a single argument
-        _ => tasks::add_task(vec![arg.to_string()]),
+        _ => {
+            if numbers {
+                tasks::check_task(vec![arg.to_string()]);
+            } else {
+                tasks::add_task(vec![arg.to_string()])
+            }
+        }
     };
 
     tasks::tasks();
 }
 
 fn multiple_arugments(args: Vec<String>) {
-    //get all the numbers
-    let mut numbers: Vec<usize> = Vec::new();
+    let mut numbers = false;
+
     for num in &args {
-        if let Ok(num) = num.parse::<usize>() {
-            numbers.push(num);
+        if let Ok(_) = num.parse::<usize>() {
+            numbers = true;
+            continue;
         }
     }
 
@@ -55,18 +52,19 @@ fn multiple_arugments(args: Vec<String>) {
             }
         }
         "c" => {
-            if tasks::check_task(numbers, false) {
+            if tasks::check_task(args) {
                 return;
             }
         }
         "n" => tasks::add_note(args),
         _ => {
-            //if we have numbers and none of the other arguments are called
-            if !numbers.is_empty() && tasks::check_task(numbers, false) {
-                return;
+            if numbers {
+                if tasks::check_task(args) {
+                    return;
+                }
+            } else {
+                tasks::add_task(args);
             }
-
-            tasks::add_task(args);
         }
     };
 
