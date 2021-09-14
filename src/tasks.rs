@@ -8,7 +8,7 @@ use crossterm::{
 };
 use hashbrown::HashMap;
 use itertools::Itertools;
-use regex::Regex;
+use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 
 use std::fs::File;
@@ -41,7 +41,7 @@ pub struct Data {
     pub tasks: Vec<Task>,
 }
 
-fn clear() {
+fn clear_console() {
     execute!(
         stdout(),
         Hide,
@@ -112,38 +112,29 @@ fn get_numbers(args: &Vec<String>) -> Vec<usize> {
     )
     .unwrap();
 
+    let mut caps: Option<Captures> = None;
+
     if args.len() == 1 {
-        if let Some(caps) = re.captures(&args[0]) {
-            let first = caps["first"].parse::<usize>().unwrap();
-            let last = caps["last"].parse::<usize>().unwrap();
+        caps = re.captures(&args[0]);
+    } else if args.len() >= 2 {
+        caps = re.captures(&args[1]);
+    }
 
-            if first > last {
-                return numbers;
-            }
+    if let Some(caps) = caps {
+        let first = caps["first"].parse::<usize>().unwrap();
+        let last = caps["last"].parse::<usize>().unwrap();
 
-            for num in first - 1..last {
-                numbers.push(num);
-            }
-
+        if first > last {
             return numbers;
         }
-    }
-    if args.len() >= 2 {
-        if let Some(caps) = re.captures(&args[1]) {
-            let first = caps["first"].parse::<usize>().unwrap();
-            let last = caps["last"].parse::<usize>().unwrap();
 
-            if first > last {
-                return numbers;
-            }
-
-            for num in first - 1..last {
-                numbers.push(num);
-            }
-
-            return numbers;
+        for num in first - 1..last {
+            numbers.push(num);
         }
+
+        return numbers;
     }
+    fuck!();
 
     for num in args {
         if let Ok(num) = num.parse::<usize>() {
@@ -228,8 +219,11 @@ pub fn delete_task(args: Vec<String>) {
 
     let mut data = get_tasks();
 
+    //TODO can I drain this bad boy?
+
     //since we're deleting tasks the size will change
     let size = data.tasks.len();
+
     //this is annoying but again the size chagnes
     let mut indexes_removed = 0;
 
@@ -335,7 +329,7 @@ pub fn tasks() {
     let mut notes_total = 0;
     let mut index = 0;
 
-    clear();
+    clear_console();
 
     //Print all the custom boards
     for board in board_list {
@@ -415,5 +409,6 @@ pub fn old_tasks() {
         }
     } else {
         eprintln!("Task archive is empty.");
+        fuck!();
     }
 }
