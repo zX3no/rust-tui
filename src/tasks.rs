@@ -1,4 +1,5 @@
 #![allow(clippy::needless_return)]
+
 use chrono::{DateTime, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
@@ -134,11 +135,12 @@ fn get_numbers(args: &Vec<String>) -> Vec<usize> {
 
         return numbers;
     }
-    fuck!();
 
     for num in args {
         if let Ok(num) = num.parse::<usize>() {
-            numbers.push(num - 1);
+            if num != 0 {
+                numbers.push(num - 1);
+            }
         }
     }
 
@@ -214,18 +216,22 @@ pub fn delete_task(args: Vec<String>) {
     let numbers = get_numbers(&args);
 
     if numbers.is_empty() {
+        eprintln!("{} is not a valid number.", args[1]);
         quit::with_code(1);
     }
 
     let mut data = get_tasks();
-
-    //TODO can I drain this bad boy?
 
     //since we're deleting tasks the size will change
     let size = data.tasks.len();
 
     //this is annoying but again the size chagnes
     let mut indexes_removed = 0;
+
+    // dbg!(&data.tasks);
+    // data.tasks.drain_filter(|task| task.id == numbers).collect::<Vec<_>>();
+    // dbg!(&data.tasks);
+    // panic!();
 
     for id in numbers {
         if id < size {
@@ -239,6 +245,7 @@ pub fn delete_task(args: Vec<String>) {
 
     if data.tasks.is_empty() {
         File::create(Config::current()).unwrap();
+        eprintln!("No tasks WTF?");
         fuck!();
     }
 

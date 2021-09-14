@@ -22,9 +22,11 @@ fn arguments(args: Vec<String>) {
     let mut numbers = false;
 
     for num in &args {
-        if let Ok(_) = num.parse::<usize>() {
-            numbers = true;
-            continue;
+        for char in num.chars() {
+            if char.is_numeric() {
+                numbers = true;
+                continue;
+            }
         }
     }
 
