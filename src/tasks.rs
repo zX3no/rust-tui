@@ -55,6 +55,7 @@ fn clear_console() {
 
 //TODO update macro to include a message
 //fuck!("You forgot to add an argument!")
+#[macro_export]
 macro_rules! fuck {
     () => {
         quit::with_code(0);
@@ -150,14 +151,15 @@ fn get_numbers(args: &Vec<String>) -> Vec<usize> {
 pub fn add_task(args: Vec<String>) {
     let mut name: String = "Tasks".to_string();
     let arguments: String;
-    let command = &args[0];
+    let command = &args[1];
+    dbg!(&args);
 
     //Get the board_name and task data
     if command.contains('!') {
         name = command.replace('!', "");
-        arguments = args[1..].join(" ");
+        arguments = args[2..].join(" ");
     } else {
-        arguments = args[0..].join(" ");
+        arguments = args[1..].join(" ");
     }
 
     let now: DateTime<Utc> = Utc::now();

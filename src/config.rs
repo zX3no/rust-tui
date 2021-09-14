@@ -1,12 +1,12 @@
 use itertools::Itertools;
 
+use crate::fuck;
 use crate::tasks;
 
 use std::{
     fs::File,
     path::{Path, PathBuf},
 };
-
 //TODO change this to a const fn if that's possible?
 // static CURRENT: PathBuf = dirs::config_dir().unwrap().join(r"t/tasks.toml");
 // static OLD: PathBuf = dirs::config_dir().unwrap().join(r"t/old.toml");
@@ -55,6 +55,8 @@ pub fn backup() {
     let data = tasks::get_tasks();
     let path = dirs::config_dir().unwrap().join(r"t/backup.toml");
     tasks::write_toml(path, &data);
+    println!("Tasks are backed up!");
+    fuck!();
 }
 
 fn sort_tasks() {
@@ -75,21 +77,22 @@ fn sort_tasks() {
         board_list.push(elem.board_name.clone());
     }
 
+    //TODO wtf is going on here?
     board_list = board_list.into_iter().unique().collect();
 
     board_list.retain(|x| x != "Tasks");
+
+    for elem in old_data.tasks.iter() {
+        if elem.board_name == "Tasks" {
+            new_data.tasks.push(elem.clone());
+        }
+    }
 
     for board in board_list {
         for elem in old_data.tasks.iter() {
             if elem.board_name == board {
                 new_data.tasks.push(elem.clone());
             }
-        }
-    }
-
-    for elem in old_data.tasks.iter() {
-        if elem.board_name == "Tasks" {
-            new_data.tasks.push(elem.clone());
         }
     }
 
