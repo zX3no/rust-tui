@@ -21,19 +21,10 @@ fn arguments_missing() -> bool {
 fn arguments(args: Vec<String>) {
     let mut numbers = false;
 
-    if args.len() > 1 {
-        for num in &args {
-            if let Ok(_) = num.parse::<usize>() {
-                numbers = true;
-                continue;
-            }
-        }
-    } else {
-        for char in args[0].chars() {
-            if char.is_numeric() {
-                numbers = true;
-                continue;
-            }
+    for num in &args {
+        if let Ok(_) = num.parse::<usize>() {
+            numbers = true;
+            continue;
         }
     }
 
