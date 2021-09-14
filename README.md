@@ -31,6 +31,7 @@ t h
         cls                     Clear checked tasks and archive them
         o                       Displays previously completed tasks
         d                       Deletes a task
+        b                       Backup current tasks
         h                       Displays the help page
 
     Examples                     
@@ -47,7 +48,8 @@ t h
         t cls                   Clears all checked task
         t o                     Displays previously completed tasks
         t d 1                   Deletes task number 1
-        t d 1 - 3               Deletes task 1, 2 and 3
+        t d 1-3                 Deletes task 1, 2 and 3
+        t b                     Creates the file backup.toml in the config directory
         t h                     Displays the help page"
 
 ```
