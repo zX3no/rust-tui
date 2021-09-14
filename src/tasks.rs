@@ -8,12 +8,13 @@ use crossterm::{
 };
 use hashbrown::HashMap;
 use itertools::Itertools;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdout;
 use std::path::PathBuf;
+use std::{convert::TryInto, fs::File};
 
 use crate::config::Config;
 use crate::date_format;
@@ -90,35 +91,6 @@ fn append_toml(file_name: PathBuf, data: &Data) {
     file.write_all(output.as_bytes()).unwrap();
 }
 
-//todo update
-fn get_id(id: &mut Vec<usize>, args: Vec<String>) -> bool {
-    //if use input is like: "1 - 3"
-    if args.len() == 3 && args[COMMAND + 1] == *"-" {
-        //check for numbers
-        if args[0].parse::<usize>().is_ok() && args[2].parse::<usize>().is_ok() {
-            let (x, y) = (
-                args[0].parse::<usize>().unwrap(),
-                args[2].parse::<usize>().unwrap(),
-            );
-            for i in x..y + 1 {
-                id.push(i - 1);
-            }
-        }
-    } else {
-        for elem in args.iter() {
-            if elem.parse::<usize>().is_ok() {
-                let temp: usize = elem.parse().unwrap();
-                id.push(temp - 1);
-            } else {
-                //negative numbers are apparently not numbers
-                println!("'{}' is not a valid number!", elem);
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 pub fn check_task(numbers: Vec<usize>, range: bool) -> bool {
     let mut data = get_tasks();
     if range {
@@ -181,13 +153,46 @@ pub fn add_task(mut args: Vec<String>) {
     append_toml(Config::current(), &data);
 }
 
-pub fn delete_task(mut args: Vec<String>) -> bool {
-    let mut id: Vec<usize> = Vec::new();
-    if args[COMMAND] == *"d" {
-        args.remove(0);
+fn get_numbers(args: Vec<String>) -> Vec<usize> {
+    let mut numbers: Vec<usize> = Vec::new();
+
+    let re = Regex::new(
+        r"(?x)
+    (?P<first>\d+)
+    -
+    (?P<last>\d+)
+    ",
+    )
+    .unwrap();
+
+    if let Some(caps) = re.captures(&args[ARGUMENT]) {
+        let first = caps["first"].parse::<usize>().unwrap();
+        let last = caps["last"].parse::<usize>().unwrap();
+
+        if first > last {
+            return numbers;
+        }
+
+        for num in first - 1..last {
+            dbg!(&num);
+            numbers.push(num);
+        }
+        return numbers;
     }
 
-    if !get_id(&mut id, args) {
+    for num in &args {
+        if let Ok(num) = num.parse::<usize>() {
+            numbers.push(num - 1);
+        }
+    }
+
+    return numbers;
+}
+
+pub fn delete_task(args: Vec<String>) -> bool {
+    let numbers = get_numbers(args);
+
+    if numbers.is_empty() {
         return true;
     }
 
@@ -198,12 +203,12 @@ pub fn delete_task(mut args: Vec<String>) -> bool {
     //this is annoying but again the size chagnes
     let mut indexes_removed = 0;
 
-    for i in id {
-        if i < size {
-            data.tasks.remove(i - indexes_removed);
+    for id in numbers {
+        if id < size {
+            data.tasks.remove(id - indexes_removed);
             indexes_removed += 1;
-        } else if i != 0 {
-            println!("'{}' is not a task!", i + 1);
+        } else if id != 0 {
+            println!("'{}' is not a task!", id);
             return true;
         }
     }

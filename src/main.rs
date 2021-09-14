@@ -8,9 +8,7 @@ fn single_argument(arg: &str) {
     if arg.len() == 3 {
         if let Ok(first) = arg[0..1].parse::<usize>() {
             if let Ok(last) = arg[2..3].parse::<usize>() {
-                let dash = &arg[1..2];
-
-                if dash == "-" && tasks::check_task(vec![first, last], true) {
+                if &arg[1..2] == "-" && tasks::check_task(vec![first, last], true) {
                     return;
                 }
             }
@@ -74,7 +72,6 @@ fn multiple_arugments(args: Vec<String>) {
 
     tasks::tasks();
 }
-
 fn main() {
     config::check_files().unwrap();
 
