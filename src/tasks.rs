@@ -7,10 +7,10 @@ use crossterm::{
     style::Print,
     terminal::{Clear, ClearType},
 };
+
 use hashbrown::HashMap;
 use itertools::Itertools;
 use regex::{Captures, Regex};
-use serde::{Deserialize, Serialize};
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -18,29 +18,10 @@ use std::io::stdout;
 use std::path::PathBuf;
 
 use crate::config::Config;
-use crate::date_format;
+use crate::data::Data;
 use crate::print;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Task {
-    pub item: String,
-    pub checked: bool,
-    pub board_name: String,
-    pub note: bool,
-    #[serde(with = "date_format")]
-    pub date: DateTime<Utc>,
-}
-
-impl PartialEq for Task {
-    fn eq(&self, other: &Self) -> bool {
-        self.item == other.item
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Data {
-    pub tasks: Vec<Task>,
-}
+type Board<'a> = HashMap<&'a str, usize>;
 
 fn clear_console() {
     execute!(
@@ -60,21 +41,6 @@ macro_rules! fuck {
     () => {
         quit::with_code(0);
     };
-}
-
-pub fn get_tasks() -> Data {
-    let mut file = File::open(&Config::current()).unwrap();
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents).unwrap();
-
-    if contents.is_empty() {
-        print::help_message();
-        fuck!();
-    }
-
-    let data = toml::from_str(&contents).unwrap();
-    return data;
 }
 
 pub fn write_toml(file_name: PathBuf, data: &Data) {
@@ -141,47 +107,31 @@ fn get_numbers(args: &Vec<String>) -> Vec<usize> {
 }
 
 pub fn add_task(args: Vec<String>) {
-    let mut name: String = "Tasks".to_string();
-    let arguments: String;
+    let mut board_name = String::from("Tasks");
+    let item: String;
     let command = &args[1];
-    dbg!(&args);
+
+    let date: DateTime<Utc> = Utc::now();
 
     //Get the board_name and task data
     if command.contains('!') {
-        name = command.replace('!', "");
-        arguments = args[2..].join(" ");
+        board_name = command.replace('!', "");
+        item = args[2..].join(" ");
     } else {
-        arguments = args[1..].join(" ");
+        item = args[1..].join(" ");
     }
 
-    let now: DateTime<Utc> = Utc::now();
-
-    let task = Task {
-        item: arguments,
-        checked: false,
-        board_name: name,
-        note: false,
-        date: now,
-    };
-
-    let data = Data { tasks: vec![task] };
+    let data = Data::from(item, false, board_name.as_str(), false, date);
 
     append_toml(Config::current(), &data);
 }
 
 pub fn add_note(args: Vec<String>) {
-    let arguments = args[1..].join(" ");
-    let now: DateTime<Utc> = Utc::now();
+    let item = args[1..].join(" ");
+    let date: DateTime<Utc> = Utc::now();
 
-    let task = Task {
-        item: arguments,
-        checked: false,
-        board_name: "Tasks".to_string(),
-        note: true,
-        date: now,
-    };
+    let data = Data::from(item, false, "Tasks", true, date);
 
-    let data = Data { tasks: vec![task] };
     append_toml(Config::current(), &data);
 }
 
@@ -193,10 +143,10 @@ pub fn check_task(args: Vec<String>) {
         fuck!();
     }
 
-    let mut data = get_tasks();
+    let mut data = Data::tasks();
 
     for id in numbers {
-        if id > data.tasks.len() {
+        if id > data.len() {
             eprintln!("'{}' is not a task!", id);
             fuck!();
         }
@@ -211,25 +161,20 @@ pub fn delete_task(args: Vec<String>) {
 
     if numbers.is_empty() {
         eprintln!("{} is not a valid number.", args[1]);
-        quit::with_code(1);
+        fuck!();
     }
 
-    let mut data = get_tasks();
+    let mut data = Data::tasks();
 
     //since we're deleting tasks the size will change
-    let size = data.tasks.len();
+    let size = data.len();
 
     //this is annoying but again the size chagnes
     let mut indexes_removed = 0;
 
-    // dbg!(&data.tasks);
-    // data.tasks.drain_filter(|task| task.id == numbers).collect::<Vec<_>>();
-    // dbg!(&data.tasks);
-    // panic!();
-
     for id in numbers {
         if id < size {
-            data.tasks.remove(id - indexes_removed);
+            data.remove(id - indexes_removed);
             indexes_removed += 1;
         } else if id != 0 {
             eprintln!("'{}' is not a task!", id);
@@ -237,7 +182,7 @@ pub fn delete_task(args: Vec<String>) {
         }
     }
 
-    if data.tasks.is_empty() {
+    if data.is_empty() {
         File::create(Config::current()).unwrap();
         eprintln!("No tasks WTF?");
         fuck!();
@@ -247,29 +192,27 @@ pub fn delete_task(args: Vec<String>) {
 }
 
 pub fn clear_tasks() {
-    let mut data_to_append: Data = Data { tasks: Vec::new() };
+    let mut data_to_append = Data::new();
 
     //Get finished tasks and put them in buffer
-    let mut data = get_tasks();
+    let mut data = Data::tasks();
     let mut indexes_removed = 0;
 
     //return if there are no tasks to clear
-    if data.tasks.is_empty() {
+    if data.is_empty() {
         return;
     }
 
     //Copy checked tasks to new file
-    for i in 0..data.tasks.len() {
+    for i in 0..data.len() {
         if data.tasks[i - indexes_removed].checked {
-            data_to_append
-                .tasks
-                .push(data.tasks[i - indexes_removed].clone());
-            data.tasks.remove(i - indexes_removed);
+            data_to_append.push(&data.tasks[i - indexes_removed]);
+            data.remove(i - indexes_removed);
             indexes_removed += 1;
         }
     }
 
-    if data.tasks.is_empty() {
+    if data.is_empty() {
         File::create(Config::current()).unwrap();
     } else {
         write_toml(Config::current(), &data);
@@ -279,25 +222,26 @@ pub fn clear_tasks() {
 }
 
 pub fn tasks() {
-    let data = get_tasks();
+    let data = Data::tasks();
 
-    if data.tasks.is_empty() {
+    if data.is_empty() {
         print::help_message();
         return;
     }
 
-    let mut board_completed: HashMap<&str, usize> = HashMap::new();
-    let mut board_total: HashMap<&str, usize> = HashMap::new();
+    let mut board_completed = Board::new();
+    let mut board_total = Board::new();
+
     let mut board_list: Vec<&str> = Vec::new();
 
-    let mut tasks_total = data.tasks.len();
+    let mut tasks_total = data.len();
     let mut tasks_completed = 0;
     let now: DateTime<Utc> = Utc::now();
 
     //Get a list of all boards
-    for elem in data.tasks.iter() {
-        board_list.push(elem.board_name.as_str());
-        if elem.checked && !elem.note {
+    for task in data.iter() {
+        board_list.push(task.board_name.as_str());
+        if task.checked && !task.note {
             tasks_completed += 1;
         }
     }
@@ -310,10 +254,10 @@ pub fn tasks() {
         //boards completed and board total
         let (mut bc, mut bt) = (0, 0);
 
-        for elem in data.tasks.iter() {
-            if elem.board_name == *board {
+        for task in data.iter() {
+            if task.board_name == *board {
                 bt += 1;
-                if elem.checked {
+                if task.checked {
                     bc += 1;
                 }
             }
@@ -336,18 +280,18 @@ pub fn tasks() {
     print::header(board_completed["Tasks"], board_total["Tasks"], "Tasks");
 
     //Print the default board
-    for elem in data.tasks.iter() {
-        if elem.board_name == "Tasks" {
+    for task in data.iter() {
+        if task.board_name == "Tasks" {
             index += 1;
-            let day = (now - elem.date).num_days();
-            if elem.note {
-                print::note(index, elem.item.as_str(), tasks_total);
+            let day = (now - task.date).num_days();
+            if task.note {
+                print::note(index, task.item.as_str(), tasks_total);
                 notes_total += 1;
             } else {
                 print::task(
                     index,
-                    elem.checked,
-                    elem.item.as_str(),
+                    task.checked,
+                    task.item.as_str(),
                     day,
                     board_total["Tasks"],
                 );
@@ -360,7 +304,7 @@ pub fn tasks() {
     //Print all the custom boards
     for board in board_list {
         print::header(board_completed[board], board_total[board], board);
-        for elem in data.tasks.iter() {
+        for elem in data.iter() {
             let day = (now - elem.date).num_days();
             if elem.board_name == board {
                 index += 1;
@@ -375,7 +319,7 @@ pub fn tasks() {
         println!();
     }
 
-    //Don't count the notes
+    //Don't count the notes in footer
     tasks_total -= notes_total;
 
     print::footer(tasks_completed, tasks_total, notes_total);
@@ -384,22 +328,25 @@ pub fn tasks() {
 }
 
 pub fn old_tasks() {
-    let mut file = match File::open(&Config::old()) {
-        Err(why) => panic!("couldn't open {}: ", why),
-        Ok(file) => file,
-    };
+    let mut file = File::open(&Config::old()).unwrap();
 
     let mut contents = String::new();
 
     file.read_to_string(&mut contents).unwrap();
 
     let now: DateTime<Utc> = Utc::now();
-    if !contents.is_empty() {
+
+    if contents.is_empty() {
+        eprintln!("Task archive is empty.");
+        fuck!();
+    } else {
         let data: Data = toml::from_str(&contents).unwrap();
-        let total_tasks = data.tasks.len();
-        //how long ago the task was added in days
-        for i in 0..data.tasks.len() {
+        let total_tasks = data.len();
+
+        for i in 0..total_tasks {
+            //how long ago the task was added in days
             let day = (now - data.tasks[i].date).num_days();
+
             print::task(
                 i + 1,
                 data.tasks[i].checked,
@@ -408,8 +355,5 @@ pub fn old_tasks() {
                 total_tasks,
             );
         }
-    } else {
-        eprintln!("Task archive is empty.");
-        fuck!();
     }
 }

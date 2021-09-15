@@ -1,5 +1,6 @@
 use itertools::Itertools;
 
+use crate::data::Data;
 use crate::fuck;
 use crate::tasks;
 
@@ -21,6 +22,7 @@ impl Config {
 
 pub fn check_files() -> std::io::Result<()> {
     let mut path = dirs::config_dir().unwrap();
+
     //check if the config dir exists
     if !Path::new(&path).exists() {
         std::fs::create_dir(&path)?;
@@ -49,7 +51,7 @@ pub fn check_files() -> std::io::Result<()> {
 }
 
 pub fn backup() {
-    let data = tasks::get_tasks();
+    let data = Data::tasks();
     let path = dirs::config_dir().unwrap().join(r"t/backup.toml");
     tasks::write_toml(path, &data);
     println!("Tasks are backed up!");
@@ -57,44 +59,39 @@ pub fn backup() {
 }
 
 fn sort_tasks() {
-    let old_data = tasks::get_tasks();
+    if let Some(data) = Data::option() {
+        let mut new_data = Data::new();
+        let old_data = data.clone();
 
-    if old_data.tasks.is_empty() {
-        return;
-    }
+        let mut board_list: Vec<String> = Vec::new();
 
-    let mut new_data = tasks::Data { tasks: Vec::new() };
-
-    let data = tasks::get_tasks();
-
-    let mut board_list: Vec<String> = Vec::new();
-
-    //Get a list of all boards
-    for elem in data.tasks.iter() {
-        board_list.push(elem.board_name.clone());
-    }
-
-    //TODO wtf is going on here?
-    board_list = board_list.into_iter().unique().collect();
-
-    board_list.retain(|x| x != "Tasks");
-
-    for elem in old_data.tasks.iter() {
-        if elem.board_name == "Tasks" {
-            new_data.tasks.push(elem.clone());
+        //Get a list of all boards
+        for task in data.iter() {
+            board_list.push(task.board_name.clone());
         }
-    }
 
-    for board in board_list {
-        for elem in old_data.tasks.iter() {
-            if elem.board_name == board {
-                new_data.tasks.push(elem.clone());
+        //TODO wtf is going on here?
+        board_list = board_list.into_iter().unique().collect();
+
+        board_list.retain(|x| x != "Tasks");
+
+        for task in old_data.iter() {
+            if task.board_name == "Tasks" {
+                new_data.push(task);
             }
         }
-    }
 
-    //Only write to file if tasks need to be sorted
-    if !itertools::equal(&old_data.tasks, &new_data.tasks) {
-        tasks::write_toml(Config::current(), &new_data);
+        for board in board_list {
+            for task in old_data.iter() {
+                if task.board_name == board {
+                    new_data.push(task);
+                }
+            }
+        }
+
+        //Only write to file if tasks need to be sorted
+        if !itertools::equal(&old_data.tasks, &new_data.tasks) {
+            tasks::write_toml(Config::current(), &new_data);
+        }
     }
 }

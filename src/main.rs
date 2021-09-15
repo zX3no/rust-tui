@@ -1,4 +1,5 @@
 mod config;
+mod data;
 mod date_format;
 mod print;
 mod tasks;
@@ -57,9 +58,9 @@ fn arguments(args: Vec<String>) {
 
 #[quit::main]
 fn main() {
-    config::check_files().unwrap();
-
     let args: Vec<String> = std::env::args().skip(1).collect();
+
+    config::check_files().unwrap();
 
     match args.len() {
         0 => tasks::tasks(),
