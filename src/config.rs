@@ -7,9 +7,6 @@ use std::{
     fs::File,
     path::{Path, PathBuf},
 };
-//TODO change this to a const fn if that's possible?
-// static CURRENT: PathBuf = dirs::config_dir().unwrap().join(r"t/tasks.toml");
-// static OLD: PathBuf = dirs::config_dir().unwrap().join(r"t/old.toml");
 
 pub struct Config {}
 

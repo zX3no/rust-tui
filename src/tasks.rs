@@ -62,26 +62,18 @@ macro_rules! fuck {
     };
 }
 
-//TODO shouldn't this be optional?
-//I feel like there are some weird cases were an empty stuct is made
-//but no data gets put in it
-//option might help
-
 pub fn get_tasks() -> Data {
-    let mut file = match File::open(&Config::current()) {
-        Err(why) => panic!("couldn't open {}: ", why),
-        Ok(file) => file,
-    };
+    let mut file = File::open(&Config::current()).unwrap();
     let mut contents = String::new();
-    let mut data = Data { tasks: Vec::new() };
 
     file.read_to_string(&mut contents).unwrap();
-    if !contents.is_empty() {
-        data = toml::from_str(&contents).unwrap();
-    } else {
-        return data;
+
+    if contents.is_empty() {
+        print::help_message();
+        fuck!();
     }
 
+    let data = toml::from_str(&contents).unwrap();
     return data;
 }
 
