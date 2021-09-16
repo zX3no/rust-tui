@@ -18,7 +18,7 @@ pub fn help_message() {
     .unwrap()
 }
 
-pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
+pub fn header(completed_tasks: usize, total_tasks: usize, board: &String) {
     execute!(
         stdout(),
         Print(" "),
@@ -37,7 +37,7 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     .unwrap();
 }
 
-pub fn note(id: usize, text: &str, total_tasks: usize) {
+pub fn note(id: usize, text: &String, total_tasks: usize) {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
@@ -74,7 +74,7 @@ pub fn note(id: usize, text: &str, total_tasks: usize) {
     execute!(stdout(), Print("\n"),).unwrap();
 }
 
-pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
+pub fn task(id: usize, checked: bool, text: &String, days: i64, total_tasks: usize) {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),

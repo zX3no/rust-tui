@@ -1,11 +1,19 @@
+// #![feature(drain_filter)]
+use config::Config;
+
 mod config;
-mod data;
 mod date_format;
 mod print;
-mod tasks;
+mod task;
 
-fn arguments_missing() -> bool {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+#[macro_export]
+macro_rules! fuck {
+    () => {
+        quit::with_code(0);
+    };
+}
+
+fn arguments_missing(args: Vec<String>) -> bool {
     if args.len() == 1 {
         match &args[0] as &str {
             "a" | "d" | "n" | "c" => {
@@ -31,39 +39,46 @@ fn arguments(args: Vec<String>) {
         }
     }
 
-    if arguments_missing() {
+    if arguments_missing(args) {
         return;
     }
 
     match &args[0] as &str {
-        "a" => tasks::add_task(args),
-        "d" => tasks::delete_task(args),
-        "c" => tasks::check_task(args),
-        "n" => tasks::add_note(args),
-        "cls" => tasks::clear_tasks(),
-        "o" | "old" => tasks::old_tasks(),
-        "b" | "backup" => config::backup(),
+        "h" | "--help" | "help" => print::help(),
+    }
+
+    let mut config = Config::new();
+
+    match &args[0] as &str {
+        "a" => config.add_task(),
+        "d" => config.delete_task(),
+        "c" => config.check_task(),
+        "n" => config.add_note(),
+        "cls" => config.clear_tasks(),
+        "o" | "old" => config.print_old(),
+        "b" | "backup" => config.backup(),
         "h" | "--help" | "help" => print::help(),
         _ => {
             if numbers {
-                tasks::check_task(args);
+                config.check_task();
             } else {
-                tasks::add_task(args);
+                config.add_task();
             }
         }
     };
 
-    tasks::tasks();
+    config.print_tasks();
 }
 
 #[quit::main]
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
-    config::check_files().unwrap();
-
     match args.len() {
-        0 => tasks::tasks(),
+        0 => {
+            let config = Config::new();
+            // print(config);
+        }
         _ => arguments(args),
     }
 }

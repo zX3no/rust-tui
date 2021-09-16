@@ -18,8 +18,8 @@ use std::io::stdout;
 use std::path::PathBuf;
 
 use crate::config::Config;
-use crate::data::Data;
 use crate::print;
+use crate::task::Data;
 
 type Board<'a> = HashMap<&'a str, usize>;
 
@@ -250,7 +250,7 @@ pub fn tasks() {
         }
     }
 
-    //Remove repeated elements
+    //Remove repeated taskents
     board_list = board_list.into_iter().unique().collect();
 
     //Get total and completed tasks for each board
@@ -308,15 +308,15 @@ pub fn tasks() {
     //Print all the custom boards
     for board in board_list {
         print::header(board_completed[board], board_total[board], board);
-        for elem in data.iter() {
-            let day = (now - elem.date).num_days();
-            if elem.board_name == board {
+        for task in data.iter() {
+            let day = (now - task.date).num_days();
+            if task.board_name == board {
                 index += 1;
-                if elem.note {
-                    print::note(index, elem.item.as_str(), tasks_total);
+                if task.note {
+                    print::note(index, task.item.as_str(), tasks_total);
                     notes_total += 1;
                 } else {
-                    print::task(index, elem.checked, elem.item.as_str(), day, tasks_total);
+                    print::task(index, task.checked, task.item.as_str(), day, tasks_total);
                 }
             }
         }
