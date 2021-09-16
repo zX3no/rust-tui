@@ -13,29 +13,13 @@ pub struct Task {
     pub date: DateTime<Utc>,
     pub id: usize,
 }
-
-impl Task {
-    pub fn from(
-        item: String,
-        checked: bool,
-        board_name: String,
-        note: bool,
-        date: DateTime<Utc>,
-        id: usize,
-    ) -> Self {
-        Task {
-            item,
-            checked,
-            board_name,
-            note,
-            date,
-            id,
-        }
-    }
-}
-
 impl PartialEq for Task {
     fn eq(&self, other: &Self) -> bool {
         self.item == other.item
+            && self.checked == other.checked
+            && self.board_name == other.board_name
+            && self.note == other.note
+            && self.date == other.date
+            && self.id == other.id
     }
 }

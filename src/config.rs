@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 use chrono::{DateTime, Utc};
 use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show};
 use crossterm::execute;
@@ -76,28 +76,11 @@ impl Config {
 
     //maybe the destructor should write to file ?
     pub fn new() -> Self {
-        let read = |file_name: &PathBuf| -> Tasks {
-            let mut data = File::open(file_name).unwrap();
-
-            //Load contents into a string
-            let mut contents = String::new();
-            data.read_to_string(&mut contents).unwrap();
-
-            if contents.is_empty() {
-                panic!();
-                //TODO
-            }
-
-            let data: Tasks = toml::from_str(&contents).unwrap();
-
-            return data;
-        };
-
         let file = dirs::config_dir().unwrap().join(r"t/tasks.toml");
         let old = dirs::config_dir().unwrap().join(r"t/old.toml");
 
-        let tasks = read(&file);
-        let old_tasks = read(&old);
+        let tasks = Config::read(&file);
+        let old_tasks = Config::read(&old);
 
         let total_tasks = tasks.len();
 
@@ -116,7 +99,7 @@ impl Config {
     /// Commands
     ///
 
-    pub fn add_task(&self) {
+    pub fn add_task(&mut self) {
         let mut board_name = String::from("Tasks");
         let item: String;
 
@@ -129,16 +112,14 @@ impl Config {
             item = self.args[1..].join(" ");
         }
 
-        let task = Task {
+        self.tasks.push(Task {
             item,
             checked: false,
             board_name,
             note: false,
             date,
             id: self.gen_id(),
-        };
-
-        // append_toml(self.file, &task);
+        });
     }
 
     pub fn delete_task(&mut self) {
@@ -164,21 +145,19 @@ impl Config {
                 fuck!();
             }
         }
-
-        //if there are no tasks don't write the data?
-        self.check_empty();
-
-        // write_toml(Config::current(), &data);
     }
 
     pub fn add_note(&mut self) {
         let item = self.args[1..].join(" ");
-        let date: DateTime<Utc> = Utc::now();
 
-        let task = Task::from(item, false, "Tasks".to_string(), true, date, self.gen_id());
-        self.tasks.push(task);
-
-        // append_toml(Config::current(), &data);
+        self.tasks.push(Task {
+            item,
+            checked: false,
+            board_name: "Tasks".to_string(),
+            note: true,
+            date: Utc::now(),
+            id: self.gen_id(),
+        });
     }
 
     pub fn check_task(&mut self) {
@@ -198,8 +177,6 @@ impl Config {
             //todo can this be done better?
             self.tasks.tasks[id].checked = !self.tasks.tasks[id].checked;
         }
-
-        // write_toml(Config::current(), &data);
     }
 
     pub fn clear_tasks(&mut self) {
@@ -213,25 +190,24 @@ impl Config {
             })
             .collect();
 
-        // self.tasks.drain_filter(|task| task.checked);
+        self.tasks.tasks.drain_filter(|task| task.checked);
 
-        // append_toml(Config::old(), &data_to_append);
+        for task in old {
+            self.old_tasks.push(task);
+        }
     }
 
     pub fn backup(&self) {
-        // tasks::write_toml(path, &data);
-        self.write_toml(&self.file);
+        let file_path = dirs::config_dir().unwrap().join(r"t/backup.toml");
+        self.write(&file_path);
         println!("Tasks are backed up!");
         fuck!();
     }
 
     pub fn print_tasks(&self) {
-        dbg!(&self.tasks);
         //todo wtf is this?
         let mut board_completed = Board::new();
         let mut board_total = Board::new();
-
-        let mut board_list: Vec<&str> = Vec::new();
 
         // let mut tasks_completed = self.tasks.iter().map(|task| task.checked).collect();
         let tasks_completed = 0;
@@ -335,14 +311,7 @@ impl Config {
 
         for task in &self.tasks {
             let day = (now - task.date).num_days();
-            print::task(
-                // task.id as usize + 1,
-                1,
-                task.checked,
-                &task.item,
-                day,
-                self.total_tasks,
-            );
+            print::task(task.id + 1, task.checked, &task.item, day, self.total_tasks);
         }
     }
 
@@ -361,8 +330,31 @@ impl Config {
         file.write_all(output.as_bytes()).unwrap();
     }
 
-    fn write_toml(&self, file_name: &PathBuf) {
-        let mut file = File::create(file_name).unwrap();
+    pub fn save(&self) {
+        if Config::read(&self.file) != self.tasks {
+            self.write(&self.file);
+        } else if Config::read(&self.old) != self.old_tasks {
+            self.write(&self.old);
+        }
+    }
+
+    pub fn read(file_path: &PathBuf) -> Tasks {
+        let mut data = File::open(file_path).unwrap();
+
+        //Load contents into a string
+        let mut contents = String::new();
+        data.read_to_string(&mut contents).unwrap();
+
+        if contents.is_empty() {
+            panic!();
+            //TODO
+        }
+
+        toml::from_str(&contents).unwrap()
+    }
+
+    pub fn write(&self, file_path: &PathBuf) {
+        let mut file = File::create(file_path).unwrap();
         let output = toml::to_string(&self.tasks).unwrap();
         file.write_all(output.as_bytes()).unwrap();
     }

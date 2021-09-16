@@ -1,4 +1,4 @@
-// #![feature(drain_filter)]
+#![feature(drain_filter)]
 use config::Config;
 
 mod config;
@@ -70,7 +70,7 @@ fn arguments(args: Vec<String>) {
 
     config.print_tasks();
 
-    //config.write()
+    config.save();
 }
 
 #[quit::main]
