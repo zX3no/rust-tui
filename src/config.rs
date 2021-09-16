@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use chrono::{DateTime, Utc};
 use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show};
 use crossterm::execute;
@@ -11,6 +12,7 @@ use crate::task::Task;
 use crate::{fuck, print};
 
 use std::io::{self, stdout, Read, Write};
+use std::slice::Iter;
 use std::{
     fs::File,
     path::{Path, PathBuf},
@@ -18,12 +20,46 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-type Board<'a> = HashMap<&'a str, usize>;
+type Board<'a> = HashMap<String, usize>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Tasks {
+    pub tasks: Vec<Task>,
+}
+impl Tasks {
+    pub fn len(&self) -> usize {
+        self.tasks.len()
+    }
+    pub fn remove(&mut self, index: usize) {
+        self.tasks.remove(index);
+    }
+    pub fn push(&mut self, task: Task) {
+        self.tasks.push(task);
+    }
+    pub fn iter(&self) -> Iter<Task> {
+        self.tasks.iter()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.tasks.is_empty()
+    }
+}
+
+impl IntoIterator for &Tasks {
+    type Item = Task;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tasks.clone().into_iter()
+    }
+}
+impl PartialEq for Tasks {
+    fn eq(&self, other: &Self) -> bool {
+        self.tasks == other.tasks
+    }
+}
 pub struct Config {
-    tasks: Vec<Task>,
-    old_tasks: Vec<Task>,
+    tasks: Tasks,
+    old_tasks: Tasks,
 
     total_tasks: usize,
 
@@ -40,7 +76,7 @@ impl Config {
 
     //maybe the destructor should write to file ?
     pub fn new() -> Self {
-        let read = |file_name: &PathBuf| -> Vec<Task> {
+        let read = |file_name: &PathBuf| -> Tasks {
             let mut data = File::open(file_name).unwrap();
 
             //Load contents into a string
@@ -48,10 +84,13 @@ impl Config {
             data.read_to_string(&mut contents).unwrap();
 
             if contents.is_empty() {
+                panic!();
                 //TODO
             }
 
-            toml::from_str(&contents).unwrap()
+            let data: Tasks = toml::from_str(&contents).unwrap();
+
+            return data;
         };
 
         let file = dirs::config_dir().unwrap().join(r"t/tasks.toml");
@@ -151,13 +190,13 @@ impl Config {
         }
 
         for id in numbers {
-            if id > self.tasks.len() || self.tasks[id].note {
+            if id > self.tasks.len() || self.tasks.tasks[id].note {
                 eprintln!("'{}' is not a task!", id);
                 fuck!();
             }
 
             //todo can this be done better?
-            self.tasks[id].checked = !self.tasks[id].checked;
+            self.tasks.tasks[id].checked = !self.tasks.tasks[id].checked;
         }
 
         // write_toml(Config::current(), &data);
@@ -187,6 +226,7 @@ impl Config {
     }
 
     pub fn print_tasks(&self) {
+        dbg!(&self.tasks);
         //todo wtf is this?
         let mut board_completed = Board::new();
         let mut board_total = Board::new();
@@ -206,12 +246,12 @@ impl Config {
             .collect();
 
         //Get total and completed tasks for each board
-        for board in board_list {
+        for board in &board_list {
             //boards completed and board total
             let (mut bc, mut bt) = (0, 0);
 
             for task in &self.tasks {
-                if task.board_name == board {
+                if &task.board_name == board {
                     bt += 1;
                     if task.checked {
                         bc += 1;
@@ -220,24 +260,24 @@ impl Config {
             }
 
             //push the name and value into a hashmap
-            board_completed.insert(&board, bc);
-            board_total.insert(&board, bt);
+            board_completed.insert(board.clone(), bc);
+            board_total.insert(board.clone(), bt);
         }
 
         //Remove the default board, we will print this last
-        board_list.retain(|&x| x != "Tasks");
+        board_list.retain(|x| x != "Tasks");
 
         let mut notes_total = 0;
         let mut index = 0;
 
-        execute!(
-            stdout(),
-            Hide,
-            DisableBlinking,
-            MoveTo(0, 0),
-            Clear(ClearType::All)
-        )
-        .unwrap();
+        // execute!(
+        //     stdout(),
+        //     Hide,
+        //     DisableBlinking,
+        //     MoveTo(0, 0),
+        //     Clear(ClearType::All)
+        // )
+        // .unwrap();
 
         //Print the header for the default board
         print::header(
@@ -295,7 +335,14 @@ impl Config {
 
         for task in &self.tasks {
             let day = (now - task.date).num_days();
-            print::task(task.id + 1, task.checked, &task.item, day, self.total_tasks);
+            print::task(
+                // task.id as usize + 1,
+                1,
+                task.checked,
+                &task.item,
+                day,
+                self.total_tasks,
+            );
         }
     }
 
@@ -310,13 +357,13 @@ impl Config {
             .open(file_name)
             .unwrap();
 
-        let output = toml::to_string(&self).unwrap();
+        let output = toml::to_string(&self.tasks).unwrap();
         file.write_all(output.as_bytes()).unwrap();
     }
 
     fn write_toml(&self, file_name: &PathBuf) {
         let mut file = File::create(file_name).unwrap();
-        let output = toml::to_string(self).unwrap();
+        let output = toml::to_string(&self.tasks).unwrap();
         file.write_all(output.as_bytes()).unwrap();
     }
 
@@ -354,7 +401,7 @@ impl Config {
             }
         }
 
-        self.tasks = sorted_tasks;
+        self.tasks.tasks = sorted_tasks;
 
         //Only write to file if tasks need to be sorted
         if self.tasks != old_data {

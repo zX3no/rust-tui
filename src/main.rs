@@ -13,7 +13,7 @@ macro_rules! fuck {
     };
 }
 
-fn arguments_missing(args: Vec<String>) -> bool {
+fn arguments_missing(args: &Vec<String>) -> bool {
     if args.len() == 1 {
         match &args[0] as &str {
             "a" | "d" | "n" | "c" => {
@@ -39,12 +39,13 @@ fn arguments(args: Vec<String>) {
         }
     }
 
-    if arguments_missing(args) {
+    if arguments_missing(&args) {
         return;
     }
 
     match &args[0] as &str {
         "h" | "--help" | "help" => print::help(),
+        _ => (),
     }
 
     let mut config = Config::new();
@@ -68,6 +69,8 @@ fn arguments(args: Vec<String>) {
     };
 
     config.print_tasks();
+
+    //config.write()
 }
 
 #[quit::main]
@@ -77,7 +80,7 @@ fn main() {
     match args.len() {
         0 => {
             let config = Config::new();
-            // print(config);
+            config.print_tasks();
         }
         _ => arguments(args),
     }

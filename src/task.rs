@@ -13,6 +13,7 @@ pub struct Task {
     pub date: DateTime<Utc>,
     pub id: usize,
 }
+
 impl Task {
     pub fn from(
         item: String,
