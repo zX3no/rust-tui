@@ -42,6 +42,10 @@ impl Tasks {
     pub fn is_empty(&self) -> bool {
         self.tasks.is_empty()
     }
+
+    fn new() -> Tasks {
+        Tasks { tasks: Vec::new() }
+    }
 }
 
 impl IntoIterator for &Tasks {
@@ -84,7 +88,12 @@ impl Config {
         let tasks = Config::read(&file);
         let old_tasks = Config::read(&old);
 
-        let total_tasks = tasks.len();
+        let mut total_tasks: usize = 0;
+        for task in &tasks.tasks {
+            if task.checked && !task.note {
+                total_tasks += 1;
+            }
+        }
 
         //TODO sort tasks?
         Config {
@@ -105,7 +114,9 @@ impl Config {
         let mut board_name = String::from("Tasks");
         let item: String;
 
-        if self.args[1].contains('!') {
+        if self.args.len() == 1 {
+            item = self.args[0..].join(" ");
+        } else if self.args[1].contains('!') {
             board_name = self.args[1].replace('!', "");
             item = self.args[2..].join(" ");
         } else if self.args[0] == "a" {
@@ -165,8 +176,11 @@ impl Config {
     pub fn check_task(&mut self) {
         let numbers = self.get_numbers();
 
-        if numbers.is_empty() {
+        if numbers.is_empty() && self.args.len() > 1 {
             eprintln!("{} is not a valid number.", self.args[1]);
+            fuck!();
+        } else if self.args.len() == 1 {
+            eprintln!("{} is not a valid number.", self.args[0]);
             fuck!();
         }
 
@@ -207,6 +221,8 @@ impl Config {
     }
 
     pub fn print_tasks(&self) {
+        self.check_empty();
+
         //todo wtf is this?
         let mut board_completed = Board::new();
         let mut board_total = Board::new();
@@ -245,7 +261,7 @@ impl Config {
         //Remove the default board, we will print this last
         board_list.retain(|x| x != "Tasks");
 
-        let mut notes_total = 0;
+        let mut total_notes = 0;
         let mut index = 0;
 
         // execute!(
@@ -271,7 +287,7 @@ impl Config {
                 let day = (now - task.date).num_days();
                 if task.note {
                     print::note(index, &task.item, self.total_tasks);
-                    notes_total += 1;
+                    total_notes += 1;
                 } else {
                     print::task(index, task.checked, &task.item, day, board_total["Tasks"]);
                 }
@@ -294,7 +310,7 @@ impl Config {
                     index += 1;
                     if task.note {
                         print::note(index, &task.item, self.total_tasks);
-                        notes_total += 1;
+                        total_notes += 1;
                     } else {
                         print::task(index, task.checked, &task.item, day, self.total_tasks);
                     }
@@ -303,7 +319,7 @@ impl Config {
             println!();
         }
 
-        print::footer(tasks_completed, self.total_tasks - notes_total, notes_total);
+        print::footer(tasks_completed, self.total_tasks, total_notes);
 
         execute!(stdout(), Print("\n"), Show, EnableBlinking).unwrap();
     }
@@ -348,7 +364,7 @@ impl Config {
         data.read_to_string(&mut contents).unwrap();
 
         if contents.is_empty() {
-            panic!();
+            return Tasks::new();
             //TODO
         }
 
@@ -479,11 +495,10 @@ impl Config {
         Ok(())
     }
 
-    //TODO REMOVE
     fn check_empty(&self) {
         if self.tasks.is_empty() {
             File::create(&self.file).unwrap();
-            eprintln!("No tasks WTF?");
+            print::help_message();
             fuck!();
         }
     }

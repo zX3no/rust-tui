@@ -5,6 +5,8 @@ use crossterm::{
 };
 use std::io::stdout;
 
+use crate::fuck;
+
 pub fn help_message() {
     execute!(
         stdout(),
@@ -219,4 +221,5 @@ Examples
     t b                     Creates the file backup.toml in the config directory
     t h                     Displays the help page"
     );
+    fuck!();
 }
