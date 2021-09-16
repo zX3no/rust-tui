@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_imports)]
 use chrono::{DateTime, Utc};
 use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show};
 use crossterm::execute;
@@ -8,11 +7,10 @@ use hashbrown::HashMap;
 use itertools::Itertools;
 use regex::{Captures, Regex};
 
-use crate::task::Task;
+use crate::task::{Task, Tasks};
 use crate::{fuck, print};
 
-use std::io::{self, stdout, Read, Write};
-use std::slice::Iter;
+use std::io::{stdout, Read, Write};
 use std::{
     fs::File,
     path::{Path, PathBuf},
@@ -23,46 +21,6 @@ use serde::{Deserialize, Serialize};
 type Board<'a> = HashMap<String, usize>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Tasks {
-    pub tasks: Vec<Task>,
-}
-impl Tasks {
-    pub fn len(&self) -> usize {
-        self.tasks.len()
-    }
-    pub fn remove(&mut self, index: usize) {
-        self.tasks.remove(index);
-    }
-    pub fn push(&mut self, task: Task) {
-        self.tasks.push(task);
-    }
-    pub fn iter(&self) -> Iter<Task> {
-        self.tasks.iter()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.tasks.is_empty()
-    }
-
-    fn new() -> Tasks {
-        Tasks { tasks: Vec::new() }
-    }
-}
-
-impl IntoIterator for &Tasks {
-    type Item = Task;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.tasks.clone().into_iter()
-    }
-}
-
-impl PartialEq for Tasks {
-    fn eq(&self, other: &Self) -> bool {
-        self.tasks == other.tasks
-    }
-}
-
 pub struct Config {
     tasks: Tasks,
     old_tasks: Tasks,
@@ -95,7 +53,26 @@ impl Config {
             }
         }
 
-        //TODO sort tasks?
+        let mut path = dirs::config_dir().unwrap();
+
+        if !Path::new(&path).exists() {
+            std::fs::create_dir(&path).unwrap();
+        }
+
+        path.push("t");
+
+        if !Path::new(&path).exists() {
+            std::fs::create_dir(&path).unwrap();
+        }
+
+        if !Path::new(&file).exists() {
+            File::create(&file).unwrap();
+        }
+
+        if !Path::new(&old).exists() {
+            File::create(&old).unwrap();
+        }
+
         Config {
             tasks,
             old_tasks,
@@ -114,16 +91,32 @@ impl Config {
         let mut board_name = String::from("Tasks");
         let item: String;
 
-        if self.args.len() == 1 {
-            item = self.args[0..].join(" ");
-        } else if self.args[1].contains('!') {
-            board_name = self.args[1].replace('!', "");
-            item = self.args[2..].join(" ");
-        } else if self.args[0] == "a" {
-            item = self.args[1..].join(" ");
-        } else {
-            item = self.args[0..].join(" ");
+        dbg!(&self.args, &self.args.len());
+
+        let mut args = self.args.clone();
+
+        if args[0] == "a" {
+            args.remove(0);
         }
+        match args.len() {
+            2.. => {
+                if args[0].contains('!') {
+                    board_name = args[0].replace('!', "");
+                    item = args[1..].join(" ");
+                } else {
+                    item = args[0..].join(" ");
+                }
+            }
+            // !sus or task
+            1.. => {
+                if args[0].contains('!') {
+                    panic!("You forgot a task");
+                } else {
+                    item = args[0..].join(" ");
+                }
+            }
+            _ => panic!("wtf?"),
+        };
 
         self.tasks.push(Task {
             item,
@@ -218,14 +211,14 @@ impl Config {
         fuck!();
     }
 
-    pub fn print_tasks(&self) {
+    pub fn print_tasks(&mut self) {
         self.check_empty();
+        self.sort_tasks();
 
         //todo wtf is this?
         let mut board_completed = Board::new();
         let mut board_total = Board::new();
 
-        // let mut tasks_completed = self.tasks.iter().map(|task| task.checked).collect();
         let tasks_completed = 0;
         let now: DateTime<Utc> = Utc::now();
 
@@ -256,43 +249,45 @@ impl Config {
             board_total.insert(board.clone(), bt);
         }
 
-        //Remove the default board, we will print this last
-        board_list.retain(|x| x != "Tasks");
-
         let mut total_notes = 0;
         let mut index = 0;
 
-        // execute!(
-        //     stdout(),
-        //     Hide,
-        //     DisableBlinking,
-        //     MoveTo(0, 0),
-        //     Clear(ClearType::All)
-        // )
-        // .unwrap();
+        execute!(
+            stdout(),
+            Hide,
+            DisableBlinking,
+            MoveTo(0, 0),
+            Clear(ClearType::All)
+        )
+        .unwrap();
 
         //Print the header for the default board
-        print::header(
-            board_completed["Tasks"],
-            board_total["Tasks"],
-            &"Tasks".to_string(),
-        );
+        if board_list.contains(&"Tasks".to_string()) {
+            print::header(
+                board_completed["Tasks"],
+                board_total["Tasks"],
+                &"Tasks".to_string(),
+            );
 
-        //Print the default board
-        for task in &self.tasks {
-            if task.board_name == "Tasks" {
-                index += 1;
-                let day = (now - task.date).num_days();
-                if task.note {
-                    print::note(index, &task.item, self.total_tasks);
-                    total_notes += 1;
-                } else {
-                    print::task(index, task.checked, &task.item, day, board_total["Tasks"]);
+            //Print the default board
+            for task in &self.tasks {
+                if task.board_name == "Tasks" {
+                    index += 1;
+                    let day = (now - task.date).num_days();
+                    if task.note {
+                        print::note(index, &task.item, self.total_tasks);
+                        total_notes += 1;
+                    } else {
+                        print::task(index, task.checked, &task.item, day, board_total["Tasks"]);
+                    }
                 }
             }
+
+            println!();
         }
 
-        println!();
+        //Remove the default board, we will print this last
+        board_list.retain(|x| x != "Tasks");
 
         //Print all the custom boards
         for board in board_list {
@@ -335,17 +330,6 @@ impl Config {
     /// Helpers
     ///
 
-    fn append_toml(&self, file_name: PathBuf) {
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .append(true)
-            .open(file_name)
-            .unwrap();
-
-        let output = toml::to_string(&self.tasks).unwrap();
-        file.write_all(output.as_bytes()).unwrap();
-    }
-
     pub fn save(&self) {
         if Config::read(&self.file) != self.tasks {
             self.write(&self.file);
@@ -354,7 +338,7 @@ impl Config {
         }
     }
 
-    pub fn read(file_path: &PathBuf) -> Tasks {
+    fn read(file_path: &PathBuf) -> Tasks {
         let args: Vec<String> = std::env::args().skip(1).collect();
         let mut data = File::open(file_path).unwrap();
 
@@ -365,12 +349,12 @@ impl Config {
         if contents.is_empty() {
             if args.len() > 1 {
                 match &args[0] as &str {
-                    "h" | "--help" | "help" => return Tasks::new(),
-                    "a" => return Tasks::new(),
-                    _ => {
+                    "h" | "--help" | "help" | "a" | "n" => return Tasks::new(),
+                    "d" | "c" | "cls" | "o" | "b" => {
                         eprintln!("Can't do that");
                         fuck!();
                     }
+                    _ => return Tasks::new(),
                 }
             } else {
                 //User entered just 't'
@@ -381,7 +365,7 @@ impl Config {
         toml::from_str(&contents).unwrap()
     }
 
-    pub fn write(&self, file_path: &PathBuf) {
+    fn write(&self, file_path: &PathBuf) {
         let mut file = File::create(file_path).unwrap();
         let output = toml::to_string(&self.tasks).unwrap();
         file.write_all(output.as_bytes()).unwrap();
@@ -421,7 +405,7 @@ impl Config {
 
         //Only write to file if tasks need to be sorted
         if self.tasks != old_data {
-            // tasks::write_toml(Config::current(), &new_data);
+            self.write(&self.file);
         }
     }
 
@@ -469,36 +453,6 @@ impl Config {
         }
 
         return numbers;
-    }
-
-    fn check_files(&mut self) -> io::Result<()> {
-        let mut path = dirs::config_dir().unwrap();
-
-        //check if the config dir exists
-        if !Path::new(&path).exists() {
-            std::fs::create_dir(&path)?;
-        }
-
-        path.push("t");
-
-        //check if config/t exists
-        if !Path::new(&path).exists() {
-            std::fs::create_dir(&path)?;
-        }
-
-        //check if tasks.toml exists
-        if !Path::new(&self.file).exists() {
-            File::create(&self.file)?;
-        } else {
-            self.sort_tasks();
-        }
-
-        //check if old.toml exists
-        if !Path::new(&self.old).exists() {
-            File::create(&self.old)?;
-        }
-
-        Ok(())
     }
 
     fn check_empty(&self) {

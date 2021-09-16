@@ -39,13 +39,13 @@ fn arguments(args: Vec<String>) {
         }
     }
 
-    if arguments_missing(&args) {
-        return;
-    }
-
     match &args[0] as &str {
         "h" | "--help" | "help" => print::help(),
         _ => (),
+    }
+
+    if arguments_missing(&args) {
+        return;
     }
 
     let mut config = Config::new();
@@ -79,7 +79,7 @@ fn main() {
 
     match args.len() {
         0 => {
-            let config = Config::new();
+            let mut config = Config::new();
             config.print_tasks();
         }
         _ => arguments(args),
