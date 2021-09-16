@@ -11,7 +11,6 @@ pub struct Task {
     pub note: bool,
     #[serde(with = "date_format")]
     pub date: DateTime<Utc>,
-    pub id: usize,
 }
 impl PartialEq for Task {
     fn eq(&self, other: &Self) -> bool {
@@ -20,6 +19,5 @@ impl PartialEq for Task {
             && self.board_name == other.board_name
             && self.note == other.note
             && self.date == other.date
-            && self.id == other.id
     }
 }

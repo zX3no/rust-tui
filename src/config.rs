@@ -131,7 +131,6 @@ impl Config {
             board_name,
             note: false,
             date: Utc::now(),
-            id: self.gen_id(),
         });
     }
 
@@ -169,7 +168,6 @@ impl Config {
             board_name: "Tasks".to_string(),
             note: true,
             date: Utc::now(),
-            id: self.gen_id(),
         });
     }
 
@@ -325,11 +323,11 @@ impl Config {
     }
 
     pub fn print_old(&self) {
-        let now: DateTime<Utc> = Utc::now();
-
+        let mut id = 0;
         for task in &self.tasks {
-            let day = (now - task.date).num_days();
-            print::task(task.id + 1, task.checked, &task.item, day, self.total_tasks);
+            let day = (Utc::now() - task.date).num_days();
+            print::task(id, task.checked, &task.item, day, self.total_tasks);
+            id += 1;
         }
     }
 
@@ -357,6 +355,7 @@ impl Config {
     }
 
     pub fn read(file_path: &PathBuf) -> Tasks {
+        let args: Vec<String> = std::env::args().skip(1).collect();
         let mut data = File::open(file_path).unwrap();
 
         //Load contents into a string
@@ -364,8 +363,19 @@ impl Config {
         data.read_to_string(&mut contents).unwrap();
 
         if contents.is_empty() {
-            return Tasks::new();
-            //TODO
+            if args.len() > 1 {
+                match &args[0] as &str {
+                    "h" | "--help" | "help" => return Tasks::new(),
+                    "a" => return Tasks::new(),
+                    _ => {
+                        eprintln!("Can't do that");
+                        fuck!();
+                    }
+                }
+            } else {
+                //User entered just 't'
+                return Tasks::new();
+            }
         }
 
         toml::from_str(&contents).unwrap()
@@ -375,10 +385,6 @@ impl Config {
         let mut file = File::create(file_path).unwrap();
         let output = toml::to_string(&self.tasks).unwrap();
         file.write_all(output.as_bytes()).unwrap();
-    }
-
-    fn gen_id(&self) -> usize {
-        self.tasks.len()
     }
 
     fn sort_tasks(&mut self) {
