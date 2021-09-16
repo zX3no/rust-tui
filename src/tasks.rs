@@ -60,7 +60,7 @@ fn append_toml(file_name: PathBuf, data: &Data) {
     file.write_all(output.as_bytes()).unwrap();
 }
 
-fn get_numbers(args: &Vec<String>) -> Vec<usize> {
+fn get_numbers(args: &[String]) -> Vec<usize> {
     let mut numbers: Vec<usize> = Vec::new();
 
     let re = Regex::new(
@@ -109,21 +109,25 @@ fn get_numbers(args: &Vec<String>) -> Vec<usize> {
 pub fn add_task(args: Vec<String>) {
     let mut board_name = String::from("Tasks");
     let item: String;
-    let command = &args[1];
 
     let date: DateTime<Utc> = Utc::now();
+    if args.len() > 1 {
+        let command = &args[1];
 
-    //Get the board_name and task data
-    if command.contains('!') {
-        board_name = command.replace('!', "");
-        item = args[2..].join(" ");
+        if command.contains('!') {
+            board_name = command.replace('!', "");
+            item = args[2..].join(" ");
+        } else {
+            item = args[1..].join(" ");
+        }
+
+        let data = Data::from(item, false, board_name.as_str(), false, date);
+        dbg!(&data);
+
+        append_toml(Config::current(), &data);
     } else {
-        item = args[1..].join(" ");
+        let command = args[0].clone();
     }
-
-    let data = Data::from(item, false, board_name.as_str(), false, date);
-
-    append_toml(Config::current(), &data);
 }
 
 pub fn add_note(args: Vec<String>) {

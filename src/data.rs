@@ -1,3 +1,4 @@
+use std::iter::FromIterator;
 use std::{fs::File, io::Read};
 
 use crate::config::Config;
@@ -15,6 +16,7 @@ pub struct Task {
     pub note: bool,
     #[serde(with = "date_format")]
     pub date: DateTime<Utc>,
+    pub id: usize,
     //If there was an ID here it might make draining / maps possible
 }
 
@@ -29,6 +31,17 @@ pub struct Data {
     pub tasks: Vec<Task>,
 }
 
+impl FromIterator<Task> for Data {
+    fn from_iter<I: IntoIterator<Item = Task>>(iter: I) -> Data {
+        let mut data = Data::new();
+
+        for i in iter {
+            data.push(&i);
+        }
+        return data;
+    }
+}
+
 impl Data {
     pub fn new() -> Data {
         Data { tasks: Vec::new() }
@@ -41,6 +54,11 @@ impl Data {
         note: bool,
         date: DateTime<Utc>,
     ) -> Data {
+        //okay now this is dumb
+        let id = match Data::option() {
+            Some(id) => id.len(),
+            None => 0,
+        };
         Data {
             tasks: vec![Task {
                 item,
@@ -48,6 +66,7 @@ impl Data {
                 board_name: board_name.to_string(),
                 note,
                 date,
+                id,
             }],
         }
     }
