@@ -52,11 +52,13 @@ impl IntoIterator for &Tasks {
         self.tasks.clone().into_iter()
     }
 }
+
 impl PartialEq for Tasks {
     fn eq(&self, other: &Self) -> bool {
         self.tasks == other.tasks
     }
 }
+
 pub struct Config {
     tasks: Tasks,
     old_tasks: Tasks,
@@ -103,13 +105,13 @@ impl Config {
         let mut board_name = String::from("Tasks");
         let item: String;
 
-        let date: DateTime<Utc> = Utc::now();
-
         if self.args[1].contains('!') {
             board_name = self.args[1].replace('!', "");
             item = self.args[2..].join(" ");
-        } else {
+        } else if self.args[0] == "a" {
             item = self.args[1..].join(" ");
+        } else {
+            item = self.args[0..].join(" ");
         }
 
         self.tasks.push(Task {
@@ -117,7 +119,7 @@ impl Config {
             checked: false,
             board_name,
             note: false,
-            date,
+            date: Utc::now(),
             id: self.gen_id(),
         });
     }
