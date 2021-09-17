@@ -1,4 +1,3 @@
-// #![feature(drain_filter)]
 use config::Config;
 
 mod config;
@@ -8,23 +7,22 @@ mod task;
 
 #[macro_export]
 macro_rules! fuck {
-    () => {
-        quit::with_code(0);
-    };
+    () => (quit::with_code(0));
+    ($($arg:tt)*) => ({
+       eprintln!($($arg)*);
+       quit::with_code(0);
+    })
 }
 
-fn arguments_missing(args: &Vec<String>) -> bool {
+fn arguments_missing(args: &Vec<String>) {
     if args.len() == 1 {
         match &args[0] as &str {
             "a" | "d" | "n" | "c" => {
-                //TODO change this to print::missing_argument();
-                eprintln!("Missing arguments for '{}'", &args[0]);
-                return true;
+                fuck!("Missing arguments for '{}'", &args[0]);
             }
             _ => (),
         }
     }
-    return false;
 }
 
 fn arguments(args: Vec<String>) {
@@ -39,14 +37,14 @@ fn arguments(args: Vec<String>) {
         }
     }
 
+    println!();
+
     match &args[0] as &str {
         "h" | "--help" | "help" => print::help(),
         _ => (),
     }
 
-    if arguments_missing(&args) {
-        return;
-    }
+    arguments_missing(&args);
 
     let mut config = Config::new();
 

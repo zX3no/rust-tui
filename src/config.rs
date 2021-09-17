@@ -91,8 +91,6 @@ impl Config {
         let mut board_name = String::from("Tasks");
         let item: String;
 
-        dbg!(&self.args, &self.args.len());
-
         let mut args = self.args.clone();
 
         if args[0] == "a" || args[0] == "n" {
@@ -131,8 +129,7 @@ impl Config {
         let numbers = self.get_numbers();
 
         if numbers.is_empty() {
-            eprintln!("{} is not a valid number.", self.args[1]);
-            fuck!();
+            fuck!("{} is not a valid number.", self.args[1]);
         }
 
         //since we're deleting tasks the size will change
@@ -146,8 +143,7 @@ impl Config {
                 self.tasks.remove(id - indexes_removed);
                 indexes_removed += 1;
             } else if id != 0 {
-                eprintln!("'{}' is not a task!", id + 1);
-                fuck!();
+                fuck!("'{}' is not a task!", id + 1);
             }
         }
     }
@@ -156,14 +152,12 @@ impl Config {
         let numbers = self.get_numbers();
 
         if numbers.is_empty() && self.args.len() > 1 {
-            eprintln!("{} is not a valid number.", self.args[1]);
-            fuck!();
+            fuck!("{} is not a valid number.", self.args[1]);
         }
 
         for id in numbers {
             if id > self.tasks.len() || self.tasks.tasks[id].note {
-                eprintln!("'{}' is not a task!", id + 1);
-                fuck!();
+                fuck!("'{}' is not a task!", id + 1);
             }
 
             //todo can this be done better?
@@ -191,8 +185,7 @@ impl Config {
     pub fn backup(&self) {
         let file_path = dirs::config_dir().unwrap().join(r"t/backup.toml");
         self.write(&file_path);
-        println!("Tasks are backed up!");
-        fuck!();
+        fuck!("Tasks are backed up!");
     }
 
     pub fn print_tasks(&mut self) {
@@ -335,8 +328,7 @@ impl Config {
                 match &args[0] as &str {
                     "h" | "--help" | "help" | "a" | "n" => return Tasks::new(),
                     "d" | "c" | "cls" | "o" | "b" => {
-                        eprintln!("Can't do that");
-                        fuck!();
+                        fuck!("Can't do that");
                     }
                     _ => return Tasks::new(),
                 }
