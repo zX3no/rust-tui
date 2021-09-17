@@ -87,7 +87,7 @@ impl Config {
     /// Commands
     ///
 
-    pub fn add_task(&mut self) {
+    pub fn add_task(&mut self, note: bool) {
         let mut board_name = String::from("Tasks");
         let item: String;
 
@@ -95,9 +95,10 @@ impl Config {
 
         let mut args = self.args.clone();
 
-        if args[0] == "a" {
+        if args[0] == "a" || args[0] == "n" {
             args.remove(0);
         }
+
         match args.len() {
             2.. => {
                 if args[0].contains('!') {
@@ -107,7 +108,6 @@ impl Config {
                     item = args[0..].join(" ");
                 }
             }
-            // !sus or task
             1.. => {
                 if args[0].contains('!') {
                     panic!("You forgot a task");
@@ -122,11 +122,22 @@ impl Config {
             item,
             checked: false,
             board_name,
-            note: false,
+            note,
             date: Utc::now(),
         });
     }
 
+    // pub fn add_note(&mut self) {
+    //     let item = self.args[1..].join(" ");
+
+    //     self.tasks.push(Task {
+    //         item,
+    //         checked: false,
+    //         board_name: "Tasks".to_string(),
+    //         note: true,
+    //         date: Utc::now(),
+    //     });
+    // }
     pub fn delete_task(&mut self) {
         let numbers = self.get_numbers();
 
@@ -152,26 +163,11 @@ impl Config {
         }
     }
 
-    pub fn add_note(&mut self) {
-        let item = self.args[1..].join(" ");
-
-        self.tasks.push(Task {
-            item,
-            checked: false,
-            board_name: "Tasks".to_string(),
-            note: true,
-            date: Utc::now(),
-        });
-    }
-
     pub fn check_task(&mut self) {
         let numbers = self.get_numbers();
 
         if numbers.is_empty() && self.args.len() > 1 {
             eprintln!("{} is not a valid number.", self.args[1]);
-            fuck!();
-        } else if self.args.len() == 1 {
-            eprintln!("{} is not a valid number.", self.args[0]);
             fuck!();
         }
 

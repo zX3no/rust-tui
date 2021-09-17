@@ -51,10 +51,10 @@ fn arguments(args: Vec<String>) {
     let mut config = Config::new();
 
     match &args[0] as &str {
-        "a" => config.add_task(),
+        "a" => config.add_task(false),
         "d" => config.delete_task(),
         "c" => config.check_task(),
-        "n" => config.add_note(),
+        "n" => config.add_task(true),
         "cls" => config.clear_tasks(),
         "o" | "old" => config.print_old(),
         "b" | "backup" => config.backup(),
@@ -63,7 +63,7 @@ fn arguments(args: Vec<String>) {
             if numbers {
                 config.check_task();
             } else {
-                config.add_task();
+                config.add_task(false);
             }
         }
     };
