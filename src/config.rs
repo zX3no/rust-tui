@@ -127,17 +127,6 @@ impl Config {
         });
     }
 
-    // pub fn add_note(&mut self) {
-    //     let item = self.args[1..].join(" ");
-
-    //     self.tasks.push(Task {
-    //         item,
-    //         checked: false,
-    //         board_name: "Tasks".to_string(),
-    //         note: true,
-    //         date: Utc::now(),
-    //     });
-    // }
     pub fn delete_task(&mut self) {
         let numbers = self.get_numbers();
 
@@ -157,7 +146,7 @@ impl Config {
                 self.tasks.remove(id - indexes_removed);
                 indexes_removed += 1;
             } else if id != 0 {
-                eprintln!("'{}' is not a task!", id);
+                eprintln!("'{}' is not a task!", id + 1);
                 fuck!();
             }
         }
@@ -173,7 +162,7 @@ impl Config {
 
         for id in numbers {
             if id > self.tasks.len() || self.tasks.tasks[id].note {
-                eprintln!("'{}' is not a task!", id);
+                eprintln!("'{}' is not a task!", id + 1);
                 fuck!();
             }
 
@@ -184,7 +173,7 @@ impl Config {
 
     pub fn clear_tasks(&mut self) {
         //if tasks is checked remove it
-        let old: Vec<Task> = self
+        let mut old: Vec<Task> = self
             .tasks
             .iter()
             .filter_map(|task| match task.checked {
@@ -193,11 +182,10 @@ impl Config {
             })
             .collect();
 
-        self.tasks.tasks.drain_filter(|task| task.checked);
+        self.old_tasks.tasks.append(&mut old);
 
-        for task in old {
-            self.old_tasks.push(task);
-        }
+        self.tasks.tasks.retain(|task| !task.checked);
+        dbg!(&self.tasks);
     }
 
     pub fn backup(&self) {
