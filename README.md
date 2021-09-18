@@ -32,7 +32,7 @@ t h
         o                       Displays previously completed tasks
         d                       Deletes a task
         b                       Backup current tasks
-        dir                     Displays the config directory
+        dir                     Displays the config directories
         h                       Displays the help page
 
     Examples                     
@@ -51,7 +51,7 @@ t h
         t d 1                   Deletes task number 1
         t d 1-3                 Deletes task 1, 2 and 3
         t b                     Creates the file backup.toml in the config directory
-        t dir                   Displays \"C:\\Users\\UserName\\Appdata\\Roaming\\t\\task.toml\" on windows
+        t dir                   Displays the config directories 
         t h                     Displays the help page"
 
 ```
