@@ -296,12 +296,17 @@ impl Config {
     pub fn print_old(&self) {
         let mut id = 0;
         let total_tasks = self.old_tasks.len();
+        
+        if total_tasks == 0 {
+            fuck!("You have no old tasks!");
+        }
+        
         for task in &self.old_tasks {
             let day = (Utc::now() - task.date).num_days();
             print::task(id + 1, task.checked, &task.item, day, total_tasks);
             id += 1;
         }
-        panic!();
+        fuck!();
     }
 
     ///
@@ -318,7 +323,6 @@ impl Config {
     }
 
     fn read(file_path: &PathBuf) -> Tasks {
-        let args: Vec<String> = std::env::args().skip(1).collect();
         let mut data = File::open(file_path).unwrap();
 
         //Load contents into a string
