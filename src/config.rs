@@ -40,8 +40,8 @@ impl Config {
 
     //maybe the destructor should write to file ?
     pub fn new() -> Self {
-        let file = dirs::config_dir().unwrap().join(r"t/tasks.toml");
-        let old = dirs::config_dir().unwrap().join(r"t/old.toml");
+        let file = dirs::config_dir().unwrap().join(r"t\tasks.toml");
+        let old = dirs::config_dir().unwrap().join(r"t\old.toml");
 
         let tasks = Config::read(&file);
         let old_tasks = Config::read(&old);
@@ -306,6 +306,13 @@ impl Config {
             print::task(id + 1, task.checked, &task.item, day, total_tasks);
             id += 1;
         }
+        fuck!();
+    }
+
+    pub fn print_dir(&self) {
+        //TODO should this be pretty?
+        println!("{}", &self.file.as_path().to_string_lossy());
+        println!("{}", &self.old.as_path().to_string_lossy());
         fuck!();
     }
 

@@ -54,9 +54,9 @@ fn arguments(args: Vec<String>) {
         "c" => config.check_task(),
         "n" => config.add_task(true),
         "cls" => config.clear_tasks(),
+        "dir" => config.print_dir(),
         "o" | "old" => config.print_old(),
         "b" | "backup" => config.backup(),
-        "h" | "--help" | "help" => print::help(),
         _ => {
             if numbers {
                 config.check_task();
