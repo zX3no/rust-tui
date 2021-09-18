@@ -67,8 +67,6 @@ fn arguments(args: Vec<String>) {
     };
 
     config.print_tasks();
-
-    config.save();
 }
 
 #[quit::main]

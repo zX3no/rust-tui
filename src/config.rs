@@ -439,3 +439,10 @@ impl Config {
         }
     }
 }
+
+//Save to file after object is destroyed
+impl Drop for Config {
+    fn drop(&mut self) {
+        self.save();
+    }
+}
