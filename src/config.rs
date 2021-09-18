@@ -179,7 +179,6 @@ impl Config {
         self.old_tasks.tasks.append(&mut old);
 
         self.tasks.tasks.retain(|task| !task.checked);
-        dbg!(&self.tasks);
     }
 
     pub fn backup(&self) {
@@ -296,11 +295,13 @@ impl Config {
 
     pub fn print_old(&self) {
         let mut id = 0;
-        for task in &self.tasks {
+        let total_tasks = self.old_tasks.len();
+        for task in &self.old_tasks {
             let day = (Utc::now() - task.date).num_days();
-            print::task(id, task.checked, &task.item, day, self.total_tasks);
+            print::task(id + 1, task.checked, &task.item, day, total_tasks);
             id += 1;
         }
+        panic!();
     }
 
     ///
@@ -310,7 +311,8 @@ impl Config {
     pub fn save(&self) {
         if Config::read(&self.file) != self.tasks {
             self.write(&self.file);
-        } else if Config::read(&self.old) != self.old_tasks {
+        } 
+        if Config::read(&self.old) != self.old_tasks {
             self.write(&self.old);
         }
     }
@@ -324,18 +326,7 @@ impl Config {
         data.read_to_string(&mut contents).unwrap();
 
         if contents.is_empty() {
-            if args.len() > 1 {
-                match &args[0] as &str {
-                    "h" | "--help" | "help" | "a" | "n" => return Tasks::new(),
-                    "d" | "c" | "cls" | "o" | "b" => {
-                        fuck!("Can't do that");
-                    }
-                    _ => return Tasks::new(),
-                }
-            } else {
-                //User entered just 't'
-                return Tasks::new();
-            }
+            return Tasks::new();
         }
 
         toml::from_str(&contents).unwrap()
