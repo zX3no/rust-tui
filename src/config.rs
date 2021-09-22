@@ -108,7 +108,7 @@ impl Config {
             }
             1.. => {
                 if args[0].contains('!') {
-                    panic!("You forgot a task");
+                    fuck!("Missing task!");
                 } else {
                     item = args[0..].join(" ");
                 }
@@ -296,11 +296,11 @@ impl Config {
     pub fn print_old(&self) {
         let mut id = 0;
         let total_tasks = self.old_tasks.len();
-        
+
         if total_tasks == 0 {
             fuck!("You have no old tasks!");
         }
-        
+
         for task in &self.old_tasks {
             let day = (Utc::now() - task.date).num_days();
             print::task(id + 1, task.checked, &task.item, day, total_tasks);
@@ -323,7 +323,7 @@ impl Config {
     pub fn save(&self) {
         if Config::read(&self.file) != self.tasks {
             self.write(&self.file);
-        } 
+        }
         if Config::read(&self.old) != self.old_tasks {
             self.write(&self.old);
         }
