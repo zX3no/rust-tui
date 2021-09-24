@@ -33,6 +33,9 @@ fn arguments(args: Vec<String>) {
             if char.is_numeric() {
                 numbers = true;
                 continue;
+            } else if char != '-' {
+                numbers = false;
+                continue;
             }
         }
     }

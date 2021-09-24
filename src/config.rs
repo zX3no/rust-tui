@@ -228,14 +228,14 @@ impl Config {
         let mut total_notes = 0;
         let mut index = 0;
 
-        execute!(
-            stdout(),
-            Hide,
-            DisableBlinking,
-            MoveTo(0, 0),
-            Clear(ClearType::All)
-        )
-        .unwrap();
+        //execute!(
+        //    stdout(),
+        //    Hide,
+        //    DisableBlinking,
+        //    MoveTo(0, 0),
+        //    Clear(ClearType::All)
+        //)
+        //.unwrap();
 
         //Print the header for the default board
         if board_list.contains(&"Tasks".to_string()) {
