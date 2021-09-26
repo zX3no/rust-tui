@@ -1,3 +1,5 @@
+#![allow(unreachable_code)]
+
 use chrono::{DateTime, Utc};
 use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show};
 use crossterm::execute;
@@ -10,6 +12,7 @@ use regex::{Captures, Regex};
 use crate::task::{Task, Tasks};
 use crate::{fuck, print};
 
+use core::panic;
 use std::io::{stdout, Read, Write};
 use std::{
     fs::File,
@@ -45,6 +48,8 @@ impl Config {
 
         let tasks = Config::read(&file);
         let old_tasks = Config::read(&old);
+        // dbg!(&old_tasks);
+        // panic!();
 
         let mut total_tasks: usize = 0;
         for task in &tasks.tasks {
@@ -166,8 +171,8 @@ impl Config {
     }
 
     pub fn clear_tasks(&mut self) {
-        //if tasks is checked remove it
-        let mut old: Vec<Task> = self
+        //Get a list of all checked tasks
+        let old: Vec<Task> = self
             .tasks
             .iter()
             .filter_map(|task| match task.checked {
@@ -176,8 +181,12 @@ impl Config {
             })
             .collect();
 
-        self.old_tasks.tasks.append(&mut old);
+        //Add the checked tasks to the old tasks
+        for task in old {
+            self.old_tasks.tasks.push(task.clone());
+        }
 
+        //Delete the checked tasks
         self.tasks.tasks.retain(|task| !task.checked);
     }
 
@@ -228,14 +237,14 @@ impl Config {
         let mut total_notes = 0;
         let mut index = 0;
 
-        //execute!(
-        //    stdout(),
-        //    Hide,
-        //    DisableBlinking,
-        //    MoveTo(0, 0),
-        //    Clear(ClearType::All)
-        //)
-        //.unwrap();
+        execute!(
+            stdout(),
+            Hide,
+            DisableBlinking,
+            MoveTo(0, 0),
+            Clear(ClearType::All)
+        )
+        .unwrap();
 
         //Print the header for the default board
         if board_list.contains(&"Tasks".to_string()) {
@@ -301,11 +310,14 @@ impl Config {
             fuck!("You have no old tasks!");
         }
 
+        print::header(total_tasks, total_tasks, &"Tasks".to_string());
+
         for task in &self.old_tasks {
             let day = (Utc::now() - task.date).num_days();
             print::task(id + 1, task.checked, &task.item, day, total_tasks);
             id += 1;
         }
+        println!();
         fuck!();
     }
 
@@ -325,7 +337,9 @@ impl Config {
             self.write(&self.file);
         }
         if Config::read(&self.old) != self.old_tasks {
-            self.write(&self.old);
+            let mut file = File::create(&self.old).unwrap();
+            let output = toml::to_string(&self.old_tasks).unwrap();
+            file.write_all(output.as_bytes()).unwrap();
         }
     }
 
