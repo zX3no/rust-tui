@@ -70,7 +70,6 @@ fn arguments(args: Vec<String>) {
     config.print_tasks();
 }
 
-//This is a comment
 #[quit::main]
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();

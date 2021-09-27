@@ -37,19 +37,12 @@ pub struct Config {
 }
 
 impl Config {
-    ///
-    /// Construction
-    ///
-
-    //maybe the destructor should write to file ?
     pub fn new() -> Self {
         let file = dirs::config_dir().unwrap().join(r"t\tasks.toml");
         let old = dirs::config_dir().unwrap().join(r"t\old.toml");
 
         let tasks = Config::read(&file);
         let old_tasks = Config::read(&old);
-        // dbg!(&old_tasks);
-        // panic!();
 
         let mut total_tasks: usize = 0;
         for task in &tasks.tasks {
@@ -88,16 +81,13 @@ impl Config {
         }
     }
 
-    ///
-    /// Commands
-    ///
-
     pub fn add_task(&mut self, note: bool) {
         let mut board_name = String::from("Tasks");
         let item: String;
 
         let mut args = self.args.clone();
 
+        //Remove the add or note command
         if args[0] == "a" || args[0] == "n" {
             args.remove(0);
         }
@@ -105,20 +95,24 @@ impl Config {
         match args.len() {
             2.. => {
                 if args[0].contains('!') {
+                    //t !board 'task ...'
                     board_name = args[0].replace('!', "");
                     item = args[1..].join(" ");
                 } else {
+                    //t 'long task ...'
                     item = args[0..].join(" ");
                 }
             }
             1.. => {
                 if args[0].contains('!') {
+                    //t !board
                     fuck!("Missing task!");
                 } else {
+                    //t 'task'
                     item = args[0..].join(" ");
                 }
             }
-            _ => panic!("wtf?"),
+            _ => panic!("This should not have happened."),
         };
 
         self.tasks.push(Task {
@@ -204,7 +198,7 @@ impl Config {
         let mut board_completed = Board::new();
         let mut board_total = Board::new();
 
-        let tasks_completed = 0;
+        let total_tasks_completed = 0;
         let now: DateTime<Utc> = Utc::now();
 
         //Get a list of all boards
@@ -237,6 +231,8 @@ impl Config {
         let mut total_notes = 0;
         let mut index = 0;
 
+        //Clears the screen
+        #[cfg(not(debug_assertions))]
         execute!(
             stdout(),
             Hide,
@@ -297,7 +293,7 @@ impl Config {
             println!();
         }
 
-        print::footer(tasks_completed, self.total_tasks, total_notes);
+        print::footer(total_tasks_completed, self.total_tasks, total_notes);
 
         execute!(stdout(), Print("\n"), Show, EnableBlinking).unwrap();
     }
@@ -322,15 +318,10 @@ impl Config {
     }
 
     pub fn print_dir(&self) {
-        //TODO should this be pretty?
         println!("{}", &self.file.as_path().to_string_lossy());
         println!("{}", &self.old.as_path().to_string_lossy());
         fuck!();
     }
-
-    ///
-    /// Helpers
-    ///
 
     pub fn save(&self) {
         if Config::read(&self.file) != self.tasks {
@@ -404,6 +395,8 @@ impl Config {
     fn get_numbers(&mut self) -> Vec<usize> {
         let mut numbers: Vec<usize> = Vec::new();
 
+        //Match string: num-num
+        //2-10 or 45-79
         let re = Regex::new(
             r"(?x)
                 (?P<first>\d+)
