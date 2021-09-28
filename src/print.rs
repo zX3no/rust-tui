@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(unused_must_use)]
 use crossterm::{
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
@@ -35,8 +36,7 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &String) {
         Print(total_tasks),
         Print("]\n"),
         ResetColor
-    )
-    .unwrap();
+    );
 }
 
 pub fn note(id: usize, text: &String, total_tasks: usize) {
@@ -45,8 +45,7 @@ pub fn note(id: usize, text: &String, total_tasks: usize) {
         SetForegroundColor(Color::DarkGrey),
         Print("   "),
         Print(id)
-    )
-    .unwrap();
+    );
 
     let mut spacing: &str = "";
     if total_tasks < 10 {
@@ -71,9 +70,8 @@ pub fn note(id: usize, text: &String, total_tasks: usize) {
         Print(" •  "),
         ResetColor,
         Print(text),
-    )
-    .unwrap();
-    execute!(stdout(), Print("\n"),).unwrap();
+    );
+    execute!(stdout(), Print("\n"));
 }
 
 pub fn task(id: usize, checked: bool, text: &String, days: i64, total_tasks: usize) {
@@ -82,8 +80,7 @@ pub fn task(id: usize, checked: bool, text: &String, days: i64, total_tasks: usi
         SetForegroundColor(Color::DarkGrey),
         Print("   "),
         Print(id)
-    )
-    .unwrap();
+    );
     let mut spacing: &str = "";
     if checked {
         if total_tasks < 10 {
@@ -109,8 +106,7 @@ pub fn task(id: usize, checked: bool, text: &String, days: i64, total_tasks: usi
             SetForegroundColor(Color::DarkGrey),
             Print(text),
             ResetColor
-        )
-        .unwrap();
+        );
     } else {
         if total_tasks < 10 {
             spacing = ". ";
@@ -136,8 +132,7 @@ pub fn task(id: usize, checked: bool, text: &String, days: i64, total_tasks: usi
             Print(" "),
             Print(text),
             ResetColor
-        )
-        .unwrap();
+        );
         if days > 0 {
             execute!(
                 stdout(),
@@ -146,11 +141,10 @@ pub fn task(id: usize, checked: bool, text: &String, days: i64, total_tasks: usi
                 Print(days),
                 Print("d"),
                 ResetColor,
-            )
-            .unwrap();
+            );
         }
     }
-    execute!(stdout(), Print("\n")).unwrap();
+    execute!(stdout(), Print("\n"));
 }
 
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
@@ -162,8 +156,7 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
         Print(percent),
         Print("% of all tasks completed\n"),
         ResetColor,
-    )
-    .unwrap();
+    );
     execute!(
         stdout(),
         Print("  "),
@@ -180,8 +173,7 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
         SetForegroundColor(Color::DarkGrey),
         Print(" notes"),
         ResetColor,
-    )
-    .unwrap();
+    );
 }
 pub fn help() {
     println!(
