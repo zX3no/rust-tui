@@ -38,6 +38,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
+        Config::check_files().unwrap();
         let file = dirs::config_dir().unwrap().join(r"t\tasks.toml");
         let old = dirs::config_dir().unwrap().join(r"t\old.toml");
 
@@ -335,17 +336,17 @@ impl Config {
     }
 
     fn read(file_path: &PathBuf) -> Tasks {
-        let mut data = File::open(file_path).unwrap();
+        if let Ok(mut data) = File::open(file_path) {
+            let mut contents = String::new();
+            data.read_to_string(&mut contents).unwrap();
 
-        //Load contents into a string
-        let mut contents = String::new();
-        data.read_to_string(&mut contents).unwrap();
+            if contents.is_empty() {
+                return Tasks::new();
+            }
 
-        if contents.is_empty() {
-            return Tasks::new();
+            return toml::from_str(&contents).unwrap();
         }
-
-        toml::from_str(&contents).unwrap()
+        panic!("Could not read file {}", file_path.to_string_lossy());
     }
 
     fn write(&self, file_path: &PathBuf) {
@@ -446,6 +447,36 @@ impl Config {
             print::help_message();
             fuck!();
         }
+    }
+
+    pub fn check_files() -> std::io::Result<()> {
+        let mut path = dirs::config_dir().unwrap();
+        let file = dirs::config_dir().unwrap().join(r"t\tasks.toml");
+        let old = dirs::config_dir().unwrap().join(r"t\old.toml");
+
+        //check if the config dir exists
+        if !Path::new(&path).exists() {
+            std::fs::create_dir(&path)?;
+        }
+
+        path.push("t");
+
+        //check if config/t exists
+        if !Path::new(&path).exists() {
+            std::fs::create_dir(&path)?;
+        }
+
+        //check if tasks.toml exists
+        if !Path::new(&file).exists() {
+            File::create(&file)?;
+        }
+
+        //check if old.toml exists
+        if !Path::new(&old).exists() {
+            File::create(&old)?;
+        }
+
+        Ok(())
     }
 }
 
