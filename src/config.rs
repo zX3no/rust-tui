@@ -1,20 +1,20 @@
-#![allow(unreachable_code)]
 use crate::task::{Task, Tasks};
 use crate::{fuck, print};
 use chrono::{DateTime, Utc};
-use core::panic;
-use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show};
-use crossterm::execute;
-use crossterm::style::Print;
-use crossterm::terminal::{Clear, ClearType};
+use crossterm::{
+    cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
+    execute,
+    style::Print,
+    terminal::{Clear, ClearType},
+};
 use hashbrown::HashMap;
 use itertools::Itertools;
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
-use std::fs::{self, create_dir};
-use std::io::{stdout, Read, Write};
 use std::{
     fs::File,
+    fs::{self, create_dir},
+    io::{stdout, Write},
     path::{Path, PathBuf},
 };
 
@@ -284,6 +284,7 @@ impl Config {
 
         print::footer(total_tasks_completed, self.total_tasks, total_notes);
 
+        #[cfg(not(debug_assertions))]
         execute!(stdout(), Print("\n"), Show, EnableBlinking).unwrap();
     }
 
