@@ -324,7 +324,7 @@ impl Config {
         };
 
         if Config::deserialize(&path) != *data {
-            let mut file = File::create(&path.join(r"t\tasks.toml")).unwrap();
+            let mut file = File::create(&path).unwrap();
             let output = toml::to_string(&data).unwrap();
             file.write_all(output.as_bytes()).unwrap();
         }
