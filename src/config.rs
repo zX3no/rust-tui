@@ -1,6 +1,8 @@
 #![allow(unreachable_code)]
-
+use crate::task::{Task, Tasks};
+use crate::{fuck, print};
 use chrono::{DateTime, Utc};
+use core::panic;
 use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show};
 use crossterm::execute;
 use crossterm::style::Print;
@@ -8,20 +10,20 @@ use crossterm::terminal::{Clear, ClearType};
 use hashbrown::HashMap;
 use itertools::Itertools;
 use regex::{Captures, Regex};
-
-use crate::task::{Task, Tasks};
-use crate::{fuck, print};
-
-use core::panic;
+use serde::{Deserialize, Serialize};
+use std::fs::{self, create_dir};
 use std::io::{stdout, Read, Write};
 use std::{
     fs::File,
     path::{Path, PathBuf},
 };
 
-use serde::{Deserialize, Serialize};
-
 type Board<'a> = HashMap<String, usize>;
+
+pub enum ConfigFile {
+    Current,
+    Old,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -30,20 +32,30 @@ pub struct Config {
 
     total_tasks: usize,
 
-    file: PathBuf,
-    old: PathBuf,
-
     args: Vec<String>,
+}
+
+fn exists(paths: &[&PathBuf]) {
+    for path in paths {
+        if !Path::new(&path).exists() {
+            create_dir(&path).unwrap();
+        }
+    }
 }
 
 impl Config {
     pub fn new() -> Self {
-        Config::check_files().unwrap();
-        let file = dirs::config_dir().unwrap().join(r"t\tasks.toml");
-        let old = dirs::config_dir().unwrap().join(r"t\old.toml");
+        let path = dirs::config_dir().unwrap();
 
-        let tasks = Config::read(&file);
-        let old_tasks = Config::read(&old);
+        exists(&[
+            &path,
+            &path.join("t"),
+            &path.join(r"t\tasks.toml"),
+            &path.join(r"t\old.toml"),
+        ]);
+
+        let tasks = Config::deserialize(&path.join(r"t\tasks.toml"));
+        let old_tasks = Config::deserialize(&path.join(r"t\old.toml"));
 
         let mut total_tasks: usize = 0;
         for task in &tasks.tasks {
@@ -52,32 +64,10 @@ impl Config {
             }
         }
 
-        let mut path = dirs::config_dir().unwrap();
-
-        if !Path::new(&path).exists() {
-            std::fs::create_dir(&path).unwrap();
-        }
-
-        path.push("t");
-
-        if !Path::new(&path).exists() {
-            std::fs::create_dir(&path).unwrap();
-        }
-
-        if !Path::new(&file).exists() {
-            File::create(&file).unwrap();
-        }
-
-        if !Path::new(&old).exists() {
-            File::create(&old).unwrap();
-        }
-
         Config {
             tasks,
             old_tasks,
             total_tasks,
-            file,
-            old,
             args: std::env::args().skip(1).collect(),
         }
     }
@@ -186,8 +176,6 @@ impl Config {
     }
 
     pub fn backup(&self) {
-        let file_path = dirs::config_dir().unwrap().join(r"t/backup.toml");
-        self.write(&file_path);
         fuck!("Tasks are backed up!");
     }
 
@@ -319,44 +307,39 @@ impl Config {
     }
 
     pub fn print_dir(&self) {
-        println!("{}", &self.file.as_path().to_string_lossy());
-        println!("{}", &self.old.as_path().to_string_lossy());
+        let path = dirs::config_dir().unwrap();
+        println!(
+            "{}",
+            &path.join(r"t\tasks.toml").as_path().to_string_lossy()
+        );
+        println!("{}", &path.join(r"t\old.toml").as_path().to_string_lossy());
         fuck!();
     }
 
-    pub fn save(&self) {
-        if Config::read(&self.file) != self.tasks {
-            self.write(&self.file);
-        }
-        if Config::read(&self.old) != self.old_tasks {
-            let mut file = File::create(&self.old).unwrap();
-            let output = toml::to_string(&self.old_tasks).unwrap();
+    fn write(file: ConfigFile, data: &Tasks) {
+        let mut path = dirs::config_dir().unwrap();
+        match file {
+            ConfigFile::Current => path = path.join(r"t\tasks.toml"),
+            ConfigFile::Old => path = path.join(r"t\old.toml"),
+        };
+
+        if Config::deserialize(&path) != *data {
+            let mut file = File::create(&path.join(r"t\tasks.toml")).unwrap();
+            let output = toml::to_string(&data).unwrap();
             file.write_all(output.as_bytes()).unwrap();
         }
     }
 
-    fn read(file_path: &PathBuf) -> Tasks {
-        if let Ok(mut data) = File::open(file_path) {
-            let mut contents = String::new();
-            data.read_to_string(&mut contents).unwrap();
+    fn deserialize(file_path: &PathBuf) -> Tasks {
+        let data = fs::read_to_string(file_path).expect("Unable to read file.");
 
-            if contents.is_empty() {
-                return Tasks::new();
-            }
-
-            return toml::from_str(&contents).unwrap();
+        if data.is_empty() {
+            return Tasks::new();
         }
-        panic!("Could not read file {}", file_path.to_string_lossy());
-    }
-
-    fn write(&self, file_path: &PathBuf) {
-        let mut file = File::create(file_path).unwrap();
-        let output = toml::to_string(&self.tasks).unwrap();
-        file.write_all(output.as_bytes()).unwrap();
+        return toml::from_str(&data).unwrap();
     }
 
     fn sort_tasks(&mut self) {
-        let old_data = self.tasks.clone();
         //Get a list of all boards and remove the duplicates
         let mut board_list: Vec<String> = self
             .tasks
@@ -388,9 +371,7 @@ impl Config {
         self.tasks.tasks = sorted_tasks;
 
         //Only write to file if tasks need to be sorted
-        if self.tasks != old_data {
-            self.write(&self.file);
-        }
+        Config::write(ConfigFile::Current, &self.tasks)
     }
 
     fn get_numbers(&mut self) -> Vec<usize> {
@@ -443,46 +424,17 @@ impl Config {
 
     fn check_empty(&self) {
         if self.tasks.is_empty() {
-            File::create(&self.file).unwrap();
+            File::create(dirs::config_dir().unwrap().join(r"t\tasks.toml")).unwrap();
             print::help_message();
             fuck!();
         }
-    }
-
-    pub fn check_files() -> std::io::Result<()> {
-        let mut path = dirs::config_dir().unwrap();
-        let file = dirs::config_dir().unwrap().join(r"t\tasks.toml");
-        let old = dirs::config_dir().unwrap().join(r"t\old.toml");
-
-        //check if the config dir exists
-        if !Path::new(&path).exists() {
-            std::fs::create_dir(&path)?;
-        }
-
-        path.push("t");
-
-        //check if config/t exists
-        if !Path::new(&path).exists() {
-            std::fs::create_dir(&path)?;
-        }
-
-        //check if tasks.toml exists
-        if !Path::new(&file).exists() {
-            File::create(&file)?;
-        }
-
-        //check if old.toml exists
-        if !Path::new(&old).exists() {
-            File::create(&old)?;
-        }
-
-        Ok(())
     }
 }
 
 //Save to file after object is destroyed
 impl Drop for Config {
     fn drop(&mut self) {
-        self.save();
+        Config::write(ConfigFile::Current, &self.tasks);
+        Config::write(ConfigFile::Old, &self.old_tasks);
     }
 }
