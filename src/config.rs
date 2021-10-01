@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::task::{Task, Tasks};
 use crate::{fuck, print};
 use chrono::{DateTime, Utc};
