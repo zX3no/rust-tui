@@ -16,7 +16,6 @@ cargo install t-cli
 
 ```
 t h
-
     Usage
         t [<options> <args>] 
 
@@ -29,11 +28,11 @@ t h
         a                       Create a task
         n                       Create a note
         cls                     Clear checked tasks and archive them
-        o                       Displays previously completed tasks
+        o, old                  Displays previously completed tasks
         d                       Deletes a task
-        b                       Backup current tasks
+        b, backup               Backup current tasks
         dir                     Displays the config directories
-        h                       Displays the help page
+        h, help                 Displays the help page
 
     Examples                     
         t                       Displays tasks
@@ -46,14 +45,8 @@ t h
         t c 1                   Checks task 1
         t 1-3                   Checks task 1, 2 and 3
         t c 1-3                 Checks task 1, 2 and 3
-        t cls                   Clears all checked task
-        t o                     Displays previously completed tasks
         t d 1                   Deletes task number 1
         t d 1-3                 Deletes task 1, 2 and 3
-        t b                     Creates the file backup.toml in the config directory
-        t dir                   Displays the config directories 
-        t h                     Displays the help page"
-
 ```
 
 ### Config Directory:
