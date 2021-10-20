@@ -75,8 +75,6 @@ impl Config {
 
     pub fn add_task(&mut self, note: bool) {
         let mut board_name = String::from("Tasks");
-        let item: String;
-
         let mut args = self.args.clone();
 
         //Remove the add or note command
@@ -84,27 +82,25 @@ impl Config {
             args.remove(0);
         }
 
-        match args.len() {
-            2.. => {
-                if args[0].contains('!') {
-                    //t !board 'task ...'
-                    board_name = args[0].replace('!', "");
-                    item = args[1..].join(" ");
-                } else {
-                    //t 'long task ...'
-                    item = args[0..].join(" ");
-                }
+        let item = if args.len() >= 2 {
+            if args[0].contains('!') {
+                //t !board 'task ...'
+                board_name = args[0].replace('!', "");
+                args[1..].join(" ")
+            } else {
+                //t 'long task ...'
+                args[0..].join(" ")
             }
-            1.. => {
-                if args[0].contains('!') {
-                    //t !board
-                    fuck!("Missing task!");
-                } else {
-                    //t 'task'
-                    item = args[0..].join(" ");
-                }
+        } else if args.len() >= 1 {
+            if args[0].contains('!') {
+                //t !board
+                fuck!("Missing task!");
+            } else {
+                //t 'task'
+                args[0..].join(" ")
             }
-            _ => panic!("This should not have happened."),
+        } else {
+            fuck!("This should not have happend!");
         };
 
         self.tasks.push(Task {
