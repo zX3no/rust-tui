@@ -15,7 +15,7 @@ pub fn help_message() {
         Print(" Try adding one with:"),
         SetAttribute(Attribute::Italic),
         SetForegroundColor(Color::Cyan),
-        Print(" t 'this⠀is⠀a⠀task'"),
+        Print(" t 'this⠀is⠀a⠀task'\n"),
         ResetColor,
     )
     .unwrap()

@@ -50,7 +50,6 @@ fn exists(paths: &[&PathBuf]) {
     }
 }
 
-
 impl Config {
     pub fn new() -> Self {
         let path = dirs::config_dir().unwrap();
@@ -98,7 +97,7 @@ impl Config {
                 //t 'long task ...'
                 args[0..].join(" ")
             }
-        } else if args.len() >= 1 {
+        } else if !args.is_empty() {
             if args[0].contains('!') {
                 //t !board
                 fuck!("Missing task!");
