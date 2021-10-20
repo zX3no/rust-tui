@@ -39,10 +39,17 @@ pub struct Config {
 fn exists(paths: &[&PathBuf]) {
     for path in paths {
         if !Path::new(&path).exists() {
-            create_dir(&path).unwrap();
+            if let Some(ex) = path.extension() {
+                if ex == "toml" {
+                    File::create(path).unwrap();
+                }
+            } else {
+                create_dir(&path).unwrap();
+            }
         }
     }
 }
+
 
 impl Config {
     pub fn new() -> Self {
