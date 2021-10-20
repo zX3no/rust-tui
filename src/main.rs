@@ -14,7 +14,7 @@ macro_rules! fuck {
     })
 }
 
-fn arguments_missing(args: &Vec<String>) {
+fn arguments_missing(args: &[String]) {
     if args.len() == 1 {
         match &args[0] as &str {
             "a" | "d" | "n" | "c" => {
@@ -25,10 +25,10 @@ fn arguments_missing(args: &Vec<String>) {
     }
 }
 
-fn arguments(args: Vec<String>) {
+fn arguments(args: &[String]) {
     let mut numbers = false;
 
-    for num in &args {
+    for num in args {
         for char in num.chars() {
             if char.is_numeric() {
                 numbers = true;
@@ -45,7 +45,7 @@ fn arguments(args: Vec<String>) {
         _ => (),
     }
 
-    arguments_missing(&args);
+    arguments_missing(args);
 
     let mut config = Config::new();
 
@@ -79,6 +79,6 @@ fn main() {
             let mut config = Config::new();
             config.print_tasks();
         }
-        _ => arguments(args),
+        _ => arguments(&args),
     }
 }

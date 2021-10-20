@@ -290,7 +290,6 @@ impl Config {
     }
 
     pub fn print_old(&self) {
-        let mut id = 0;
         let total_tasks = self.old_tasks.len();
 
         if total_tasks == 0 {
@@ -299,11 +298,11 @@ impl Config {
 
         print::header(total_tasks, total_tasks, &"Tasks".to_string());
 
-        for task in &self.old_tasks {
+        for (id, task) in (&self.old_tasks).into_iter().enumerate() {
             let day = (Utc::now() - task.date).num_days();
             print::task(id + 1, task.checked, &task.item, day, total_tasks);
-            id += 1;
         }
+
         println!();
         fuck!();
     }
@@ -332,13 +331,13 @@ impl Config {
         }
     }
 
-    fn deserialize(file_path: &PathBuf) -> Tasks {
+    fn deserialize(file_path: &Path) -> Tasks {
         let data = fs::read_to_string(file_path).expect("Unable to read file.");
 
         if data.is_empty() {
             return Tasks::new();
         }
-        return toml::from_str(&data).unwrap();
+        toml::from_str(&data).unwrap()
     }
 
     fn sort_tasks(&mut self) {
@@ -421,7 +420,7 @@ impl Config {
             }
         }
 
-        return numbers;
+        numbers
     }
 
     fn check_empty(&self) {
