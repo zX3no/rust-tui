@@ -51,12 +51,12 @@ impl Config {
         exists(&[
             &path,
             &path.join("t"),
-            &path.join(r"t\tasks.toml"),
-            &path.join(r"t\old.toml"),
+            &path.join(r"t/tasks.toml"),
+            &path.join(r"t/old.toml"),
         ]);
 
-        let tasks = Config::deserialize(&path.join(r"t\tasks.toml"));
-        let old_tasks = Config::deserialize(&path.join(r"t\old.toml"));
+        let tasks = Config::deserialize(&path.join(r"t/tasks.toml"));
+        let old_tasks = Config::deserialize(&path.join(r"t/old.toml"));
 
         let mut total_tasks: usize = 0;
         for task in &tasks.tasks {
@@ -307,17 +307,17 @@ impl Config {
         let path = dirs::config_dir().unwrap();
         println!(
             "{}",
-            &path.join(r"t\tasks.toml").as_path().to_string_lossy()
+            &path.join(r"t/tasks.toml").as_path().to_string_lossy()
         );
-        println!("{}", &path.join(r"t\old.toml").as_path().to_string_lossy());
+        println!("{}", &path.join(r"t/old.toml").as_path().to_string_lossy());
         fuck!();
     }
 
     fn write(file: ConfigFile, data: &Tasks) {
         let mut path = dirs::config_dir().unwrap();
         match file {
-            ConfigFile::Current => path = path.join(r"t\tasks.toml"),
-            ConfigFile::Old => path = path.join(r"t\old.toml"),
+            ConfigFile::Current => path = path.join(r"t/tasks.toml"),
+            ConfigFile::Old => path = path.join(r"t/old.toml"),
         };
 
         if Config::deserialize(&path) != *data {
@@ -328,7 +328,7 @@ impl Config {
     }
 
     fn deserialize(file_path: &Path) -> Tasks {
-        let data = fs::read_to_string(file_path).expect("Unable to read file.");
+        let data = fs::read_to_string(file_path).expect("Unable to read file");
 
         if data.is_empty() {
             return Tasks::new();
@@ -421,7 +421,7 @@ impl Config {
 
     fn check_empty(&self) {
         if self.tasks.is_empty() {
-            File::create(dirs::config_dir().unwrap().join(r"t\tasks.toml")).unwrap();
+            File::create(dirs::config_dir().unwrap().join(r"t/tasks.toml")).unwrap();
             print::help_message();
             fuck!();
         }
