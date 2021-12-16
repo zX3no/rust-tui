@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
+use crate::print;
 use crate::task::{Task, Tasks};
-use crate::{fuck, print};
 use chrono::{DateTime, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking, Hide, MoveTo, Show},
@@ -100,13 +100,13 @@ impl Config {
         } else if !args.is_empty() {
             if args[0].contains('!') {
                 //t !board
-                fuck!("Missing task!");
+                panic!("Missing task!");
             } else {
                 //t 'task'
                 args[0..].join(" ")
             }
         } else {
-            fuck!("This should not have happend!");
+            panic!("This should not have happend!");
         };
 
         self.tasks.push(Task {
@@ -122,7 +122,7 @@ impl Config {
         let numbers = self.get_numbers();
 
         if numbers.is_empty() {
-            fuck!("{} is not a valid number.", self.args[1]);
+            panic!("{} is not a valid number.", self.args[1]);
         }
 
         //since we're deleting tasks the size will change
@@ -136,7 +136,7 @@ impl Config {
                 self.tasks.remove(id - indexes_removed);
                 indexes_removed += 1;
             } else if id != 0 {
-                fuck!("'{}' is not a task!", id + 1);
+                panic!("'{}' is not a task!", id + 1);
             }
         }
     }
@@ -145,12 +145,12 @@ impl Config {
         let numbers = self.get_numbers();
 
         if numbers.is_empty() && self.args.len() > 1 {
-            fuck!("{} is not a valid number.", self.args[1]);
+            panic!("{} is not a valid number.", self.args[1]);
         }
 
         for id in numbers {
             if id > self.tasks.len() || self.tasks.tasks[id].note {
-                fuck!("'{}' is not a task!", id + 1);
+                panic!("'{}' is not a task!", id + 1);
             }
 
             //todo can this be done better?
@@ -179,7 +179,7 @@ impl Config {
     }
 
     pub fn backup(&self) {
-        fuck!("Tasks are backed up!");
+        panic!("Tasks are backed up!");
     }
 
     pub fn print_tasks(&mut self) {
@@ -295,7 +295,7 @@ impl Config {
         let total_tasks = self.old_tasks.len();
 
         if total_tasks == 0 {
-            fuck!("You have no old tasks!");
+            panic!("You have no old tasks!");
         }
 
         print::header(total_tasks, total_tasks, &"Tasks".to_string());
@@ -306,7 +306,7 @@ impl Config {
         }
 
         println!();
-        fuck!();
+        panic!();
     }
 
     pub fn print_dir(&self) {
@@ -316,7 +316,7 @@ impl Config {
             &path.join(r"t/tasks.toml").as_path().to_string_lossy()
         );
         println!("{}", &path.join(r"t/old.toml").as_path().to_string_lossy());
-        fuck!();
+        panic!();
     }
 
     fn write(file: ConfigFile, data: &Tasks) {
@@ -429,7 +429,7 @@ impl Config {
         if self.tasks.is_empty() {
             File::create(dirs::config_dir().unwrap().join(r"t/tasks.toml")).unwrap();
             print::help_message();
-            fuck!();
+            panic!();
         }
     }
 }

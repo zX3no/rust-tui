@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use rusqlite::{params, Connection, Result};
 
@@ -22,20 +25,16 @@ impl Database {
     pub fn new() -> Self {
         let conn = Connection::open(DB_DIR.as_path()).unwrap();
 
+        conn.busy_timeout(Duration::from_millis(0)).unwrap();
+        conn.pragma_update(None, "journal_mode", "WAL").unwrap();
+        conn.pragma_update(None, "synchronous", "0").unwrap();
+        conn.pragma_update(None, "temp_store", "MEMORY").unwrap();
+
         conn.execute(
             "CREATE TABLE IF NOT EXISTS tasks(
                     content TEXT NOT NULL,
                     checked BOOL NOT NULL,
                     board TEXT NOT NULL,
-                    date TEXT NOT NULL
-                )",
-            [],
-        )
-        .unwrap();
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS old_tasks(
-                    content TEXT NOT NULL,
                     date TEXT NOT NULL
                 )",
             [],
@@ -52,11 +51,11 @@ impl Database {
         .unwrap();
         Self { conn }
     }
-    pub fn insert_task(&self, task: &str, board: Option<&str>) {
+    pub fn insert_task(&self, task: &str, board: Option<String>) {
         let board = if let Some(board) = board {
             board
         } else {
-            "Tasks"
+            String::from("Tasks")
         };
 
         self.conn
@@ -66,25 +65,34 @@ impl Database {
             )
             .unwrap();
     }
-    pub fn delete_task(&self, id: usize) {
+    pub fn insert_note(&self, note: &str) {
         self.conn
-            .execute("DELETE FROM tasks WHERE rowid = ?", [id])
+            .execute(
+                "INSERT INTO notes (content,date) VALUES (?1, datetime('now', 'localtime'))",
+                params![note],
+            )
             .unwrap();
     }
-
-    pub fn check_task(&self, id: usize) {
-        self.conn
-            .execute("UPDATE tasks SET checked = '1' WHERE rowid = ?", [id])
-            .unwrap();
+    pub fn delete_tasks(&self, ids: &[usize]) {
+        for id in ids {
+            self.conn
+                .execute("DELETE FROM tasks WHERE rowid = ?", [id])
+                .unwrap();
+        }
+    }
+    pub fn check_tasks(&self, ids: &[usize]) {
+        for id in ids {
+            self.conn
+                .execute(
+                    "UPDATE tasks SET checked = ((checked| 1) - (checked & 1)) WHERE rowid = ?",
+                    [id],
+                )
+                .unwrap();
+        }
     }
     pub fn clear_tasks(&self) -> Result<()> {
         let tasks = self.get_checked()?;
         for task in tasks {
-            self.conn.execute(
-                "INSERT INTO old_tasks (content, date) VALUES (?1, ?2)",
-                params![task.content, task.date],
-            )?;
-
             self.conn
                 .execute("DELETE FROM tasks WHERE rowid = ?", params![task.id])?;
         }
@@ -126,25 +134,13 @@ impl Database {
         .flatten()
         .collect()
     }
-    pub fn get_old_tasks(&self) -> Vec<(String, String)> {
-        let mut stmt = self.conn.prepare("SELECT * FROM old_tasks").unwrap();
-
-        stmt.query_map([], |row| {
-            let content = row.get(0).unwrap();
-            let date = row.get(1).unwrap();
-            Ok((content, date))
-        })
-        .unwrap()
-        .flatten()
-        .collect()
-    }
 }
 
 #[derive(Debug)]
 pub struct Task {
-    content: String,
-    checked: bool,
-    board: String,
-    date: String,
-    id: usize,
+    pub content: String,
+    pub checked: bool,
+    pub board: String,
+    pub date: String,
+    pub id: usize,
 }

@@ -5,8 +5,6 @@ use crossterm::{
 };
 use std::io::stdout;
 
-use crate::fuck;
-
 pub fn help_message() {
     execute!(
         stdout(),
@@ -210,5 +208,5 @@ Examples
     t d 1-3                 Deletes task 1, 2 and 3
     "
     );
-    fuck!();
+    panic!();
 }
