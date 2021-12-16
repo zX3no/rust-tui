@@ -1,5 +1,5 @@
 use database::Database;
-use regex::{Captures, Regex};
+use regex::Regex;
 
 #[macro_use]
 extern crate lazy_static;
@@ -16,7 +16,6 @@ mod task;
 
 fn get_numbers() -> Vec<usize> {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let mut numbers: Vec<usize> = Vec::new();
 
     //Match string: num-num
     //2-10 or 45-79
@@ -29,15 +28,16 @@ fn get_numbers() -> Vec<usize> {
     )
     .unwrap();
 
-    let mut caps: Option<Captures> = None;
-
-    if args.len() == 1 {
-        caps = re.captures(&args[0]);
+    let caps = if args.len() == 1 {
+        re.captures(&args[0])
     } else if args.len() >= 2 {
-        caps = re.captures(&args[1]);
-    }
+        re.captures(&args[1])
+    } else {
+        panic!("no arguments?");
+    };
 
     if let Some(caps) = caps {
+        //t 1-10
         let first = caps["first"].parse::<usize>().unwrap();
         let last = caps["last"].parse::<usize>().unwrap();
 
@@ -45,27 +45,20 @@ fn get_numbers() -> Vec<usize> {
             return Vec::new();
         }
 
-        for num in first - 1..last {
-            numbers.push(num);
-        }
-
-        return numbers;
+        (first..last + 1).collect()
+    } else {
+        //t 1 2 3 4
+        args.iter().flat_map(|arg| arg.parse::<usize>()).collect()
     }
-
-    for num in args {
-        if let Ok(num) = num.parse::<usize>() {
-            if num != 0 {
-                numbers.push(num);
-            }
-        }
-    }
-
-    numbers
 }
 
 fn print_tasks(db: &Database) {
     let tasks = db.get_tasks();
     let len = tasks.len();
+    if tasks.is_empty() {
+        print::help_message();
+        return;
+    }
     let checked = db.get_checked().unwrap().len();
     print::header(checked, len, "Tasks");
     for task in tasks {
