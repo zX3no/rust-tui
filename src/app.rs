@@ -1,5 +1,10 @@
+use std::io::stdout;
+
 use crate::database::{Database, Task};
 use crate::print;
+use crossterm::cursor::{DisableBlinking, Hide, MoveTo};
+use crossterm::execute;
+use crossterm::terminal::{Clear, ClearType};
 use regex::Regex;
 
 lazy_static! {
@@ -26,6 +31,15 @@ impl App {
         let other_boards = self.db.get_other_boards();
 
         let total_checked = self.db.total_checked();
+
+        execute!(
+            stdout(),
+            Hide,
+            DisableBlinking,
+            MoveTo(0, 0),
+            Clear(ClearType::All)
+        )
+        .unwrap();
 
         let mut prev_board = String::new();
         let mut print = |task: Task, i: usize| {

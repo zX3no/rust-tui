@@ -128,24 +128,6 @@ impl Database {
             .flatten()
             .collect())
     }
-    pub fn get_tasks(&self) -> Vec<Task> {
-        //TODO: sort tasks so deafult board is put at the top
-        let mut stmt = self.conn.prepare("SELECT *, rowid FROM tasks").unwrap();
-
-        stmt.query_map([], |row| {
-            Ok(Task {
-                content: row.get(0).unwrap(),
-                checked: row.get(1).unwrap(),
-                note: row.get(2).unwrap(),
-                board: row.get(3).unwrap(),
-                date: row.get(4).unwrap(),
-                id: row.get(5).unwrap(),
-            })
-        })
-        .unwrap()
-        .flatten()
-        .collect()
-    }
     pub fn get_default_board(&self) -> Vec<Task> {
         let mut stmt = self
             .conn
