@@ -34,6 +34,7 @@ impl Database {
             "CREATE TABLE IF NOT EXISTS tasks(
                     content TEXT NOT NULL,
                     checked BOOL NOT NULL,
+                    note BOOL NOT NULL,
                     board TEXT NOT NULL,
                     date TEXT NOT NULL
                 )",
@@ -60,16 +61,22 @@ impl Database {
 
         self.conn
             .execute(
-                "INSERT INTO tasks (content, checked, board, date) VALUES (?1, ?2, ?3, datetime('now', 'localtime'))",
-                params![task, false, board],
+                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'localtime'))",
+                params![task, false, false, board],
             )
             .unwrap();
     }
-    pub fn insert_note(&self, note: &str) {
+    pub fn insert_note(&self, note: &str, board: Option<String>) {
+        let board = if let Some(board) = board {
+            board
+        } else {
+            String::from("Tasks")
+        };
+
         self.conn
             .execute(
-                "INSERT INTO notes (content,date) VALUES (?1, datetime('now', 'localtime'))",
-                params![note],
+                "INSERT INTO tasks (content, checked, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'localtime'))",
+                params![note, false, true, board],
             )
             .unwrap();
     }
@@ -109,9 +116,10 @@ impl Database {
                 Ok(Task {
                     content: row.get(0)?,
                     checked: row.get(1)?,
-                    board: row.get(2)?,
-                    date: row.get(3)?,
-                    id: row.get(4)?,
+                    note: row.get(2)?,
+                    board: row.get(3)?,
+                    date: row.get(4)?,
+                    id: row.get(5)?,
                 })
             })
             .unwrap()
@@ -119,15 +127,17 @@ impl Database {
             .collect())
     }
     pub fn get_tasks(&self) -> Vec<Task> {
+        //TODO: sort tasks so deafult board is put at the top
         let mut stmt = self.conn.prepare("SELECT *, rowid FROM tasks").unwrap();
 
         stmt.query_map([], |row| {
             Ok(Task {
                 content: row.get(0).unwrap(),
                 checked: row.get(1).unwrap(),
-                board: row.get(2).unwrap(),
-                date: row.get(3).unwrap(),
-                id: row.get(4).unwrap(),
+                note: row.get(2).unwrap(),
+                board: row.get(3).unwrap(),
+                date: row.get(4).unwrap(),
+                id: row.get(5).unwrap(),
             })
         })
         .unwrap()
@@ -140,6 +150,7 @@ impl Database {
 pub struct Task {
     pub content: String,
     pub checked: bool,
+    pub note: bool,
     pub board: String,
     pub date: String,
     pub id: usize,

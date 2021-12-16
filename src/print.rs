@@ -36,7 +36,7 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     );
 }
 
-pub fn note(id: usize, text: &str, total_tasks: usize) {
+pub fn note(id: usize, text: &str, total_notes: usize) {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
@@ -45,9 +45,9 @@ pub fn note(id: usize, text: &str, total_tasks: usize) {
     );
 
     let mut spacing: &str = "";
-    if total_tasks < 10 {
+    if total_notes < 10 {
         spacing = ". ";
-    } else if total_tasks < 100 {
+    } else if total_notes < 100 {
         if id < 10 {
             spacing = ".  ";
         } else if id < 100 {
@@ -208,5 +208,4 @@ Examples
     t d 1-3                 Deletes task 1, 2 and 3
     "
     );
-    panic!();
 }
