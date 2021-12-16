@@ -1,4 +1,4 @@
-use crate::database::Database;
+use crate::database::{Database, Task};
 use crate::print;
 use regex::Regex;
 
@@ -16,34 +16,45 @@ impl App {
         }
     }
     pub fn print_tasks(&self) {
-        let tasks = self.db.get_tasks();
-        let checked = self.db.get_checked().unwrap().len();
-        let len = tasks.len();
-
-        if tasks.is_empty() {
+        let total_tasks = self.db.total_tasks();
+        if total_tasks == 0 {
             print::help_message();
             return;
         }
 
+        let default_board = self.db.get_default_board();
+        let other_boards = self.db.get_other_boards();
+
+        let total_checked = self.db.total_checked();
+
         let mut prev_board = String::new();
-        //TODO: date and notes
-        for task in tasks {
+        let mut print = |task: Task, i: usize| {
             if prev_board.is_empty() {
                 prev_board = task.board;
-                print::header(checked, len, &prev_board)
+                print::header(total_checked, total_tasks, &prev_board)
             } else if prev_board != task.board {
                 prev_board = task.board;
-                print::header(checked, len, &prev_board)
+                print::header(total_checked, total_tasks, &prev_board)
             }
 
             if task.note {
-                print::note(task.id, &task.content, len);
+                print::note(i, &task.content, total_tasks);
             } else {
-                print::task(task.id, task.checked, &task.content, 0, len);
+                print::task(i, task.checked, &task.content, 0, total_tasks);
             }
+        };
+        let mut i = 1;
+
+        for task in default_board {
+            print(task, i);
+            i += 1;
+        }
+        for task in other_boards {
+            print(task, i);
+            i += 1;
         }
 
-        print::footer(checked, len, 0);
+        print::footer(total_checked, total_tasks, 0);
     }
     fn ids() -> Vec<usize> {
         let args: Vec<String> = std::env::args().skip(1).collect();
