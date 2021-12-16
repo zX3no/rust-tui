@@ -35,7 +35,12 @@ impl App {
                 prev_board = task.board;
                 print::header(checked, len, &prev_board)
             }
-            print::task(task.id, task.checked, &task.content, 0, len);
+
+            if task.note {
+                print::note(task.id, &task.content, len);
+            } else {
+                print::task(task.id, task.checked, &task.content, 0, len);
+            }
         }
 
         print::footer(checked, len, 0);
@@ -77,9 +82,8 @@ impl App {
             args.iter().flat_map(|arg| arg.parse::<usize>()).collect()
         }
     }
-    pub fn add_task(&self, is_note: bool) {
-        let args: Vec<String> = std::env::args().skip(1).collect();
-
+    pub fn add_task(&self, is_note: bool, skip_command: bool) {
+        let args = if skip_command { &ARGS[1..] } else { &ARGS };
         let mut board_name = None;
         let item = if args.len() >= 2 {
             if args[0].contains('!') {
@@ -135,16 +139,16 @@ impl App {
                         print::help();
                         return;
                     }
-                    "a" => self.add_task(false),
+                    "a" => self.add_task(false, true),
                     "d" => self.db.delete_tasks(&App::ids()),
                     "c" => self.db.check_tasks(&App::ids()),
                     "cls" => self.db.clear_tasks().unwrap(),
-                    "n" => self.add_task(true),
+                    "n" => self.add_task(true, true),
                     _ => {
                         if numbers {
                             self.db.check_tasks(&App::ids());
                         } else {
-                            self.add_task(false);
+                            self.add_task(false, false);
                         }
                     }
                 };
