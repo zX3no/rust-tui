@@ -28,10 +28,7 @@ t h
         a                       Create a task
         n                       Create a note
         cls                     Clear checked tasks and archive them
-        o, old                  Displays previously completed tasks
         d                       Deletes a task
-        b, backup               Backup current tasks
-        dir                     Displays the config directories
         h, help                 Displays the help page
 
     Examples                     
