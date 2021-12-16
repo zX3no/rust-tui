@@ -1,6 +1,11 @@
 use config::Config;
+use database::Database;
+
+#[macro_use]
+extern crate lazy_static;
 
 mod config;
+mod database;
 mod date_format;
 mod print;
 mod task;
@@ -70,15 +75,29 @@ fn arguments(args: &[String]) {
     config.print_tasks();
 }
 
+//TODO:
+//remove fuck!()
+//change to sqlite database
+//refactor and simplify code
+//better argument handling
+
 #[quit::main]
 fn main() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    // let args: Vec<String> = std::env::args().skip(1).collect();
 
-    match args.len() {
-        0 => {
-            let mut config = Config::new();
-            config.print_tasks();
-        }
-        _ => arguments(&args),
-    }
+    let db = Database::new();
+    db.insert_task("this is a test task", None);
+    db.check_task(1);
+    db.clear_tasks().unwrap();
+    dbg!(db.get_tasks());
+    dbg!(db.get_old_tasks());
+    // db.delete_task(1);
+
+    // match args.len() {
+    //     0 => {
+    //         let mut config = Config::new();
+    //         config.print_tasks();
+    //     }
+    //     _ => arguments(&args),
+    // }
 }
