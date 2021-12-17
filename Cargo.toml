@@ -27,3 +27,4 @@ regex = "1.5.4"
 quit = "1.1.4"
 lazy_static = "1.4.0"
 rusqlite = { version = "0.26.3", features = ["bundled"] }
+tui = { version = "0.16.0", default-features = false, features = ['crossterm'] }

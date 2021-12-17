@@ -11,7 +11,7 @@ lazy_static! {
     static ref ARGS: Vec<String> = std::env::args().skip(1).collect();
 }
 pub struct App {
-    db: Database,
+    pub db: Database,
 }
 
 impl App {
