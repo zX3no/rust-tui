@@ -1,5 +1,5 @@
 use crate::database::Database;
-use crate::print;
+use crate::ui;
 use regex::Regex;
 
 lazy_static! {
@@ -20,29 +20,29 @@ impl App {
         let total_checked = self.db.total_checked();
 
         if total_tasks == 0 {
-            print::help_message();
+            ui::help_message();
             return;
         }
 
         let boards = self.db.get_boards();
 
-        print::clear();
+        ui::clear();
 
         let mut i = 1;
 
         for board in boards {
-            print::header(board.checked, board.total, &board.name);
+            ui::header(board.checked, board.total, &board.name);
             for task in board.tasks {
                 if task.note {
-                    print::note(i, &task.content, total_tasks);
+                    ui::note(i, &task.content, total_tasks);
                 } else {
-                    print::task(i, task.checked, &task.content, 0, total_tasks);
+                    ui::task(i, task.checked, &task.content, 0, total_tasks);
                 }
                 i += 1;
             }
         }
 
-        print::footer(total_checked, total_tasks, 0);
+        ui::footer(total_checked, total_tasks, 0);
     }
     fn ids() -> Vec<usize> {
         let args: Vec<String> = std::env::args().skip(1).collect();
@@ -135,7 +135,7 @@ impl App {
                 }
                 match ARGS[0].as_str() {
                     "h" | "--help" | "help" => {
-                        print::help();
+                        ui::help();
                         return;
                     }
                     "a" => self.add_task(false, true),

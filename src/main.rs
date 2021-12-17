@@ -5,7 +5,6 @@ extern crate lazy_static;
 
 mod app;
 mod database;
-mod print;
 mod ui;
 
 fn main() {

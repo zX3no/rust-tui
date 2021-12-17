@@ -100,73 +100,9 @@ impl Database {
         }
     }
     pub fn clear_tasks(&self) -> Result<()> {
-        let tasks = self.get_checked()?;
-        for task in tasks {
-            self.conn
-                .execute("DELETE FROM tasks WHERE rowid = ?", params![task.id])?;
-        }
+        self.conn
+            .execute("DELETE FROM tasks WHERE checked = '1'", [])?;
         Ok(())
-    }
-    pub fn get_checked(&self) -> Result<Vec<Task>> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT *, rowid FROM tasks WHERE checked = 1")
-            .unwrap();
-
-        Ok(stmt
-            .query_map([], |row| {
-                Ok(Task {
-                    content: row.get(0)?,
-                    checked: row.get(1)?,
-                    note: row.get(2)?,
-                    board: row.get(3)?,
-                    date: row.get(4)?,
-                    id: row.get(5)?,
-                })
-            })
-            .unwrap()
-            .flatten()
-            .collect())
-    }
-    pub fn get_default_board(&self) -> Vec<Task> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT *, rowid FROM tasks WHERE board = 'Tasks'")
-            .unwrap();
-
-        stmt.query_map([], |row| {
-            Ok(Task {
-                content: row.get(0).unwrap(),
-                checked: row.get(1).unwrap(),
-                note: row.get(2).unwrap(),
-                board: row.get(3).unwrap(),
-                date: row.get(4).unwrap(),
-                id: row.get(5).unwrap(),
-            })
-        })
-        .unwrap()
-        .flatten()
-        .collect()
-    }
-    pub fn get_other_boards(&self) -> Vec<Task> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT *, rowid FROM tasks WHERE board != 'Tasks' ORDER BY board ASC")
-            .unwrap();
-
-        stmt.query_map([], |row| {
-            Ok(Task {
-                content: row.get(0).unwrap(),
-                checked: row.get(1).unwrap(),
-                note: row.get(2).unwrap(),
-                board: row.get(3).unwrap(),
-                date: row.get(4).unwrap(),
-                id: row.get(5).unwrap(),
-            })
-        })
-        .unwrap()
-        .flatten()
-        .collect()
     }
     pub fn total_checked(&self) -> usize {
         let mut stmt = self
@@ -192,11 +128,14 @@ impl Database {
         }
     }
     pub fn get_real_ids(&self, ids: &[usize]) -> Vec<usize> {
-        let mut default = self.get_default_board();
-        let other = self.get_other_boards();
-        default.extend(other);
+        let mut stmt = self.conn.prepare("SELECT rowid FROM tasks").unwrap();
+        let real_ids: Vec<usize> = stmt
+            .query_map([], |row| Ok(row.get(0).unwrap()))
+            .unwrap()
+            .flatten()
+            .collect();
         ids.iter()
-            .map(|id| default.get(*id - 1).unwrap().id)
+            .map(|id| real_ids.get(*id - 1).unwrap().clone())
             .collect()
     }
     pub fn get_boards(&self) -> Vec<Board> {
@@ -253,7 +192,6 @@ impl Database {
     }
 }
 
-#[derive(Debug)]
 pub struct Task {
     pub content: String,
     pub checked: bool,
