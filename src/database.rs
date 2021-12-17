@@ -168,7 +168,6 @@ impl Database {
         .flatten()
         .collect()
     }
-
     pub fn total_checked(&self) -> usize {
         let mut stmt = self
             .conn
@@ -200,6 +199,58 @@ impl Database {
             .map(|id| default.get(*id - 1).unwrap().id)
             .collect()
     }
+    pub fn get_boards(&self) -> Vec<Board> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT DISTINCT board FROM tasks")
+            .unwrap();
+        let boards: Vec<String> = stmt
+            .query_map([], |row| Ok(row.get(0).unwrap()))
+            .unwrap()
+            .flatten()
+            .collect();
+
+        boards
+            .iter()
+            .map(|board| {
+                let mut stmt = self
+                    .conn
+                    .prepare(&format!(
+                        "SELECT *, rowid FROM tasks WHERE board = '{}'",
+                        board
+                    ))
+                    .unwrap();
+
+                let mut total_checked: usize = 0;
+
+                let tasks: Vec<Task> = stmt
+                    .query_map([], |row| {
+                        let checked = row.get(1).unwrap();
+                        if checked {
+                            total_checked += 1;
+                        }
+                        Ok(Task {
+                            content: row.get(0).unwrap(),
+                            checked,
+                            note: row.get(2).unwrap(),
+                            board: row.get(3).unwrap(),
+                            date: row.get(4).unwrap(),
+                            id: row.get(5).unwrap(),
+                        })
+                    })
+                    .unwrap()
+                    .flatten()
+                    .collect();
+
+                Board {
+                    name: board.clone(),
+                    total: tasks.len(),
+                    tasks,
+                    checked: total_checked,
+                }
+            })
+            .collect()
+    }
 }
 
 #[derive(Debug)]
@@ -210,4 +261,11 @@ pub struct Task {
     pub board: String,
     pub date: String,
     pub id: usize,
+}
+
+pub struct Board {
+    pub name: String,
+    pub tasks: Vec<Task>,
+    pub total: usize,
+    pub checked: usize,
 }

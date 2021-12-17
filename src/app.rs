@@ -1,10 +1,5 @@
-use std::io::stdout;
-
-use crate::database::{Database, Task};
+use crate::database::Database;
 use crate::print;
-use crossterm::cursor::{DisableBlinking, Hide, MoveTo};
-use crossterm::execute;
-use crossterm::terminal::{Clear, ClearType};
 use regex::Regex;
 
 lazy_static! {
@@ -22,50 +17,29 @@ impl App {
     }
     pub fn print_tasks(&self) {
         let total_tasks = self.db.total_tasks();
+        let total_checked = self.db.total_checked();
+
         if total_tasks == 0 {
             print::help_message();
             return;
         }
 
-        let default_board = self.db.get_default_board();
-        let other_boards = self.db.get_other_boards();
+        let boards = self.db.get_boards();
 
-        let total_checked = self.db.total_checked();
+        print::clear();
 
-        execute!(
-            stdout(),
-            Hide,
-            DisableBlinking,
-            MoveTo(0, 0),
-            Clear(ClearType::All)
-        )
-        .unwrap();
-
-        let mut prev_board = String::new();
-        let mut print = |task: Task, i: usize| {
-            if prev_board.is_empty() {
-                prev_board = task.board;
-                print::header(total_checked, total_tasks, &prev_board)
-            } else if prev_board != task.board {
-                prev_board = task.board;
-                print::header(total_checked, total_tasks, &prev_board)
-            }
-
-            if task.note {
-                print::note(i, &task.content, total_tasks);
-            } else {
-                print::task(i, task.checked, &task.content, 0, total_tasks);
-            }
-        };
         let mut i = 1;
 
-        for task in default_board {
-            print(task, i);
-            i += 1;
-        }
-        for task in other_boards {
-            print(task, i);
-            i += 1;
+        for board in boards {
+            print::header(board.checked, board.total, &board.name);
+            for task in board.tasks {
+                if task.note {
+                    print::note(i, &task.content, total_tasks);
+                } else {
+                    print::task(i, task.checked, &task.content, 0, total_tasks);
+                }
+                i += 1;
+            }
         }
 
         print::footer(total_checked, total_tasks, 0);

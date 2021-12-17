@@ -1,9 +1,22 @@
 #![allow(unused_must_use)]
 use crossterm::{
+    cursor::{DisableBlinking, Hide, MoveTo},
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
+    terminal::{Clear, ClearType},
 };
 use std::io::stdout;
+
+pub fn clear() {
+    execute!(
+        stdout(),
+        Hide,
+        DisableBlinking,
+        MoveTo(0, 0),
+        Clear(ClearType::All)
+    )
+    .unwrap();
+}
 
 pub fn help_message() {
     execute!(

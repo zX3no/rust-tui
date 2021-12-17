@@ -1,8 +1,8 @@
 use tui::{
     backend::Backend,
-    layout::{Alignment, Rect},
+    layout::Alignment,
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Span, Spans, Text},
     widgets::{Paragraph, Wrap},
     Frame,
 };
@@ -21,72 +21,77 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
     let mut default_board = db.get_default_board();
     let other_boards = db.get_other_boards();
 
+    //TODO:
+    // let tasks = db.get_tasks();
+
     let total_checked = db.total_checked();
 
-    let mut prev_board = String::new();
-    // let mut print = |task: Task, i: usize| {
-    //     if prev_board.is_empty() {
-    //         prev_board = task.board;
-    //         print::header(total_checked, total_tasks, &prev_board)
-    //     } else if prev_board != task.board {
-    //         prev_board = task.board;
-    //         print::header(total_checked, total_tasks, &prev_board)
-    //     }
-
-    //     if task.note {
-    //         print::note(i, &task.content, total_tasks);
-    //     } else {
-    //         print::task(i, task.checked, &task.content, 0, total_tasks);
-    //     }
-    // };
     default_board.extend(other_boards);
+
+    let size = f.size();
+    let mut buffer = Vec::new();
     let mut i = 1;
 
-    let mut out = Vec::new();
-    for task in default_board {
-        if prev_board.is_empty() {
-            prev_board = task.board.clone();
-            out.push(Spans::from(vec![
-                Span::styled(
-                    format!("{}.", task.board.clone()),
-                    Style::default().add_modifier(Modifier::UNDERLINED),
-                ),
-                Span::styled(" [1/3]", Style::default().fg(Color::DarkGray)),
-            ]));
-        } else if prev_board != task.board {
-            prev_board = task.board.clone();
-            out.push(Spans::from(vec![
-                Span::styled(
-                    format!("{}.", task.board.clone()),
-                    Style::default().add_modifier(Modifier::UNDERLINED),
-                ),
-                Span::styled(" [1/3]", Style::default().fg(Color::DarkGray)),
-            ]));
-        };
-        if task.note {
-            out.push(Spans::from(vec![
-                Span::styled(format!("{}.", i), Style::default().fg(Color::DarkGray)),
-                Span::styled("*", Style::default().fg(Color::Magenta)),
-                Span::raw(task.content.clone()),
-            ]));
-        } else {
-            if task.checked {
-                out.push(Spans::from(vec![
-                    Span::styled(format!("{}.", i), Style::default().fg(Color::DarkGray)),
-                    Span::styled("  [√] ", Style::default().fg(Color::Magenta)),
-                    Span::raw(task.content.clone()),
-                    // Span::styled(" 75d", Style::default().fg(Color::DarkGray)),
-                ]));
-            } else {
-                out.push(Spans::from(vec![
-                    Span::styled(format!("{}.", i), Style::default().fg(Color::DarkGray)),
-                    Span::styled("  [ ] ", Style::default().fg(Color::Magenta)),
-                    Span::raw(task.content.clone()),
-                ]));
-            }
-        }
+    let boards = db.get_boards();
 
-        i += 1;
+    for board in boards {
+        let header = Spans::from(vec![
+            Span::raw("ㅤ"),
+            Span::styled(
+                format!("{}:", board.name),
+                Style::default().add_modifier(Modifier::UNDERLINED),
+            ),
+            Span::styled(
+                format!(" [{}/{}]", total_checked, total_tasks),
+                Style::default().fg(Color::DarkGray),
+            ),
+        ]);
+
+        buffer.push(header);
+
+        let tasks: Vec<_> = board
+            .tasks
+            .iter()
+            .map(|task| {
+                //weird work around for incrimenting count
+                i += 1;
+                if task.note {
+                    Spans::from(vec![
+                        Span::raw("ㅤㅤ"),
+                        Span::styled(format!("{}.", i - 1), Style::default().fg(Color::DarkGray)),
+                        Span::styled("*", Style::default().fg(Color::Magenta)),
+                        Span::raw(task.content.clone()),
+                        Span::styled(" 75d", Style::default().fg(Color::DarkGray)),
+                    ])
+                } else {
+                    if task.checked {
+                        Spans::from(vec![
+                            Span::raw("ㅤㅤ"),
+                            Span::styled(
+                                format!("{}.", i - 1),
+                                Style::default().fg(Color::DarkGray),
+                            ),
+                            Span::styled("  [√] ", Style::default().fg(Color::Magenta)),
+                            Span::raw(task.content.clone()),
+                            Span::styled(" 75d", Style::default().fg(Color::DarkGray)),
+                        ])
+                    } else {
+                        Spans::from(vec![
+                            Span::raw("ㅤㅤ"),
+                            Span::styled(
+                                format!("{}.", i - 1),
+                                Style::default().fg(Color::DarkGray),
+                            ),
+                            Span::styled("  [ ] ", Style::default().fg(Color::Magenta)),
+                            Span::raw(task.content.clone()),
+                            Span::styled(" 75d", Style::default().fg(Color::DarkGray)),
+                        ])
+                    }
+                }
+            })
+            .collect();
+
+        buffer.extend(tasks);
     }
 
     let footer = vec![
@@ -104,15 +109,11 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
         ]),
     ];
 
-    let task = Paragraph::new(out)
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true });
-    let footer = Paragraph::new(footer)
+    buffer.extend(footer);
+
+    let buffer = Paragraph::new(buffer)
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true });
 
-    let size = f.size();
-    f.render_widget(task, size);
-    // f.render_widget(task, Rect::new(3, 1, size.width - 3, size.height - 1));
-    // f.render_widget(footer, Rect::new(1, 3, size.width - 1, size.height - 3));
+    f.render_widget(buffer, size);
 }
