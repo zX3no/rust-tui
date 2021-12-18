@@ -27,7 +27,7 @@ impl App {
 
         let boards = self.db.get_boards();
 
-        ui::clear();
+        // ui::clear();
 
         let mut i = 1;
 

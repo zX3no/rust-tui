@@ -7,6 +7,7 @@ use crossterm::{
 };
 use std::io::stdout;
 
+#[allow(dead_code)]
 pub fn clear() {
     execute!(
         stdout(),

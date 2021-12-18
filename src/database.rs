@@ -81,6 +81,7 @@ impl Database {
     }
     pub fn delete_tasks(&self, ids: &[usize]) {
         let ids = self.get_real_ids(ids);
+
         for id in ids {
             self.conn
                 .execute("DELETE FROM tasks WHERE rowid = ?", [id])
@@ -127,12 +128,13 @@ impl Database {
         }
     }
     pub fn get_real_ids(&self, ids: &[usize]) -> Vec<usize> {
-        let mut stmt = self.conn.prepare("SELECT rowid FROM tasks").unwrap();
-        let real_ids: Vec<usize> = stmt
-            .query_map([], |row| Ok(row.get(0).unwrap()))
-            .unwrap()
-            .flatten()
-            .collect();
+        let boards = self.get_boards();
+        let mut real_ids = Vec::new();
+        for board in boards {
+            for task in board.tasks {
+                real_ids.push(task.id);
+            }
+        }
         ids.iter()
             .map(|id| real_ids.get(*id - 1).unwrap().clone())
             .collect()
