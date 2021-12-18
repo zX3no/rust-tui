@@ -1,5 +1,6 @@
 use crate::database::Database;
 use crate::ui;
+use chrono::{TimeZone, Utc};
 use regex::Regex;
 
 lazy_static! {
@@ -36,7 +37,11 @@ impl App {
                 if task.note {
                     ui::note(i, &task.content, total_tasks);
                 } else {
-                    ui::task(i, task.checked, &task.content, 0, total_tasks);
+                    let date = Utc
+                        .datetime_from_str(&task.date, "%Y-%m-%d %H:%M:%S")
+                        .unwrap();
+                    let days = (Utc::now() - date).num_days();
+                    ui::task(i, task.checked, &task.content, days, total_tasks);
                 }
                 i += 1;
             }

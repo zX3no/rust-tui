@@ -61,7 +61,7 @@ impl Database {
 
         self.conn
             .execute(
-                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'localtime'))",
+                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'utc'))",
                 params![task, false, false, board],
             )
             .unwrap();
@@ -75,7 +75,7 @@ impl Database {
 
         self.conn
             .execute(
-                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'localtime'))",
+                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'utc'))",
                 params![note, false, true, board],
             )
             .unwrap();
