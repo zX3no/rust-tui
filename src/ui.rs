@@ -176,7 +176,7 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
         SetForegroundColor(Color::Blue),
         Print(total_notes),
         SetForegroundColor(Color::DarkGrey),
-        Print(" notes"),
+        Print(" notes\n"),
         ResetColor,
     );
 }
