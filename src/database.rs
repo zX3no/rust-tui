@@ -6,15 +6,14 @@ use std::{
 use rusqlite::{params, Connection, Result};
 
 lazy_static! {
-    static ref CONFIG_DIR: PathBuf = {
+    static ref DB_DIR: PathBuf = {
         let config_dir = dirs::config_dir().unwrap().join("t");
 
         if !Path::new(config_dir.as_path()).exists() {
             std::fs::create_dir(config_dir.as_path()).unwrap();
         }
-        config_dir
+        config_dir.join("t.db")
     };
-    static ref DB_DIR: PathBuf = dirs::config_dir().unwrap().join("t\\t.db");
 }
 
 pub struct Database {
