@@ -136,7 +136,8 @@ impl Database {
             }
         }
         ids.iter()
-            .map(|id| real_ids.get(*id - 1).unwrap().clone())
+            .flat_map(|id| real_ids.get(*id - 1))
+            .cloned()
             .collect()
     }
     pub fn get_boards(&self) -> Vec<Board> {

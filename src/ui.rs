@@ -162,7 +162,7 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     execute!(
         stdout(),
         SetForegroundColor(Color::DarkGrey),
-        Print("\n  "),
+        Print("  "),
         Print(percent),
         Print("% of all tasks completed\n  "),
         SetForegroundColor(Color::Green),
@@ -213,4 +213,8 @@ Examples
     t d 1-3                 Deletes task 1, 2 and 3
     "
     );
+}
+
+pub fn new_line() {
+    execute!(stdout(), Print("\n"));
 }

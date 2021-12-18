@@ -27,7 +27,7 @@ impl App {
 
         let boards = self.db.get_boards();
 
-        // ui::clear();
+        ui::clear();
 
         let mut i = 1;
 
@@ -45,6 +45,7 @@ impl App {
                 }
                 i += 1;
             }
+            ui::new_line();
         }
 
         ui::footer(total_checked, total_tasks, 0);
@@ -139,8 +140,12 @@ impl App {
                     }
                 }
                 match ARGS[0].as_str() {
-                    "h" | "--help" | "help" => {
+                    "h" | "help" | "--help" => {
                         ui::help();
+                        return;
+                    }
+                    "v" | "version" | "--version" => {
+                        println!("t {}", env!("CARGO_PKG_VERSION"));
                         return;
                     }
                     "a" => self.add_task(false, true),
