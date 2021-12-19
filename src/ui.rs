@@ -192,8 +192,9 @@ Options
 
     n                       Add a note
     d                       Delete a task
-    cls                     Delete checked tasks
+    cls                     Delete all checked tasks
     h, help                 Displays the help page
+    v                       Displays version
 
 Examples                     
     t                       Displays tasks
@@ -205,7 +206,6 @@ Examples
     t n !TODO example task  Create a note in a board called 'TODO'        
     t d 1                   Deletes task 1
     t d 1-3                 Deletes task 1, 2 and 3
-    t cls                   Deletes all checked tasks
     "
     );
 }
