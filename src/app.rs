@@ -82,6 +82,9 @@ impl App {
     fn add(&self, is_note: bool) {
         let args = if is_note { &ARGS[1..] } else { &ARGS };
         let mut board_name = None;
+        if args.is_empty() {
+            panic!("args are empty?");
+        }
 
         let item = if args.len() >= 2 {
             if args[0].contains('!') {
@@ -92,16 +95,21 @@ impl App {
                 //t 'long task ...'
                 args[0..].join(" ")
             }
-        } else if !args.is_empty() {
-            if args[0].contains('!') {
-                //t !board
+        } else if args[0].contains('!') {
+            let split = args[0].split(" ").clone();
+            let strs = split.collect::<Vec<&str>>();
+
+            //t '!board'
+            if strs.len() == 1 {
                 panic!("Missing task!");
             } else {
-                //t 'task'
-                args[0..].join(" ")
+                //t '!board task ...'
+                board_name = Some(strs[0].replace('!', ""));
+                strs[1..].join(" ")
             }
         } else {
-            panic!("This should not have happend!");
+            //t 'task'
+            args[0..].join(" ")
         };
 
         if is_note {
