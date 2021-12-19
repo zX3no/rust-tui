@@ -60,7 +60,7 @@ impl App {
                 args.remove(0);
             }
         }
-        if let Some(_) = re.captures(&args) {
+        if re.captures(&args).is_some() {
             return Some(ARGS.iter().flat_map(|arg| arg.parse::<usize>()).collect());
         }
 
@@ -79,9 +79,10 @@ impl App {
         }
         None
     }
-    fn add(&self, is_note: bool, skip_command: bool) {
-        let args = if skip_command { &ARGS[1..] } else { &ARGS };
+    fn add(&self, is_note: bool) {
+        let args = if is_note { &ARGS[1..] } else { &ARGS };
         let mut board_name = None;
+
         let item = if args.len() >= 2 {
             if args[0].contains('!') {
                 //t !board 'task ...'
@@ -108,12 +109,6 @@ impl App {
         } else {
             self.db.insert_task(&item, board_name);
         }
-    }
-    fn add_task(&self) {
-        self.add(false, false)
-    }
-    fn add_note(&self) {
-        self.add(true, true);
     }
     pub fn parse_args(&self) {
         match ARGS.len() {
@@ -142,12 +137,12 @@ impl App {
                         }
                     }
                     "cls" => self.db.clear_tasks().unwrap(),
-                    "n" => self.add_note(),
+                    "n" => self.add(true),
                     _ => {
                         if let Some(ids) = App::ids() {
                             self.db.check_tasks(&ids);
                         } else {
-                            self.add_task();
+                            self.add(false);
                         }
                     }
                 };
