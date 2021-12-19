@@ -215,6 +215,7 @@ pub fn missing_command(args: &str) {
         stdout(),
         Print("Missing command for: "),
         SetForegroundColor(Color::Cyan),
-        Print(format!("'{}'\n", args))
+        Print(format!("'{}'\n", args)),
+        ResetColor
     );
 }
