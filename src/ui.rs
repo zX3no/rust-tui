@@ -45,7 +45,15 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
         ResetColor
     );
 }
-
+pub fn old_header() {
+    execute!(
+        stdout(),
+        Print(" "),
+        SetAttribute(Attribute::Underlined),
+        Print("Tasks:\n"),
+        ResetColor
+    );
+}
 pub fn note(id: usize, text: &str, total_notes: usize) {
     let spacing = if total_notes < 10 {
         ". "

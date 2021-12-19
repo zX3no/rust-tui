@@ -60,8 +60,8 @@ impl App {
 
         ui::clear();
 
-        //TODO: old header?
-        // ui::header(0, old_tasks.len(), "Tasks");
+        ui::old_header();
+
         for (i, task) in old_tasks.iter().enumerate() {
             ui::note(i + 1, task, old_tasks.len());
         }
