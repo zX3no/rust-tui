@@ -1,6 +1,6 @@
 [package]
 name = "t-cli"
-version = "0.3.5"
+version = "0.3.6"
 authors = ["Bay"]
 description = "A simple CLI task manager"
 edition = "2021"

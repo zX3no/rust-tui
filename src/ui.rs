@@ -17,7 +17,6 @@ pub fn clear() {
         Clear(ClearType::All)
     );
 }
-
 pub fn help_message() {
     execute!(
         stdout(),
@@ -29,7 +28,6 @@ pub fn help_message() {
         ResetColor,
     );
 }
-
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     execute!(
         stdout(),
@@ -80,7 +78,6 @@ pub fn note(id: usize, text: &str, total_notes: usize) {
         Print("\n")
     );
 }
-
 pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
     execute!(
         stdout(),
@@ -156,7 +153,6 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
     };
     execute!(stdout(), Print("\n"));
 }
-
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     execute!(
@@ -180,6 +176,9 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
         ResetColor,
     );
 }
+pub fn new_line() {
+    execute!(stdout(), Print("\n"));
+}
 pub fn help() {
     println!(
         "
@@ -191,27 +190,22 @@ Options
     none+args               Create a task
     none+number             Check/uncheck task
 
-    c                       Check/uncheck task
     n                       Add a note
-    cls                     Delete checked tasks
     d                       Delete a task
+    cls                     Delete checked tasks
     h, help                 Displays the help page
 
 Examples                     
     t                       Displays tasks
     t example task          Creates a task 'example task'
     t !TODO example task    Create a task in a board called 'TODO'        
-    t n example note        Create note 'example note'
-    t n !TODO example task  Create a note in a board called 'TODO'        
     t 1 2 3                 Checks task 1, 2 and 3
     t 1-3                   Checks task 1, 2 and 3
-    t c 1-3                 Checks task 1, 2 and 3
+    t n example note        Create note 'example note'
+    t n !TODO example task  Create a note in a board called 'TODO'        
     t d 1                   Deletes task 1
     t d 1-3                 Deletes task 1, 2 and 3
+    t cls                   Deletes all checked tasks
     "
     );
-}
-
-pub fn new_line() {
-    execute!(stdout(), Print("\n"));
 }
