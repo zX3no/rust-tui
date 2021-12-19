@@ -82,8 +82,9 @@ impl App {
     fn add(&self, is_note: bool) {
         let args = if is_note { &ARGS[1..] } else { &ARGS };
         let mut board_name = None;
+
         if args.is_empty() {
-            panic!("args are empty?");
+            panic!("this should not have happend?");
         }
 
         let item = if args.len() >= 2 {
@@ -96,8 +97,7 @@ impl App {
                 args[0..].join(" ")
             }
         } else if args[0].contains('!') {
-            let split = args[0].split(" ").clone();
-            let strs = split.collect::<Vec<&str>>();
+            let strs: Vec<&str> = args[0].split(' ').collect();
 
             //t '!board'
             if strs.len() == 1 {
