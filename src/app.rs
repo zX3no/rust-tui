@@ -51,42 +51,33 @@ impl App {
 
         ui::footer(total_checked, total_tasks, total_notes);
     }
-    fn ids() -> Vec<usize> {
-        let args: Vec<String> = std::env::args().skip(1).collect();
+    fn ids() -> Option<Vec<usize>> {
+        let re = Regex::new("^[0-9 ]*$").unwrap();
 
-        //Match string: num-num
-        //2-10 or 45-79
-        let re = Regex::new(
-            r"(?x)
-                (?P<first>\d+)
-                -
-                (?P<last>\d+)
-                ",
-        )
-        .unwrap();
+        let mut args = ARGS.join(" ");
+        if let Some(char) = args.chars().next() {
+            if char == 'd' {
+                args.remove(0);
+            }
+        }
+        if let Some(_) = re.captures(&args) {
+            return Some(ARGS.iter().flat_map(|arg| arg.parse::<usize>()).collect());
+        }
 
-        let caps = if args.len() == 1 {
-            re.captures(&args[0])
-        } else if args.len() >= 2 {
-            re.captures(&args[1])
-        } else {
-            panic!("no arguments?");
-        };
+        let re = Regex::new(r"(?x)(?P<first>\d+)-(?P<last>\d+)").unwrap();
 
-        if let Some(caps) = caps {
-            //t 1-10
+        if let Some(caps) = re.captures(&ARGS.join(" ")) {
             let first = caps["first"].parse::<usize>().unwrap();
             let last = caps["last"].parse::<usize>().unwrap();
 
             if first > last {
-                return Vec::new();
+                println!("Invalid range! First number must be smaller than last.");
+                return None;
             }
 
-            (first..last + 1).collect()
-        } else {
-            //t 1 2 3 4
-            args.iter().flat_map(|arg| arg.parse::<usize>()).collect()
+            return Some((first..last + 1).collect());
         }
+        None
     }
     fn add(&self, is_note: bool, skip_command: bool) {
         let args = if skip_command { &ARGS[1..] } else { &ARGS };
@@ -121,9 +112,6 @@ impl App {
     fn add_task_short(&self) {
         self.add(false, false)
     }
-    fn add_task(&self) {
-        self.add(false, true);
-    }
     fn add_note(&self) {
         self.add(true, true);
     }
@@ -144,7 +132,7 @@ impl App {
                     })
                 });
                 if ARGS.len() == 1 {
-                    if let "a" | "d" | "n" | "c" = ARGS[0].as_str() {
+                    if let "d" | "n" | "c" = ARGS[0].as_str() {
                         println!("Missing arguments for '{}'", &ARGS[0]);
                         return;
                     }
@@ -158,14 +146,16 @@ impl App {
                         println!("t {}", env!("CARGO_PKG_VERSION"));
                         return;
                     }
-                    "a" => self.add_task(),
-                    "d" => self.db.delete_tasks(&App::ids()),
-                    "c" => self.db.check_tasks(&App::ids()),
+                    "d" => {
+                        if let Some(ids) = App::ids() {
+                            self.db.delete_tasks(&ids);
+                        }
+                    }
                     "cls" => self.db.clear_tasks().unwrap(),
                     "n" => self.add_note(),
                     _ => {
-                        if numbers {
-                            self.db.check_tasks(&App::ids());
+                        if let Some(ids) = App::ids() {
+                            self.db.check_tasks(&ids);
                         } else {
                             self.add_task_short();
                         }

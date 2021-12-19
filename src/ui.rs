@@ -192,7 +192,6 @@ Options
     none+number             Check/uncheck task
 
     c                       Check/uncheck task
-    a                       Add a task
     n                       Add a note
     cls                     Delete checked tasks
     d                       Delete a task
@@ -201,9 +200,7 @@ Options
 Examples                     
     t                       Displays tasks
     t example task          Creates a task 'example task'
-    t a example task        Creates a task 'example task'
     t !TODO example task    Create a task in a board called 'TODO'        
-    t a !TODO example task  Create a task in a board called 'TODO'        
     t n example note        Create note 'example note'
     t n !TODO example task  Create a note in a board called 'TODO'        
     t 1 2 3                 Checks task 1, 2 and 3
