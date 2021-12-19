@@ -11,10 +11,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn run() {
         Self {
             db: Database::new(),
         }
+        .parse_args()
     }
     pub fn print_tasks(&self) {
         let total_tasks = self.db.total_tasks();
@@ -22,8 +23,7 @@ impl App {
         let total_notes = self.db.total_notes();
 
         if total_tasks == 0 {
-            ui::help_message();
-            return;
+            return ui::help_message();
         }
 
         let boards = self.db.get_boards();

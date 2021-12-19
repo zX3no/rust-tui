@@ -8,6 +8,5 @@ mod database;
 mod ui;
 
 fn main() {
-    let app = App::new();
-    app.parse_args();
+    App::run();
 }
