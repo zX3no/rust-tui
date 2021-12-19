@@ -101,29 +101,6 @@ impl Database {
             .execute("DELETE FROM tasks WHERE checked = '1'", [])?;
         Ok(())
     }
-    pub fn total_checked(&self) -> usize {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
-            .unwrap();
-        let mut rows = stmt.query([]).unwrap();
-
-        if let Some(row) = rows.next().unwrap() {
-            row.get(0).unwrap()
-        } else {
-            0
-        }
-    }
-    pub fn total_tasks(&self) -> usize {
-        let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM tasks").unwrap();
-        let mut rows = stmt.query([]).unwrap();
-
-        if let Some(row) = rows.next().unwrap() {
-            row.get(0).unwrap()
-        } else {
-            0
-        }
-    }
     pub fn get_real_ids(&self, ids: &[usize]) -> Vec<usize> {
         let boards = self.get_boards();
         let mut real_ids = Vec::new();
@@ -185,6 +162,25 @@ impl Database {
                 }
             })
             .collect()
+    }
+    pub fn total_checked(&self) -> usize {
+        self.total("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
+    }
+    pub fn total_tasks(&self) -> usize {
+        self.total("SELECT COUNT(*) FROM tasks")
+    }
+    pub fn total_notes(&self) -> usize {
+        self.total("SELECT COUNT(*) FROM tasks WHERE note = '1'")
+    }
+    pub fn total(&self, query: &str) -> usize {
+        let mut stmt = self.conn.prepare(query).unwrap();
+        let mut rows = stmt.query([]).unwrap();
+
+        if let Some(row) = rows.next().unwrap() {
+            row.get(0).unwrap()
+        } else {
+            0
+        }
     }
 }
 

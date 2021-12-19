@@ -19,6 +19,7 @@ impl App {
     pub fn print_tasks(&self) {
         let total_tasks = self.db.total_tasks();
         let total_checked = self.db.total_checked();
+        let total_notes = self.db.total_notes();
 
         if total_tasks == 0 {
             ui::help_message();
@@ -48,7 +49,7 @@ impl App {
             ui::new_line();
         }
 
-        ui::footer(total_checked, total_tasks, 0);
+        ui::footer(total_checked, total_tasks, total_notes);
     }
     fn ids() -> Vec<usize> {
         let args: Vec<String> = std::env::args().skip(1).collect();
