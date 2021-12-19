@@ -209,3 +209,12 @@ Examples
     "
     );
 }
+
+pub fn missing_command(args: &str) {
+    execute!(
+        stdout(),
+        Print("Missing command for: "),
+        SetForegroundColor(Color::Cyan),
+        Print(format!("'{}'\n", args))
+    );
+}
