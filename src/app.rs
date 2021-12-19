@@ -120,43 +120,29 @@ impl App {
     }
     pub fn parse_args(&self) {
         match ARGS.len() {
-            0 => {
-                self.print_tasks();
-            }
-            _ => {
-                if ARGS.len() == 1 {
-                    if let "d" | "n" | "c" = ARGS[0].as_str() {
-                        println!("Missing arguments for '{}'", &ARGS[0]);
-                        return;
+            0 => self.print_tasks(),
+            _ => match ARGS[0].as_str() {
+                "n" | "d" if ARGS.len() == 1 => {
+                    return println!("Missing arguments for '{}'", &ARGS[0])
+                }
+                "h" | "help" => return ui::help(),
+                "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
+                "n" => self.add(true),
+                "d" => {
+                    if let Some(ids) = App::ids() {
+                        self.db.delete_tasks(&ids);
                     }
                 }
-                match ARGS[0].as_str() {
-                    "h" | "help" | "--help" => {
-                        ui::help();
-                        return;
+                "cls" => self.db.clear_tasks().unwrap(),
+                _ => {
+                    if let Some(ids) = App::ids() {
+                        self.db.check_tasks(&ids);
+                    } else {
+                        self.add(false);
                     }
-                    "v" | "version" | "--version" => {
-                        println!("t {}", env!("CARGO_PKG_VERSION"));
-                        return;
-                    }
-                    "d" => {
-                        if let Some(ids) = App::ids() {
-                            self.db.delete_tasks(&ids);
-                        }
-                    }
-                    "cls" => self.db.clear_tasks().unwrap(),
-                    "n" => self.add(true),
-                    _ => {
-                        if let Some(ids) = App::ids() {
-                            self.db.check_tasks(&ids);
-                        } else {
-                            self.add(false);
-                        }
-                    }
-                };
-
-                self.print_tasks();
-            }
+                }
+            },
         }
+        self.print_tasks();
     }
 }
