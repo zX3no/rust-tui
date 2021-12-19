@@ -24,10 +24,9 @@ impl Database {
     pub fn new() -> Self {
         let conn = Connection::open(DB_DIR.as_path()).unwrap();
 
-        conn.busy_timeout(Duration::from_millis(0)).unwrap();
         conn.pragma_update(None, "journal_mode", "WAL").unwrap();
         conn.pragma_update(None, "synchronous", "0").unwrap();
-        conn.pragma_update(None, "temp_store", "MEMORY").unwrap();
+        conn.pragma_update(None, "temp_store", "0").unwrap();
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS tasks(
@@ -49,6 +48,7 @@ impl Database {
             [],
         )
         .unwrap();
+
         Self { conn }
     }
     pub fn insert_task(&self, task: &str, board: Option<String>) {
@@ -123,9 +123,8 @@ impl Database {
 
         if let Some(row) = rows.next().unwrap() {
             return row.get(0).unwrap();
-        } else {
-            0
         }
+        0
     }
     pub fn get_real_ids(&self, ids: &[usize]) -> Vec<usize> {
         let boards = self.get_boards();
@@ -145,11 +144,8 @@ impl Database {
             .conn
             .prepare("SELECT DISTINCT board FROM tasks")
             .unwrap();
-        let boards: Vec<String> = stmt
-            .query_map([], |row| Ok(row.get(0).unwrap()))
-            .unwrap()
-            .flatten()
-            .collect();
+        let rows = stmt.query_map([], |row| row.get(0)).unwrap();
+        let boards: Vec<String> = rows.into_iter().flatten().collect();
 
         boards
             .iter()
