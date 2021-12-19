@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use rusqlite::{params, Connection, Result};
+use rusqlite::{params, Connection, Result, Statement};
 
 lazy_static! {
     static ref DB_DIR: PathBuf = {
@@ -78,7 +78,6 @@ impl Database {
     }
     pub fn delete_tasks(&self, ids: &[usize]) {
         let ids = self.get_real_ids(ids);
-
         for id in ids {
             self.conn
                 .execute("DELETE FROM tasks WHERE rowid = ?", [id])
@@ -115,23 +114,17 @@ impl Database {
             .collect()
     }
     pub fn get_boards(&self) -> Vec<Board> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT DISTINCT board FROM tasks")
-            .unwrap();
+        let mut stmt = self.stmt("SELECT DISTINCT board FROM tasks");
         let rows = stmt.query_map([], |row| row.get(0)).unwrap();
         let boards: Vec<String> = rows.into_iter().flatten().collect();
 
         boards
             .iter()
             .map(|board| {
-                let mut stmt = self
-                    .conn
-                    .prepare(&format!(
-                        "SELECT *, rowid FROM tasks WHERE board = '{}'",
-                        board
-                    ))
-                    .unwrap();
+                let mut stmt = self.stmt(&format!(
+                    "SELECT *, rowid FROM tasks WHERE BOARD = '{}'",
+                    board
+                ));
 
                 let mut total_checked: usize = 0;
 
@@ -173,7 +166,7 @@ impl Database {
         self.total("SELECT COUNT(*) FROM tasks WHERE note = '1'")
     }
     pub fn total(&self, query: &str) -> usize {
-        let mut stmt = self.conn.prepare(query).unwrap();
+        let mut stmt = self.stmt(query);
         let mut rows = stmt.query([]).unwrap();
 
         if let Some(row) = rows.next().unwrap() {
@@ -181,6 +174,9 @@ impl Database {
         } else {
             0
         }
+    }
+    fn stmt(&self, query: &str) -> Statement {
+        self.conn.prepare(query).unwrap()
     }
 }
 
