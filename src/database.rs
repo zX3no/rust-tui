@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::path::{Path, PathBuf};
 
 use rusqlite::{params, Connection, Result};
 
@@ -112,7 +109,7 @@ impl Database {
         let mut rows = stmt.query([]).unwrap();
 
         if let Some(row) = rows.next().unwrap() {
-            return row.get(0).unwrap();
+            row.get(0).unwrap()
         } else {
             0
         }
@@ -122,9 +119,10 @@ impl Database {
         let mut rows = stmt.query([]).unwrap();
 
         if let Some(row) = rows.next().unwrap() {
-            return row.get(0).unwrap();
+            row.get(0).unwrap()
+        } else {
+            0
         }
-        0
     }
     pub fn get_real_ids(&self, ids: &[usize]) -> Vec<usize> {
         let boards = self.get_boards();

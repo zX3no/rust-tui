@@ -87,7 +87,7 @@ impl App {
             args.iter().flat_map(|arg| arg.parse::<usize>()).collect()
         }
     }
-    pub fn add_task(&self, is_note: bool, skip_command: bool) {
+    fn add(&self, is_note: bool, skip_command: bool) {
         let args = if skip_command { &ARGS[1..] } else { &ARGS };
         let mut board_name = None;
         let item = if args.len() >= 2 {
@@ -116,6 +116,15 @@ impl App {
         } else {
             self.db.insert_task(&item, board_name);
         }
+    }
+    fn add_task_short(&self) {
+        self.add(false, true)
+    }
+    fn add_task(&self) {
+        self.add(false, false);
+    }
+    fn add_note(&self) {
+        self.add(true, false);
     }
     pub fn parse_args(&self) {
         match ARGS.len() {
@@ -148,16 +157,16 @@ impl App {
                         println!("t {}", env!("CARGO_PKG_VERSION"));
                         return;
                     }
-                    "a" => self.add_task(false, true),
+                    "a" => self.add_task(),
                     "d" => self.db.delete_tasks(&App::ids()),
                     "c" => self.db.check_tasks(&App::ids()),
                     "cls" => self.db.clear_tasks().unwrap(),
-                    "n" => self.add_task(true, true),
+                    "n" => self.add_note(),
                     _ => {
                         if numbers {
                             self.db.check_tasks(&App::ids());
                         } else {
-                            self.add_task(false, false);
+                            self.add_task_short();
                         }
                     }
                 };
