@@ -13,6 +13,22 @@ lazy_static! {
     };
 }
 
+pub struct Board {
+    pub name: String,
+    pub tasks: Vec<Task>,
+    pub total: usize,
+    pub checked: usize,
+}
+
+pub struct Task {
+    pub content: String,
+    pub checked: bool,
+    pub note: bool,
+    pub board: String,
+    pub date: String,
+    pub id: usize,
+}
+
 pub struct Database {
     conn: Connection,
 }
@@ -178,20 +194,4 @@ impl Database {
     fn stmt(&self, query: &str) -> Statement {
         self.conn.prepare(query).unwrap()
     }
-}
-
-pub struct Task {
-    pub content: String,
-    pub checked: bool,
-    pub note: bool,
-    pub board: String,
-    pub date: String,
-    pub id: usize,
-}
-
-pub struct Board {
-    pub name: String,
-    pub tasks: Vec<Task>,
-    pub total: usize,
-    pub checked: usize,
 }
