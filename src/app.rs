@@ -109,7 +109,7 @@ impl App {
             self.db.insert_task(&item, board_name);
         }
     }
-    fn add_task_short(&self) {
+    fn add_task(&self) {
         self.add(false, false)
     }
     fn add_note(&self) {
@@ -121,16 +121,6 @@ impl App {
                 self.print_tasks();
             }
             _ => {
-                let mut numbers = false;
-                ARGS.iter().for_each(|arg| {
-                    arg.chars().for_each(|char| {
-                        if char.is_numeric() {
-                            numbers = true;
-                        } else if char != '-' {
-                            numbers = false;
-                        }
-                    })
-                });
                 if ARGS.len() == 1 {
                     if let "d" | "n" | "c" = ARGS[0].as_str() {
                         println!("Missing arguments for '{}'", &ARGS[0]);
@@ -157,7 +147,7 @@ impl App {
                         if let Some(ids) = App::ids() {
                             self.db.check_tasks(&ids);
                         } else {
-                            self.add_task_short();
+                            self.add_task();
                         }
                     }
                 };
