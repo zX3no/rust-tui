@@ -6,6 +6,7 @@ use regex::Regex;
 lazy_static! {
     static ref ARGS: Vec<String> = std::env::args().skip(1).collect();
 }
+
 pub struct App {
     pub db: Database,
 }
@@ -50,6 +51,20 @@ impl App {
         }
 
         ui::footer(total_checked, total_tasks, total_notes);
+    }
+    fn print_old(&self) {
+        let old_tasks = self.db.get_old();
+        if old_tasks.is_empty() {
+            return;
+        }
+
+        ui::clear();
+
+        //TODO: old header?
+        // ui::header(0, old_tasks.len(), "Tasks");
+        for (i, task) in old_tasks.iter().enumerate() {
+            ui::note(i + 1, task, old_tasks.len());
+        }
     }
     fn ids() -> Option<Vec<usize>> {
         let re = Regex::new("^[0-9 ]*$").unwrap();
@@ -125,6 +140,7 @@ impl App {
                 "n" | "d" if ARGS.len() == 1 => return ui::missing_command(ARGS[0].as_str()),
                 "h" | "help" => return ui::help(),
                 "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
+                "o" | "old" => return self.print_old(),
                 "n" => self.add(true),
                 "d" => {
                     if let Some(ids) = App::ids() {

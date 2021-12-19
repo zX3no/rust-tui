@@ -62,6 +62,14 @@ impl Database {
         )
         .unwrap();
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS old(
+                    content TEXT NOT NULL
+                )",
+            [],
+        )
+        .unwrap();
+
         Self { conn }
     }
     pub fn insert_task(&self, task: &str, board: Option<String>) {
@@ -96,7 +104,10 @@ impl Database {
         let ids = self.get_real_ids(ids);
         for id in ids {
             self.conn
-                .execute("DELETE FROM tasks WHERE rowid = ?", [id])
+                .execute_batch(&format!(
+                    "INSERT INTO old SELECT content FROM tasks WHERE rowid = {}; DELETE FROM tasks WHERE rowid = {}",
+                    id, id
+                ))
                 .unwrap();
         }
     }
@@ -128,6 +139,16 @@ impl Database {
             .flat_map(|id| real_ids.get(*id - 1))
             .cloned()
             .collect()
+    }
+    pub fn get_old(&self) -> Vec<String> {
+        let mut stmt = self.stmt("SELECT * FROM old");
+        stmt.query_map([], |row| {
+            let content: String = row.get(0).unwrap();
+            Ok(content)
+        })
+        .unwrap()
+        .flatten()
+        .collect()
     }
     pub fn get_boards(&self) -> Vec<Board> {
         let mut stmt = self.stmt("SELECT DISTINCT board FROM tasks");
