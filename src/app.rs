@@ -119,13 +119,13 @@ impl App {
         }
     }
     fn add_task_short(&self) {
-        self.add(false, true)
+        self.add(false, false)
     }
     fn add_task(&self) {
-        self.add(false, false);
+        self.add(false, true);
     }
     fn add_note(&self) {
-        self.add(true, false);
+        self.add(true, true);
     }
     pub fn parse_args(&self) {
         match ARGS.len() {
