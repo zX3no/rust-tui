@@ -201,9 +201,9 @@ Options
     n                       Add a note
     d                       Delete a task
     cls                     Delete all checked tasks
-    old                     Displays deleted tasks 
+    o, old                  Displays deleted tasks 
     h, help                 Displays the help page
-    v                       Displays version
+    v, version              Displays version
 
 Examples                     
     t                       Displays tasks
