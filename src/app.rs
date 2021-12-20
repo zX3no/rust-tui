@@ -55,7 +55,7 @@ impl App {
     fn print_old(&self) {
         let old_tasks = self.db.get_old();
         if old_tasks.is_empty() {
-            return;
+            return println!("No old tasks.");
         }
 
         ui::clear();
