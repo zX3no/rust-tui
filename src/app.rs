@@ -137,7 +137,7 @@ impl App {
         match ARGS.len() {
             0 => self.print_tasks(),
             _ => match ARGS[0].as_str() {
-                "n" | "d" if ARGS.len() == 1 => return ui::missing_command(ARGS[0].as_str()),
+                "n" | "d" if ARGS.len() == 1 => return ui::missing_args(ARGS[0].as_str()),
                 "h" | "help" => return ui::help(),
                 "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
                 "o" | "old" => return self.print_old(),

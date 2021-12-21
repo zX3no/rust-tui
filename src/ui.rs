@@ -219,7 +219,7 @@ Examples
     );
 }
 
-pub fn missing_command(args: &str) {
+pub fn missing_args(args: &str) {
     execute!(
         stdout(),
         Print("Missing arguments for command: "),
