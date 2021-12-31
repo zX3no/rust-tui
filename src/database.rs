@@ -151,48 +151,57 @@ impl Database {
         .flatten()
         .collect()
     }
+    fn get_board(&self, board: String) -> Board {
+        let mut stmt = self.stmt(&format!(
+            "SELECT *, rowid FROM tasks WHERE BOARD = '{}'",
+            board
+        ));
+
+        let mut total_checked: usize = 0;
+
+        let tasks: Vec<Task> = stmt
+            .query_map([], |row| {
+                let checked = row.get(1).unwrap();
+                if checked {
+                    total_checked += 1;
+                }
+                Ok(Task {
+                    content: row.get(0).unwrap(),
+                    checked,
+                    note: row.get(2).unwrap(),
+                    board: row.get(3).unwrap(),
+                    date: row.get(4).unwrap(),
+                    id: row.get(5).unwrap(),
+                })
+            })
+            .unwrap()
+            .flatten()
+            .collect();
+
+        Board {
+            name: board,
+            total: tasks.len(),
+            tasks,
+            checked: total_checked,
+        }
+    }
     pub fn get_boards(&self) -> Vec<Board> {
         let mut stmt = self.stmt("SELECT DISTINCT board FROM tasks");
         let rows = stmt.query_map([], |row| row.get(0)).unwrap();
         let boards: Vec<String> = rows.into_iter().flatten().collect();
 
-        boards
-            .iter()
-            .map(|board| {
-                let mut stmt = self.stmt(&format!(
-                    "SELECT *, rowid FROM tasks WHERE BOARD = '{}'",
-                    board
-                ));
+        let mut a = Vec::new();
+        let mut b = Vec::new();
 
-                let mut total_checked: usize = 0;
-
-                let tasks: Vec<Task> = stmt
-                    .query_map([], |row| {
-                        let checked = row.get(1).unwrap();
-                        if checked {
-                            total_checked += 1;
-                        }
-                        Ok(Task {
-                            content: row.get(0).unwrap(),
-                            checked,
-                            note: row.get(2).unwrap(),
-                            board: row.get(3).unwrap(),
-                            date: row.get(4).unwrap(),
-                            id: row.get(5).unwrap(),
-                        })
-                    })
-                    .unwrap()
-                    .flatten()
-                    .collect();
-
-                Board {
-                    name: board.clone(),
-                    total: tasks.len(),
-                    tasks,
-                    checked: total_checked,
-                }
-            })
-            .collect()
+        for board in boards {
+            if board == "Tasks" {
+                a.push(self.get_board(board));
+            } else {
+                b.push(self.get_board(board));
+            }
+        }
+        a.append(&mut b);
+        a
     }
     pub fn total_checked(&self) -> usize {
         self.total("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
