@@ -1,21 +1,23 @@
 #![allow(unused_must_use)]
 use crossterm::{
-    cursor::{DisableBlinking, Hide, MoveTo},
     execute,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
-    terminal::{Clear, ClearType},
 };
-use std::io::stdout;
+use std::{io::stdout, process::Command};
 
 #[allow(dead_code)]
 pub fn clear() {
-    execute!(
-        stdout(),
-        Hide,
-        DisableBlinking,
-        MoveTo(0, 0),
-        Clear(ClearType::All)
-    );
+    if cfg!(windows) {
+        Command::new("cmd")
+            .args(["/C", "cls"])
+            .status()
+            .expect("failed to execute process");
+    } else if cfg!(unix) {
+        Command::new("/bin/sh")
+            .args(["-c", "clear"])
+            .status()
+            .expect("failed to execute process");
+    }
 }
 pub fn help_message() {
     execute!(

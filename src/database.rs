@@ -123,7 +123,6 @@ impl Database {
         }
     }
     pub fn clear_tasks(&self) -> Result<()> {
-        // self.conn.execute("DROP TABLE old", []).unwrap();
         self.conn
             .execute_batch("INSERT INTO old SELECT content FROM tasks WHERE checked = '1'; DELETE FROM tasks WHERE checked = '1'")?;
         Ok(())
