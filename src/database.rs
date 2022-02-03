@@ -105,7 +105,7 @@ impl Database {
         for id in ids {
             self.conn
                 .execute_batch(&format!(
-                    "INSERT INTO old SELECT content FROM tasks WHERE rowid = {}; DELETE FROM tasks WHERE rowid = {}",
+                    "INSERT INTO old SELECT content FROM tasks WHERE rowid = {} AND checked = 1; DELETE FROM tasks WHERE rowid = {}",
                     id, id
                 ))
                 .unwrap();

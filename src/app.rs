@@ -135,30 +135,42 @@ impl App {
             self.db.insert_task(&item, board_name);
         }
     }
+    fn clear_tasks(&self) {
+        if self.db.total_checked() == 0 {
+            println!("Not tasks to clear!");
+        } else {
+            self.db.clear_tasks().unwrap();
+            if self.db.total_tasks() != 0 {
+                self.print_tasks();
+            }
+        }
+    }
     pub fn parse_args(&self) {
         match ARGS.len() {
             0 => self.print_tasks(),
-            _ => match ARGS[0].as_str() {
-                "n" | "d" if ARGS.len() == 1 => return ui::missing_args(ARGS[0].as_str()),
-                "h" | "help" => return ui::help(),
-                "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
-                "o" | "old" => return self.print_old(),
-                "n" => self.add(true),
-                "d" => {
-                    if let Some(ids) = App::ids() {
-                        self.db.delete_tasks(&ids);
+            _ => {
+                match ARGS[0].as_str() {
+                    "n" | "d" if ARGS.len() == 1 => return ui::missing_args(ARGS[0].as_str()),
+                    "h" | "help" => return ui::help(),
+                    "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
+                    "o" | "old" => return self.print_old(),
+                    "n" => self.add(true),
+                    "d" => {
+                        if let Some(ids) = App::ids() {
+                            self.db.delete_tasks(&ids);
+                        }
+                    }
+                    "cls" => return self.clear_tasks(),
+                    _ => {
+                        if let Some(ids) = App::ids() {
+                            self.db.check_tasks(&ids);
+                        } else {
+                            self.add(false);
+                        }
                     }
                 }
-                "cls" => self.db.clear_tasks().unwrap(),
-                _ => {
-                    if let Some(ids) = App::ids() {
-                        self.db.check_tasks(&ids);
-                    } else {
-                        self.add(false);
-                    }
-                }
-            },
+                self.print_tasks();
+            }
         }
-        self.print_tasks();
     }
 }
