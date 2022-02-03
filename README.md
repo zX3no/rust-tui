@@ -1,7 +1,6 @@
 <h1 align="center" style="font-size: 55px">t</h1>
 <h3 align="center">A simple terminal task manager.</h3>
 
-
 <div align="center" style="display:inline">
       <img src="t.gif">
 </div>
@@ -12,6 +11,7 @@
 
 
 ## ✨ Features
+
 - Simple
 - Fast
 - Beautiful
@@ -35,6 +35,7 @@ cargo install --path .
 ## Usage:
 
 #### Display your tasks:
+
 ```
 t
 ```
