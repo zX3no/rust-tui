@@ -66,13 +66,13 @@ t d 1
 t cls
 ```
 
-#### View your old tasks
+#### View your old tasks:
 
 ```
 t old
 ```
 
-#### For a list of all commands
+#### List commands:
 
 ```
 t help
