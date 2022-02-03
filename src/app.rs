@@ -67,21 +67,23 @@ impl App {
         }
     }
     fn ids() -> Option<Vec<usize>> {
-        let re = Regex::new("^[0-9 ]*$").unwrap();
-
         let mut args = ARGS.join(" ");
         if let Some(char) = args.chars().next() {
             if char == 'd' {
                 args.remove(0);
             }
         }
-        if re.captures(&args).is_some() {
+
+        //remove all whitespace
+        let args = args.trim();
+
+        let re = Regex::new("^[0-9 ]*$").unwrap();
+        if re.captures(args).is_some() {
             return Some(ARGS.iter().flat_map(|arg| arg.parse::<usize>()).collect());
         }
 
-        let re = Regex::new(r"(?x)(?P<first>\d+)-(?P<last>\d+)").unwrap();
-
-        if let Some(caps) = re.captures(&ARGS.join(" ")) {
+        let re = Regex::new(r"^(?x)(?P<first>\d+)-(?P<last>\d+)$").unwrap();
+        if let Some(caps) = re.captures(args) {
             let first = caps["first"].parse::<usize>().unwrap();
             let last = caps["last"].parse::<usize>().unwrap();
 
