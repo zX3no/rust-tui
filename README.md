@@ -1,11 +1,15 @@
 <h1 align="center" style="font-size: 55px">t</h1>
-<!-- <h3 align="center"></h3> -->
+<h3 align="center">A simple terminal task manager.</h3>
+
 
 <div align="center" style="display:inline">
       <img src="t.gif">
 </div>
 
+</br>
+
 [<img src="https://img.shields.io/crates/v/t-cli.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/t-cli)
+
 
 ## ✨ Features
 - Simple
@@ -35,21 +39,21 @@ cargo install --path .
 t
 ```
 
-#### Add tasks:
+#### Add some tasks:
 
 ```
 t this is a task 
 t "another task" 
 ```
 
-#### Mark tasks as completed:
+#### Mark them as completed:
 
 ```
 t 1-2
 t 1
 ```
 
-#### Delete your tasks:
+#### Delete a task:
 
 ```
 t d 1
@@ -67,9 +71,15 @@ t cls
 t old
 ```
 
+#### For a list of all commands
+
+```
+t help
+```
+
 ## TODO
 
-- [ ] Color configuration
+- [ ] Config file for color schemes 
 
 ## ❤️ Contributing
 
