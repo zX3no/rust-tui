@@ -66,7 +66,7 @@ impl App {
             ui::note(i + 1, task, old_tasks.len());
         }
     }
-    fn ids() -> Option<Vec<usize>> {
+    fn ids(&self) -> Result<Vec<usize>, &str> {
         let mut args = ARGS.join(" ");
         if let Some(char) = args.chars().next() {
             if char == 'd' {
@@ -77,31 +77,45 @@ impl App {
         //remove all whitespace
         let args = args.trim();
 
-        let re = Regex::new("^[0-9 ]*$").unwrap();
-        if re.captures(args).is_some() {
-            return Some(ARGS.iter().flat_map(|arg| arg.parse::<usize>()).collect());
-        }
+        let single_number = Regex::new("^[0-9 ]*$").unwrap();
+        let number_range = Regex::new(r"^(?x)(?P<first>\d+)-(?P<last>\d+)$").unwrap();
 
-        let re = Regex::new(r"^(?x)(?P<first>\d+)-(?P<last>\d+)$").unwrap();
-        if let Some(caps) = re.captures(args) {
+        let len = self.db.total_tasks();
+
+        if single_number.captures(args).is_some() {
+            ARGS.iter()
+                .map(|arg| {
+                    if let Ok(num) = arg.parse::<usize>() {
+                        if num <= len {
+                            Ok(num)
+                        } else {
+                            Err("Task does not exist.")
+                        }
+                    } else {
+                        Err("Invalid number.")
+                    }
+                })
+                .collect()
+        } else if let Some(caps) = number_range.captures(args) {
             let first = caps["first"].parse::<usize>().unwrap();
             let last = caps["last"].parse::<usize>().unwrap();
 
             if first > last {
-                println!("Invalid range! First number must be smaller than last.");
-                return None;
+                return Err("Invalid range! First number must be smaller than last.");
             }
 
-            return Some((first..last + 1).collect());
+            Ok((first..last + 1).collect())
+        } else {
+            //weird hack, when err.is_empty() i can trigger something else
+            Err("")
         }
-        None
     }
-    fn add(&self, is_note: bool) {
+    fn add(&self, is_note: bool) -> Result<(), &str> {
         let args = if is_note { &ARGS[1..] } else { &ARGS };
         let mut board_name = None;
 
         if args.is_empty() {
-            panic!("this should not have happend?");
+            return Err("No arguments provided.");
         }
 
         let item = if args.len() >= 2 {
@@ -118,7 +132,7 @@ impl App {
 
             //t '!board'
             if strs.len() == 1 {
-                panic!("Missing task!");
+                return Err("Missing task!");
             } else {
                 //t '!board task ...'
                 board_name = Some(strs[0].replace('!', ""));
@@ -134,6 +148,7 @@ impl App {
         } else {
             self.db.insert_task(&item, board_name);
         }
+        Ok(())
     }
     fn clear_tasks(&self) {
         if self.db.total_checked() == 0 {
@@ -154,20 +169,27 @@ impl App {
                     "h" | "help" => return ui::help(),
                     "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
                     "o" | "old" => return self.print_old(),
-                    "n" => self.add(true),
+                    "n" => {
+                        if let Err(err) = self.add(true) {
+                            return println!("{err}");
+                        }
+                    }
                     "d" => {
-                        if let Some(ids) = App::ids() {
+                        if let Ok(ids) = self.ids() {
                             self.db.delete_tasks(&ids);
                         }
                     }
                     "cls" => return self.clear_tasks(),
-                    _ => {
-                        if let Some(ids) = App::ids() {
-                            self.db.check_tasks(&ids);
-                        } else {
-                            self.add(false);
+                    _ => match self.ids() {
+                        Ok(ids) => self.db.check_tasks(&ids),
+                        Err(err) => {
+                            if !err.is_empty() {
+                                return println!("{err}");
+                            } else if let Err(err) = self.add(false) {
+                                return println!("{err}");
+                            }
                         }
-                    }
+                    },
                 }
                 self.print_tasks();
             }

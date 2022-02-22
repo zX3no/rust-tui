@@ -1,5 +1,5 @@
 <h1 align="center" style="font-size: 55px">t</h1>
-<h3 align="center">A simple terminal task manager.</h3>
+<h3 align="center">A terminal task manager.</h3>
 
 <div align="center" style="display:inline">
       <img src="t.gif">
@@ -8,13 +8,6 @@
 </br>
 
 [<img src="https://img.shields.io/crates/v/t-cli.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/t-cli)
-
-
-## ✨ Features
-
-- Simple
-- Fast
-- Beautiful
 
 ## 📦 Installation
 

@@ -1,6 +1,6 @@
 [package]
 name = "t-cli"
-version = "0.3.10"
+version = "0.3.11"
 authors = ["Bay"]
 description = "A simple CLI task manager"
 edition = "2021"
@@ -19,7 +19,7 @@ name = "t"
 path = "src/main.rs"
 
 [dependencies]
-crossterm = "0.22.1"
+crossterm = "0.23.0"
 dirs = "4.0.0"
 regex = "1.5.4"
 lazy_static = "1.4.0"

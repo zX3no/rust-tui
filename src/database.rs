@@ -211,7 +211,7 @@ impl Database {
     pub fn total_notes(&self) -> usize {
         self.total("SELECT COUNT(*) FROM tasks WHERE note = '1'")
     }
-    pub fn total(&self, query: &str) -> usize {
+    fn total(&self, query: &str) -> usize {
         let mut stmt = self.stmt(query);
         let mut rows = stmt.query([]).unwrap();
 
