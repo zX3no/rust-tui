@@ -76,21 +76,28 @@ impl App {
         let join = args.join(" ");
         let input = join.trim();
 
-        let single_number = Regex::new("^(?x)(?P<first>[0-9 ]*$)").unwrap();
+        let single_number = Regex::new("^[0-9 ]*$").unwrap();
         let number_range = Regex::new(r"^(?x)(?P<first>\d+)-(?P<last>\d+)$").unwrap();
 
         let len = self.db.total_tasks();
 
         if let Some(caps) = single_number.captures(input) {
-            if let Ok(first) = caps["first"].parse::<usize>() {
-                if first <= len {
-                    Ok(vec![first])
-                } else {
-                    Err("Task does not exist.")
-                }
-            } else {
-                Err("Invalid number.")
-            }
+            caps.get(0)
+                .unwrap()
+                .as_str()
+                .split(' ')
+                .map(|str| {
+                    if let Ok(num) = str.parse::<usize>() {
+                        if num <= len {
+                            Ok(num)
+                        } else {
+                            Err("Task does not exist")
+                        }
+                    } else {
+                        Err("Invalid number.")
+                    }
+                })
+                .collect()
         } else if let Some(caps) = number_range.captures(input) {
             let first = caps["first"].parse::<usize>().unwrap();
             let last = caps["last"].parse::<usize>().unwrap();
