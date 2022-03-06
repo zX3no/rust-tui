@@ -67,36 +67,31 @@ impl App {
         }
     }
     fn ids(&self) -> Result<Vec<usize>, &str> {
-        let mut args = ARGS.join(" ");
-        if let Some(char) = args.chars().next() {
-            if char == 'd' {
-                args.remove(0);
-            }
-        }
+        let args = if ARGS.iter().any(|arg| arg == &String::from('d')) {
+            ARGS[1..].to_owned()
+        } else {
+            ARGS[0..].to_owned()
+        };
 
-        //remove all whitespace
-        let args = args.trim();
+        let join = args.join(" ");
+        let input = join.trim();
 
-        let single_number = Regex::new("^[0-9 ]*$").unwrap();
+        let single_number = Regex::new("^(?x)(?P<first>[0-9 ]*$)").unwrap();
         let number_range = Regex::new(r"^(?x)(?P<first>\d+)-(?P<last>\d+)$").unwrap();
 
         let len = self.db.total_tasks();
 
-        if single_number.captures(args).is_some() {
-            ARGS.iter()
-                .map(|arg| {
-                    if let Ok(num) = arg.parse::<usize>() {
-                        if num <= len {
-                            Ok(num)
-                        } else {
-                            Err("Task does not exist.")
-                        }
-                    } else {
-                        Err("Invalid number.")
-                    }
-                })
-                .collect()
-        } else if let Some(caps) = number_range.captures(args) {
+        if let Some(caps) = single_number.captures(input) {
+            if let Ok(first) = caps["first"].parse::<usize>() {
+                if first <= len {
+                    Ok(vec![first])
+                } else {
+                    Err("Task does not exist.")
+                }
+            } else {
+                Err("Invalid number.")
+            }
+        } else if let Some(caps) = number_range.captures(input) {
             let first = caps["first"].parse::<usize>().unwrap();
             let last = caps["last"].parse::<usize>().unwrap();
 
@@ -174,11 +169,10 @@ impl App {
                             return println!("{err}");
                         }
                     }
-                    "d" => {
-                        if let Ok(ids) = self.ids() {
-                            self.db.delete_tasks(&ids);
-                        }
-                    }
+                    "d" => match self.ids() {
+                        Ok(ids) => self.db.delete_tasks(&ids),
+                        Err(err) => return println!("{err}"),
+                    },
                     "cls" => return self.clear_tasks(),
                     _ => match self.ids() {
                         Ok(ids) => self.db.check_tasks(&ids),
