@@ -2,10 +2,10 @@ use crate::database::Database;
 use crate::ui;
 use chrono::{TimeZone, Utc};
 use regex::Regex;
+use static_init::dynamic;
 
-lazy_static! {
-    static ref ARGS: Vec<String> = std::env::args().skip(1).collect();
-}
+#[dynamic]
+static ARGS: Vec<String> = std::env::args().skip(1).collect();
 
 pub struct App {
     pub db: Database,

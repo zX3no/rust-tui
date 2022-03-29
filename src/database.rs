@@ -1,17 +1,16 @@
+use rusqlite::{params, Connection, Result, Statement};
+use static_init::dynamic;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{params, Connection, Result, Statement};
+#[dynamic]
+static DB_DIR: PathBuf = {
+    let config_dir = dirs::config_dir().unwrap().join("t");
 
-lazy_static! {
-    static ref DB_DIR: PathBuf = {
-        let config_dir = dirs::config_dir().unwrap().join("t");
-
-        if !Path::new(config_dir.as_path()).exists() {
-            std::fs::create_dir(config_dir.as_path()).unwrap();
-        }
-        config_dir.join("t.db")
-    };
-}
+    if !Path::new(config_dir.as_path()).exists() {
+        std::fs::create_dir(config_dir.as_path()).unwrap();
+    }
+    config_dir.join("t.db")
+};
 
 pub struct Board {
     pub name: String,

@@ -1,6 +1,6 @@
 [package]
 name = "t-cli"
-version = "0.3.12"
+version = "0.3.13"
 authors = ["Bay"]
 description = "A simple CLI task manager"
 edition = "2021"
@@ -22,6 +22,6 @@ path = "src/main.rs"
 crossterm = "0.23.0"
 dirs = "4.0.0"
 regex = "1.5.4"
-lazy_static = "1.4.0"
 rusqlite = { version = "0.27.0", features = ["bundled"] }
 chrono = "0.4.19"
+static_init = "1.0.2"
