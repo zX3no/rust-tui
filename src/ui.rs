@@ -86,7 +86,12 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
         };
         queue!(
             stdout(),
-            Print(format!("{}{}{}", spacing, "√  ".green(), text.dark_grey()))
+            Print(format!(
+                "{}{}{}",
+                spacing.dark_grey(),
+                "√  ".green(),
+                text.dark_grey()
+            ))
         );
     } else {
         let spacing = if total_tasks < 10 {
@@ -108,13 +113,15 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
         };
         queue!(
             stdout(),
-            Print(format!("{}{} {}", spacing, "[ ]".dark_magenta(), text))
+            Print(format!(
+                "{}{} {}",
+                spacing.dark_grey(),
+                "[ ]".dark_magenta(),
+                text
+            ))
         );
         if days > 0 {
-            queue!(
-                stdout(),
-                Print(format!(" {}d", days.to_string().dark_grey()))
-            );
+            queue!(stdout(), Print(format!(" {}d", days).dark_grey()));
         }
     };
     queue!(stdout(), Print("\n"));
