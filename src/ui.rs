@@ -1,7 +1,7 @@
 #![allow(unused_must_use)]
 use crossterm::{
-    execute,
-    style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
+    queue,
+    style::{Print, Stylize},
 };
 use std::{io::stdout, process::Command};
 
@@ -11,50 +11,32 @@ pub fn clear() {
         Command::new("cmd")
             .args(["/C", "cls"])
             .status()
-            .expect("failed to execute process");
+            .expect("failed to queue process");
     } else if cfg!(unix) {
         Command::new("/bin/sh")
             .args(["-c", "clear"])
             .status()
-            .expect("failed to execute process");
+            .expect("failed to queue process");
     }
 }
 pub fn help_message() {
-    execute!(
+    queue!(
         stdout(),
-        Print("You have no tasks!"),
-        Print(" Try adding one with:"),
-        SetAttribute(Attribute::Italic),
-        SetForegroundColor(Color::Cyan),
-        Print(" t 'this⠀is⠀a⠀task'\n"),
-        ResetColor,
+        Print("You have no tasks!\n Try adding one with: "),
+        Print(" t 'this⠀is⠀a⠀task'\n".cyan().italic()),
     );
 }
+//TODO: headers do not align with each other
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
-    execute!(
+    queue!(
         stdout(),
         Print(" "),
-        SetAttribute(Attribute::Underlined),
-        Print(board),
-        Print(":"),
-        ResetColor,
-        SetForegroundColor(Color::DarkGrey),
-        Print(" ["),
-        Print(completed_tasks),
-        Print("/"),
-        Print(total_tasks),
-        Print("]\n"),
-        ResetColor
+        Print(format!("{}:", board.underlined())),
+        Print(format!(" [{}/{}]\n", completed_tasks, total_tasks).dark_grey())
     );
 }
 pub fn old_header() {
-    execute!(
-        stdout(),
-        Print(" "),
-        SetAttribute(Attribute::Underlined),
-        Print("Tasks:\n"),
-        ResetColor
-    );
+    queue!(stdout(), Print(" "), Print("Tasks:\n".underlined()));
 }
 pub fn note(id: usize, text: &str, total_notes: usize) {
     let spacing = if total_notes < 10 {
@@ -75,26 +57,15 @@ pub fn note(id: usize, text: &str, total_notes: usize) {
         ". "
     };
 
-    execute!(
+    queue!(
         stdout(),
-        SetForegroundColor(Color::DarkGrey),
-        Print("   "),
-        Print(id),
-        Print(spacing),
-        SetForegroundColor(Color::DarkMagenta),
-        Print(" •  "),
-        ResetColor,
-        Print(text),
-        Print("\n")
+        Print(format!("   {}{}", id, spacing).dark_grey()),
+        Print(" •  ".dark_magenta()),
+        Print(format!("{}\n", text)),
     );
 }
 pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
-    execute!(
-        stdout(),
-        SetForegroundColor(Color::DarkGrey),
-        Print("   "),
-        Print(id)
-    );
+    queue!(stdout(), Print(format!("   {}", id).dark_grey()));
     if checked {
         let spacing = if total_tasks < 10 {
             ".  "
@@ -113,14 +84,9 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
         } else {
             ".  "
         };
-        execute!(
+        queue!(
             stdout(),
-            Print(spacing),
-            SetForegroundColor(Color::Green),
-            Print("√  "),
-            SetForegroundColor(Color::DarkGrey),
-            Print(text),
-            ResetColor
+            Print(format!("{}{}{}", spacing, "√  ".green(), text.dark_grey()))
         );
     } else {
         let spacing = if total_tasks < 10 {
@@ -140,54 +106,34 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
         } else {
             ". "
         };
-        execute!(
+        queue!(
             stdout(),
-            Print(spacing),
-            SetForegroundColor(Color::DarkMagenta),
-            Print("[ ]"),
-            ResetColor,
-            Print(" "),
-            Print(text),
-            ResetColor
+            Print(format!("{}{} {}", spacing, "[ ]".dark_magenta(), text))
         );
         if days > 0 {
-            execute!(
+            queue!(
                 stdout(),
-                Print(" "),
-                SetForegroundColor(Color::DarkGrey),
-                Print(days),
-                Print("d"),
-                ResetColor,
+                Print(format!(" {}d", days.to_string().dark_grey()))
             );
         }
     };
-    execute!(stdout(), Print("\n"));
+    queue!(stdout(), Print("\n"));
 }
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
-    execute!(
+    queue!(
         stdout(),
-        SetForegroundColor(Color::DarkGrey),
-        Print("  "),
-        Print(percent),
-        Print("% of all tasks completed\n  "),
-        SetForegroundColor(Color::Green),
-        Print(completed_tasks),
-        SetForegroundColor(Color::DarkGrey),
-        Print(" done · "),
-        SetForegroundColor(Color::Magenta),
-        Print(total_tasks - completed_tasks),
-        SetForegroundColor(Color::DarkGrey),
-        Print(" pending · "),
-        SetForegroundColor(Color::Blue),
-        Print(total_notes),
-        SetForegroundColor(Color::DarkGrey),
-        Print(" notes\n"),
-        ResetColor,
+        Print(format!("  {}% of all tasks complted\n  ", percent).dark_grey()),
+        Print(completed_tasks.to_string().green()),
+        Print(" done · ".dark_grey()),
+        Print(format!("{}", total_tasks - completed_tasks).magenta()),
+        Print(" pending · ".dark_grey()),
+        Print(total_notes.to_string().blue()),
+        Print(" notes\n".dark_grey()),
     );
 }
 pub fn new_line() {
-    execute!(stdout(), Print("\n"));
+    queue!(stdout(), Print("\n"));
 }
 pub fn help() {
     println!(
@@ -222,11 +168,9 @@ Examples
 }
 
 pub fn missing_args(args: &str) {
-    execute!(
+    queue!(
         stdout(),
         Print("Missing arguments for command: "),
-        SetForegroundColor(Color::Cyan),
-        Print(format!("'{}'\n", args)),
-        ResetColor
+        Print(format!("'{}'\n", args).cyan()),
     );
 }

@@ -18,6 +18,40 @@ impl App {
         }
         .parse_args()
     }
+    pub fn parse_args(&self) {
+        match ARGS.len() {
+            0 => self.print_tasks(),
+            _ => {
+                match ARGS[0].as_str() {
+                    "n" | "d" if ARGS.len() == 1 => return ui::missing_args(ARGS[0].as_str()),
+                    "h" | "help" => return ui::help(),
+                    "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
+                    "o" | "old" => return self.print_old(),
+                    "n" => {
+                        if let Err(err) = self.add(true) {
+                            return println!("{err}");
+                        }
+                    }
+                    "d" => match self.ids() {
+                        Ok(ids) => self.db.delete_tasks(&ids),
+                        Err(err) => return println!("{err}"),
+                    },
+                    "cls" => return self.clear_tasks(),
+                    _ => match self.ids() {
+                        Ok(ids) => self.db.check_tasks(&ids),
+                        Err(err) => {
+                            if !err.is_empty() {
+                                return println!("{err}");
+                            } else if let Err(err) = self.add(false) {
+                                return println!("{err}");
+                            }
+                        }
+                    },
+                }
+                self.print_tasks();
+            }
+        }
+    }
     pub fn print_tasks(&self) {
         let total_tasks = self.db.total_tasks();
         let total_checked = self.db.total_checked();
@@ -158,40 +192,6 @@ impl App {
         } else {
             self.db.clear_tasks().unwrap();
             if self.db.total_tasks() != 0 {
-                self.print_tasks();
-            }
-        }
-    }
-    pub fn parse_args(&self) {
-        match ARGS.len() {
-            0 => self.print_tasks(),
-            _ => {
-                match ARGS[0].as_str() {
-                    "n" | "d" if ARGS.len() == 1 => return ui::missing_args(ARGS[0].as_str()),
-                    "h" | "help" => return ui::help(),
-                    "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
-                    "o" | "old" => return self.print_old(),
-                    "n" => {
-                        if let Err(err) = self.add(true) {
-                            return println!("{err}");
-                        }
-                    }
-                    "d" => match self.ids() {
-                        Ok(ids) => self.db.delete_tasks(&ids),
-                        Err(err) => return println!("{err}"),
-                    },
-                    "cls" => return self.clear_tasks(),
-                    _ => match self.ids() {
-                        Ok(ids) => self.db.check_tasks(&ids),
-                        Err(err) => {
-                            if !err.is_empty() {
-                                return println!("{err}");
-                            } else if let Err(err) = self.add(false) {
-                                return println!("{err}");
-                            }
-                        }
-                    },
-                }
                 self.print_tasks();
             }
         }
