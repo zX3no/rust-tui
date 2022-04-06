@@ -125,7 +125,7 @@ impl App {
                         if num <= len {
                             Ok(num)
                         } else {
-                            Err("Task does not exist")
+                            Err("Task does not exist.")
                         }
                     } else {
                         Err("Invalid number.")
@@ -190,7 +190,7 @@ impl App {
         if self.db.total_checked() == 0 {
             println!("Not tasks to clear!");
         } else {
-            self.db.clear_tasks().unwrap();
+            self.db.clear_tasks();
             if self.db.total_tasks() != 0 {
                 self.print_tasks();
             }

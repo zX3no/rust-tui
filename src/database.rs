@@ -1,17 +1,23 @@
-use rusqlite::{params, Connection, Result, Statement};
+use rusqlite::{params, Connection};
 use static_init::dynamic;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[dynamic]
 static DB_DIR: PathBuf = {
-    let config_dir = dirs::config_dir().unwrap().join("t");
-
-    if !Path::new(config_dir.as_path()).exists() {
-        std::fs::create_dir(config_dir.as_path()).unwrap();
+    let config_dir = dirs::config_dir().unwrap();
+    if !config_dir.exists() {
+        std::fs::create_dir(&config_dir).unwrap();
     }
-    config_dir.join("t.db")
+
+    let t_dir = config_dir.join("t");
+    if !t_dir.exists() {
+        std::fs::create_dir(&t_dir).unwrap();
+    }
+
+    t_dir.join("t.db")
 };
 
+#[derive(Debug)]
 pub struct Board {
     pub name: String,
     pub tasks: Vec<Task>,
@@ -19,6 +25,7 @@ pub struct Board {
     pub checked: usize,
 }
 
+#[derive(Debug)]
 pub struct Task {
     pub content: String,
     pub checked: bool,
@@ -121,10 +128,9 @@ impl Database {
                 .unwrap();
         }
     }
-    pub fn clear_tasks(&self) -> Result<()> {
+    pub fn clear_tasks(&self) {
         self.conn
-            .execute_batch("INSERT INTO old SELECT content FROM tasks WHERE checked = '1'; DELETE FROM tasks WHERE checked = '1'")?;
-        Ok(())
+            .execute_batch("INSERT INTO old SELECT content FROM tasks WHERE checked = '1'; DELETE FROM tasks WHERE checked = '1'").unwrap();
     }
     pub fn get_real_ids(&self, ids: &[usize]) -> Vec<usize> {
         let boards = self.get_boards();
@@ -135,71 +141,69 @@ impl Database {
             }
         }
         ids.iter()
-            .flat_map(|id| real_ids.get(*id - 1))
+            .flat_map(|id| real_ids.get(id.saturating_sub(1)))
             .cloned()
             .collect()
     }
     pub fn get_old(&self) -> Vec<String> {
-        let mut stmt = self.stmt("SELECT * FROM old");
-        stmt.query_map([], |row| {
-            let content: String = row.get(0).unwrap();
-            Ok(content)
-        })
-        .unwrap()
-        .flatten()
-        .collect()
+        let mut stmt = self.conn.prepare("SELECT * FROM old").unwrap();
+        stmt.query_map([], |row| row.get(0))
+            .unwrap()
+            .flatten()
+            .collect()
     }
-    fn get_board(&self, board: String) -> Board {
-        let mut stmt = self.stmt(&format!(
-            "SELECT *, rowid FROM tasks WHERE BOARD = '{}'",
-            board
-        ));
+    //TODO: board table for easy length getting
+    pub fn get_boards(&self) -> Vec<Board> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT DISTINCT board FROM tasks WHERE board == 'Tasks'
+                 UNION
+                 SELECT DISTINCT board FROM tasks WHERE board != 'Tasks'",
+            )
+            .unwrap();
 
-        let mut total_checked: usize = 0;
-
-        let tasks: Vec<Task> = stmt
-            .query_map([], |row| {
-                let checked = row.get(1).unwrap();
-                if checked {
-                    total_checked += 1;
-                }
-                Ok(Task {
-                    content: row.get(0).unwrap(),
-                    checked,
-                    note: row.get(2).unwrap(),
-                    board: row.get(3).unwrap(),
-                    date: row.get(4).unwrap(),
-                    id: row.get(5).unwrap(),
-                })
-            })
+        let boards: Vec<String> = stmt
+            .query_map([], |row| row.get(0))
             .unwrap()
             .flatten()
             .collect();
 
-        Board {
-            name: board,
-            total: tasks.len(),
-            tasks,
-            checked: total_checked,
-        }
-    }
-    pub fn get_boards(&self) -> Vec<Board> {
-        let mut stmt = self.stmt("SELECT DISTINCT board FROM tasks");
-        let rows = stmt.query_map([], |row| row.get(0)).unwrap();
-        let boards: Vec<String> = rows.into_iter().flatten().collect();
+        boards
+            .iter()
+            .map(|board| {
+                let mut stmt = self
+                    .conn
+                    .prepare("SELECT *, rowid FROM tasks WHERE BOARD = ?")
+                    .unwrap();
 
-        let mut a = Vec::new();
-        let mut b = Vec::new();
-
-        for board in boards {
-            if board == "Tasks" {
-                a.push(self.get_board(board));
-            } else {
-                b.push(self.get_board(board));
-            }
-        }
-        a.append(&mut b);
-        a
+                let mut total_checked = 0;
+                let tasks: Vec<Task> = stmt
+                    .query_map([board], |row| {
+                        let checked = row.get(1).unwrap();
+                        if checked {
+                            total_checked += 1;
+                        }
+                        Ok(Task {
+                            content: row.get(0).unwrap(),
+                            checked,
+                            note: row.get(2).unwrap(),
+                            board: row.get(3).unwrap(),
+                            date: row.get(4).unwrap(),
+                            id: row.get(5).unwrap(),
+                        })
+                    })
+                    .unwrap()
+                    .flatten()
+                    .collect();
+                Board {
+                    name: board.to_string(),
+                    total: tasks.len(),
+                    tasks,
+                    checked: total_checked,
+                }
+            })
+            .collect()
     }
     pub fn total_checked(&self) -> usize {
         self.total("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
@@ -211,16 +215,7 @@ impl Database {
         self.total("SELECT COUNT(*) FROM tasks WHERE note = '1'")
     }
     fn total(&self, query: &str) -> usize {
-        let mut stmt = self.stmt(query);
-        let mut rows = stmt.query([]).unwrap();
-
-        if let Some(row) = rows.next().unwrap() {
-            row.get(0).unwrap()
-        } else {
-            0
-        }
-    }
-    fn stmt(&self, query: &str) -> Statement {
-        self.conn.prepare(query).unwrap()
+        let mut stmt = self.conn.prepare(query).unwrap();
+        stmt.query_row([], |row| row.get(0)).unwrap()
     }
 }
