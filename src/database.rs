@@ -60,15 +60,6 @@ impl Database {
         .unwrap();
 
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS notes(
-                    content TEXT NOT NULL,
-                    date TEXT NOT NULL
-                )",
-            [],
-        )
-        .unwrap();
-
-        conn.execute(
             "CREATE TABLE IF NOT EXISTS old(
                     content TEXT NOT NULL
                 )",
@@ -152,7 +143,6 @@ impl Database {
             .flatten()
             .collect()
     }
-    //TODO: board table for easy length getting
     pub fn get_boards(&self) -> Vec<Board> {
         let mut stmt = self
             .conn
