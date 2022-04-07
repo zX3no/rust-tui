@@ -12,17 +12,16 @@ pub struct App {
 }
 
 impl App {
-    pub fn run() {
+    pub fn new() -> Self {
         Self {
             db: Database::new(),
         }
-        .parse_args()
     }
-    pub fn parse_args(&self) {
+    pub fn run(&self) {
         match ARGS.len() {
             0 => self.print_tasks(),
             _ => {
-                match ARGS[0].as_str() {
+                match &*ARGS[0] {
                     "n" | "d" if ARGS.len() == 1 => return ui::missing_args(ARGS[0].as_str()),
                     "h" | "help" => return ui::help(),
                     "v" | "version" => return println!("t {}", env!("CARGO_PKG_VERSION")),

@@ -7,6 +7,6 @@ mod database;
 mod ui;
 
 fn main() {
-    App::run();
+    App::new().run();
     stdout().flush().unwrap();
 }
