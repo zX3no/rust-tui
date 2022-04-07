@@ -149,17 +149,14 @@ impl Database {
             .prepare("SELECT DISTINCT board FROM tasks ORDER BY board == 'Tasks'")
             .unwrap();
 
-        //WTF?
-        let boards: Vec<String> = stmt
-            .query_map([], |row| row.get(0))
+        //WTF? SQLITE sorts boards in reverse order??
+        //can't reverse a query_map so I need to collect then reverse??
+        stmt.query_map([], |row| row.get(0))
             .unwrap()
             .flatten()
-            .collect();
-
-        let boards: Vec<String> = boards.into_iter().rev().collect();
-
-        boards
-            .iter()
+            .collect::<Vec<String>>()
+            .into_iter()
+            .rev()
             .map(|board| {
                 let mut stmt = self
                     .conn
@@ -168,7 +165,7 @@ impl Database {
 
                 let mut total_checked = 0;
                 let tasks: Vec<Task> = stmt
-                    .query_map([board], |row| {
+                    .query_map([&board], |row| {
                         let checked = row.get(1).unwrap();
                         if checked {
                             total_checked += 1;
@@ -185,8 +182,9 @@ impl Database {
                     .unwrap()
                     .flatten()
                     .collect();
+
                 Board {
-                    name: board.to_string(),
+                    name: board,
                     total: tasks.len(),
                     tasks,
                     checked: total_checked,
@@ -195,16 +193,21 @@ impl Database {
             .collect()
     }
     pub fn total_checked(&self) -> usize {
-        self.total("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
+        let mut stmt = self
+            .conn
+            .prepare("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
+            .unwrap();
+        stmt.query_row([], |row| row.get(0)).unwrap()
     }
     pub fn total_tasks(&self) -> usize {
-        self.total("SELECT COUNT(*) FROM tasks")
+        let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM tasks").unwrap();
+        stmt.query_row([], |row| row.get(0)).unwrap()
     }
     pub fn total_notes(&self) -> usize {
-        self.total("SELECT COUNT(*) FROM tasks WHERE note = '1'")
-    }
-    fn total(&self, query: &str) -> usize {
-        let mut stmt = self.conn.prepare(query).unwrap();
+        let mut stmt = self
+            .conn
+            .prepare("SELECT COUNT(*) FROM tasks WHERE note = '1'")
+            .unwrap();
         stmt.query_row([], |row| row.get(0)).unwrap()
     }
 }
