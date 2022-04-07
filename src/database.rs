@@ -146,18 +146,17 @@ impl Database {
     pub fn get_boards(&self) -> Vec<Board> {
         let mut stmt = self
             .conn
-            .prepare(
-                "SELECT DISTINCT board FROM tasks WHERE board == 'Tasks'
-                 UNION
-                 SELECT DISTINCT board FROM tasks WHERE board != 'Tasks'",
-            )
+            .prepare("SELECT DISTINCT board FROM tasks ORDER BY board == 'Tasks'")
             .unwrap();
 
+        //WTF?
         let boards: Vec<String> = stmt
             .query_map([], |row| row.get(0))
             .unwrap()
             .flatten()
             .collect();
+
+        let boards: Vec<String> = boards.into_iter().rev().collect();
 
         boards
             .iter()
