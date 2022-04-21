@@ -10,19 +10,19 @@ use std::{
 
 #[cfg(windows)]
 pub fn clear() {
-    stdout().flush().unwrap();
     Command::new("cmd")
         .args(["/C", "cls"])
         .status()
         .expect("failed to queue process");
+    stdout().flush().unwrap();
 }
 #[cfg(unix)]
 pub fn clear() {
-    stdout().flush().unwrap();
     Command::new("/bin/sh")
         .args(["-c", "clear"])
         .status()
         .expect("failed to queue process");
+    stdout().flush().unwrap();
 }
 pub fn help_message() {
     queue!(
