@@ -7,17 +7,14 @@ use std::{io::stdout, process::Command};
 
 #[cfg(windows)]
 pub fn clear() {
-    Command::new("cmd")
-        .args(["/C", "cls"])
-        .status()
-        .expect("failed to queue process");
+    Command::new("cmd").args(["/C", "cls"]).status().unwrap();
 }
 #[cfg(unix)]
 pub fn clear() {
     Command::new("/bin/sh")
         .args(["-c", "clear"])
         .status()
-        .expect("failed to queue process");
+        .unwrap()
 }
 pub fn help_message() {
     queue!(
