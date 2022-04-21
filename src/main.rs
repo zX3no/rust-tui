@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use chrono::{TimeZone, Utc};
 use database::Database;
 use regex::Regex;
@@ -66,8 +68,9 @@ impl App {
         }
 
         let boards = self.db.get_boards();
-
         let mut i = 1;
+
+        ui::clear();
 
         for board in boards {
             ui::header(board.checked, board.total, &board.name);
@@ -93,7 +96,6 @@ impl App {
         if old_tasks.is_empty() {
             return println!("No old tasks.");
         }
-
         ui::clear();
 
         ui::old_header();
@@ -183,7 +185,7 @@ impl App {
 
 impl Drop for App {
     fn drop(&mut self) {
-        ui::clear();
+        std::io::stdout().flush().unwrap();
     }
 }
 
