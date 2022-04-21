@@ -3,27 +3,33 @@ use crossterm::{
     queue,
     style::{Print, Stylize},
 };
-use std::{io::stdout, process::Command};
+use std::{
+    io::{stdout, Write},
+    process::Command,
+};
 
-#[allow(dead_code)]
+#[cfg(windows)]
 pub fn clear() {
-    if cfg!(windows) {
-        Command::new("cmd")
-            .args(["/C", "cls"])
-            .status()
-            .expect("failed to queue process");
-    } else if cfg!(unix) {
-        Command::new("/bin/sh")
-            .args(["-c", "clear"])
-            .status()
-            .expect("failed to queue process");
-    }
+    stdout().flush().unwrap();
+    Command::new("cmd")
+        .args(["/C", "cls"])
+        .status()
+        .expect("failed to queue process");
+}
+#[cfg(unix)]
+pub fn clear() {
+    stdout().flush().unwrap();
+    Command::new("/bin/sh")
+        .args(["-c", "clear"])
+        .status()
+        .expect("failed to queue process");
 }
 pub fn help_message() {
     queue!(
         stdout(),
-        Print("You have no tasks!\n Try adding one with: "),
-        Print(" t 'this⠀is⠀a⠀task'\n".cyan().italic()),
+        Print("You have no tasks!\n"),
+        Print("Try adding one with: "),
+        Print("t 'this⠀is⠀a⠀task'\n".cyan().italic()),
     );
 }
 //TODO: headers do not align with each other
@@ -173,7 +179,6 @@ Examples
     "
     );
 }
-
 pub fn missing_args(args: &str) {
     queue!(
         stdout(),

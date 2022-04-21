@@ -1,20 +1,7 @@
 use rusqlite::{params, Connection};
-use static_init::dynamic;
-use std::path::PathBuf;
-
-#[dynamic]
-static DB_DIR: PathBuf = {
-    let config_dir = dirs::config_dir().unwrap();
-    if !config_dir.exists() {
-        std::fs::create_dir(&config_dir).unwrap();
-    }
-
-    let t_dir = config_dir.join("t");
-    if !t_dir.exists() {
-        std::fs::create_dir(&t_dir).unwrap();
-    }
-
-    t_dir.join("t.db")
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
 };
 
 #[derive(Debug)]
@@ -35,13 +22,34 @@ pub struct Task {
     pub id: usize,
 }
 
+fn check_path(path: &Path) {
+    if !path.exists() {
+        fs::create_dir(&path).unwrap_or_else(|_| panic!("Could not create directory {:?}", path));
+    }
+}
+
 pub struct Database {
     conn: Connection,
 }
+impl Default for Database {
+    fn default() -> Self {
+        let config = {
+            if let Ok(home) = env::var("HOME") {
+                PathBuf::from(home)
+            } else if let Ok(home) = env::var("APPDATA") {
+                PathBuf::from(home)
+            } else if let Ok(home) = env::var("XDG_HOME") {
+                PathBuf::from(home)
+            } else {
+                panic!("HOME, XDG_HOME and APPDATA enviroment variables are all empty?");
+            }
+        };
+        let t = config.join("t");
+        let db = t.join("t.db");
+        check_path(&config);
+        check_path(&t);
 
-impl Database {
-    pub fn new() -> Self {
-        let conn = Connection::open(DB_DIR.as_path()).unwrap();
+        let conn = Connection::open(&db).unwrap();
 
         conn.pragma_update(None, "journal_mode", "WAL").unwrap();
         conn.pragma_update(None, "synchronous", "0").unwrap();
@@ -69,6 +77,9 @@ impl Database {
 
         Self { conn }
     }
+}
+
+impl Database {
     pub fn insert_task(&self, task: &str, board: Option<String>) {
         let board = if let Some(board) = board {
             board
