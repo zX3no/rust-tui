@@ -50,28 +50,19 @@ impl Default for Database {
         check_path(&t);
 
         let conn = Connection::open(&db).unwrap();
-
-        conn.pragma_update(None, "journal_mode", "WAL").unwrap();
-        conn.pragma_update(None, "synchronous", "0").unwrap();
-        conn.pragma_update(None, "temp_store", "0").unwrap();
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS tasks(
-                    content TEXT NOT NULL,
-                    checked BOOL NOT NULL,
-                    note BOOL NOT NULL,
-                    board TEXT NOT NULL,
-                    date TEXT NOT NULL
-                )",
-            [],
-        )
-        .unwrap();
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS old(
-                    content TEXT NOT NULL
-                )",
-            [],
+        conn.execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS tasks(
+                content TEXT NOT NULL,
+                checked BOOL NOT NULL,
+                note BOOL NOT NULL,
+                board TEXT NOT NULL,
+                date TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS old(
+                content TEXT NOT NULL
+            );
+        ",
         )
         .unwrap();
 
@@ -157,17 +148,19 @@ impl Database {
     pub fn get_boards(&self) -> Vec<Board> {
         let mut stmt = self
             .conn
-            .prepare("SELECT DISTINCT board FROM tasks ORDER BY board == 'Tasks'")
+            .prepare("SELECT DISTINCT board FROM tasks")
             .unwrap();
 
-        //WTF? SQLITE sorts boards in reverse order??
-        //can't reverse a query_map so I need to collect then reverse??
-        stmt.query_map([], |row| row.get(0))
+        let mut boards: Vec<String> = stmt
+            .query_map([], |row| row.get(0))
             .unwrap()
             .flatten()
-            .collect::<Vec<String>>()
+            .collect();
+
+        boards.sort_by_key(|board| board != "Tasks");
+
+        boards
             .into_iter()
-            .rev()
             .map(|board| {
                 let mut stmt = self
                     .conn
@@ -211,7 +204,10 @@ impl Database {
         stmt.query_row([], |row| row.get(0)).unwrap()
     }
     pub fn total_tasks(&self) -> usize {
-        let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM tasks").unwrap();
+        let mut stmt = self
+            .conn
+            .prepare("SELECT COUNT(*) FROM tasks WHERE note = '0'")
+            .unwrap();
         stmt.query_row([], |row| row.get(0)).unwrap()
     }
     pub fn total_notes(&self) -> usize {

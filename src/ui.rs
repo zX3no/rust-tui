@@ -86,6 +86,7 @@ fn spacing(id: usize, total: usize) -> &'static str {
 }
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
+    let note = if total_notes == 1 { "note" } else { "notes" };
     queue!(
         stdout(),
         Print(format!("  {}% of all tasks complted\n  ", percent).dark_grey()),
@@ -94,7 +95,7 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
         Print(format!("{}", total_tasks - completed_tasks).magenta()),
         Print(" pending · ".dark_grey()),
         Print(total_notes.to_string().blue()),
-        Print(" notes\n".dark_grey()),
+        Print(format!(" {}\n", note).dark_grey()),
     );
 }
 pub fn new_line() {

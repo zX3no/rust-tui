@@ -20,7 +20,7 @@ impl App {
         };
 
         match app.args.len() {
-            0 => app.print_tasks(),
+            0 => app.print(),
             _ => {
                 match app.args[0].as_str() {
                     "n" | "d" if app.args.len() == 1 => {
@@ -54,14 +54,15 @@ impl App {
                     },
                 }
 
-                app.print_tasks();
+                app.print();
             }
         }
     }
-    pub fn print_tasks(&self) {
+    pub fn print(&self) {
         let total_tasks = self.db.total_tasks();
-        let total_checked = self.db.total_checked();
         let total_notes = self.db.total_notes();
+        let total = total_tasks + total_notes;
+        let total_checked = self.db.total_checked();
 
         if total_tasks == 0 {
             return ui::help_message();
@@ -76,13 +77,13 @@ impl App {
             ui::header(board.checked, board.total, &board.name);
             for task in board.tasks {
                 if task.note {
-                    ui::note(i, &task.content, total_tasks);
+                    ui::note(i, &task.content, total);
                 } else {
                     let date = Utc
                         .datetime_from_str(&task.date, "%Y-%m-%d %H:%M:%S")
                         .unwrap();
                     let days = (Utc::now() - date).num_days();
-                    ui::task(i, task.checked, &task.content, days, total_tasks);
+                    ui::task(i, task.checked, &task.content, days, total);
                 }
                 i += 1;
             }
