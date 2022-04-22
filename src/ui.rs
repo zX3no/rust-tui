@@ -34,27 +34,10 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     );
 }
 pub fn old_header() {
-    queue!(stdout(), Print(" "), Print("Tasks:\n".underlined()));
+    queue!(stdout(), Print(format!(" {}\n", "Tasks:".underlined())),);
 }
 pub fn note(id: usize, text: &str, total_notes: usize) {
-    let spacing = if total_notes < 10 {
-        ". "
-    } else if total_notes < 100 {
-        if id < 10 {
-            ".  "
-        } else if id < 100 {
-            ". "
-        } else {
-            panic!("id > 100");
-        }
-    } else if id < 10 {
-        ".   "
-    } else if id < 100 {
-        ".  "
-    } else {
-        ". "
-    };
-
+    let spacing = spacing(id, total_notes);
     queue!(
         stdout(),
         Print(format!("   {}{}", id, spacing).dark_grey()),
@@ -64,65 +47,48 @@ pub fn note(id: usize, text: &str, total_notes: usize) {
 }
 pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
     queue!(stdout(), Print(format!("   {}", id).dark_grey()));
-    if checked {
-        let spacing = if total_tasks < 10 {
-            ".  "
-        } else if total_tasks < 100 {
-            if id < 10 {
-                ".   "
-            } else if id < 100 {
-                ".  "
-            } else {
-                panic!("id > 100");
-            }
-        } else if id < 10 {
-            ".    "
-        } else if id < 100 {
-            ".   "
-        } else {
-            ".  "
-        };
-        queue!(
-            stdout(),
-            Print(format!(
-                "{}{}{}",
-                spacing.dark_grey(),
-                "√  ".green(),
-                text.dark_grey()
-            ))
-        );
+    let spacing = spacing(id, total_tasks);
+    let string = if checked {
+        format!(
+            "{} {}{}",
+            spacing.dark_grey(),
+            "√  ".green(),
+            text.dark_grey()
+        )
     } else {
-        let spacing = if total_tasks < 10 {
-            ". "
-        } else if total_tasks < 100 {
-            if id < 10 {
-                ".  "
-            } else if id < 100 {
-                ". "
-            } else {
-                panic!("id > 100");
-            }
-        } else if id < 10 {
-            ".   "
-        } else if id < 100 {
-            ".  "
+        let days = if days > 0 {
+            format!(" {}", days)
         } else {
-            ". "
+            String::new()
         };
-        queue!(
-            stdout(),
-            Print(format!(
-                "{}{} {}",
-                spacing.dark_grey(),
-                "[ ]".dark_magenta(),
-                text
-            ))
-        );
-        if days > 0 {
-            queue!(stdout(), Print(format!(" {}d", days).dark_grey()));
-        }
+        format!(
+            "{}{} {}{}",
+            spacing.dark_grey(),
+            "[ ]".dark_magenta(),
+            text,
+            days.dark_grey()
+        )
     };
-    queue!(stdout(), Print("\n"));
+    queue!(stdout(), Print(string + "\n"));
+}
+fn spacing(id: usize, total: usize) -> &'static str {
+    if total < 10 {
+        ". "
+    } else if total < 100 {
+        if id < 10 {
+            ".  "
+        } else if id < 100 {
+            ". "
+        } else {
+            unreachable!();
+        }
+    } else if id < 10 {
+        ".   "
+    } else if id < 100 {
+        ".  "
+    } else {
+        ". "
+    }
 }
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
