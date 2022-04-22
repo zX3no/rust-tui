@@ -62,12 +62,12 @@ impl App {
         let total_tasks = self.db.total_tasks();
         let total_notes = self.db.total_notes();
         let total = total_tasks + total_notes;
-        let total_checked = self.db.total_checked();
 
-        if total_tasks == 0 {
+        if total == 0 {
             return ui::help_message();
         }
 
+        let total_checked = self.db.total_checked();
         let boards = self.db.get_boards();
         let mut i = 1;
 
@@ -75,6 +75,7 @@ impl App {
 
         for board in boards {
             ui::header(board.checked, board.total, &board.name);
+
             for task in board.tasks {
                 if task.note {
                     ui::note(i, &task.content, total);
