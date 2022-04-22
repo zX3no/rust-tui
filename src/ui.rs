@@ -46,30 +46,24 @@ pub fn note(id: usize, text: &str, total_notes: usize) {
     );
 }
 pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
-    queue!(stdout(), Print(format!("   {}", id).dark_grey()));
     let spacing = spacing(id, total_tasks);
-    let string = if checked {
-        format!(
-            "{} {}{}",
-            spacing.dark_grey(),
-            "√  ".green(),
-            text.dark_grey()
-        )
+    let days = if days > 0 && checked {
+        format!(" {}", days)
     } else {
-        let days = if days > 0 {
-            format!(" {}", days)
-        } else {
-            String::new()
-        };
-        format!(
-            "{}{} {}{}",
-            spacing.dark_grey(),
-            "[ ]".dark_magenta(),
-            text,
-            days.dark_grey()
-        )
+        String::new()
     };
-    queue!(stdout(), Print(string + "\n"));
+
+    let checked = if checked {
+        " √ ".green()
+    } else {
+        "[ ]".dark_magenta()
+    };
+
+    queue!(
+        stdout(),
+        Print(format!("   {}{}", id, spacing).dark_grey()),
+        Print(format!("{} {}{}\n", checked, text, days.dark_grey()))
+    );
 }
 fn spacing(id: usize, total: usize) -> &'static str {
     if total < 10 {
