@@ -1,8 +1,5 @@
 use rusqlite::{params, Connection};
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-};
+use std::{env, fs, path::PathBuf};
 
 #[derive(Debug)]
 pub struct Board {
@@ -22,15 +19,10 @@ pub struct Task {
     pub id: usize,
 }
 
-fn check_path(path: &Path) {
-    if !path.exists() {
-        fs::create_dir(&path).unwrap_or_else(|_| panic!("Could not create directory {:?}", path));
-    }
-}
-
 pub struct Database {
     conn: Connection,
 }
+
 impl Default for Database {
     fn default() -> Self {
         let config = {
@@ -43,11 +35,10 @@ impl Default for Database {
             } else {
                 panic!("HOME, XDG_HOME and APPDATA enviroment variables are all empty?");
             }
-        };
-        let t = config.join("t");
-        let db = t.join("t.db");
-        check_path(&config);
-        check_path(&t);
+        }
+        .join("t");
+        fs::create_dir_all(&config).unwrap();
+        let db = config.join("t.db");
 
         let conn = Connection::open(&db).unwrap();
         conn.execute_batch(

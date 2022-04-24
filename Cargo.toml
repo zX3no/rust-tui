@@ -1,9 +1,10 @@
 [package]
 name = "t-cli"
 version = "0.3.13"
+edition = "2021"
+
 authors = ["Bay"]
 description = "A simple CLI task manager"
-edition = "2021"
 repository = "https://github.com/zX3no/t"
 readme = "README.md"
 license = "MIT"
