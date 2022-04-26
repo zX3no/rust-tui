@@ -208,4 +208,8 @@ impl Database {
             .unwrap();
         stmt.query_row([], |row| row.get(0)).unwrap()
     }
+    pub fn total(&self) -> usize {
+        let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM tasks").unwrap();
+        stmt.query_row([], |row| row.get(0)).unwrap()
+    }
 }

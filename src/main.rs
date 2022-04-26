@@ -31,23 +31,23 @@ impl App {
                     "o" | "old" => return app.print_old(),
                     "n" => {
                         if let Err(err) = app.add(true) {
-                            return println!("{err}");
+                            return println!("{}", err);
                         }
                     }
                     "d" => match app.ids() {
                         Ok(ids) => app.db.delete_tasks(&ids),
-                        Err(err) => return println!("{:?}", err),
+                        Err(err) => return println!("{}", err.unwrap_or("")),
                     },
                     "cls" => app.db.clear_tasks(),
                     _ => match app.ids() {
                         Ok(ids) => app.db.check_tasks(&ids),
                         //error with numbers or task?
                         Err(err) => match err {
-                            Some(err) => println!("{:?}", err),
+                            Some(err) => return println!("{}", err),
                             None => {
                                 //check for for input errors
                                 if let Err(err) = app.add(false) {
-                                    println!("{:?}", err);
+                                    return println!("{}", err);
                                 }
                             }
                         },
@@ -61,7 +61,7 @@ impl App {
     pub fn print(&self) {
         let total_tasks = self.db.total_tasks();
         let total_notes = self.db.total_notes();
-        let total = total_tasks + total_notes;
+        let total = self.db.total();
 
         if total == 0 {
             return ui::help_message();
@@ -119,13 +119,11 @@ impl App {
         let nums = Regex::new("^[0-9 ]*$").unwrap();
         let range = Regex::new(r"^(?x)(?P<first>\d+)(\s+)?-(\s+)?(?P<last>\d+)$").unwrap();
 
-        let len = self.db.total_tasks();
-
         if nums.captures(&args).is_some() {
             args.split(' ')
                 .map(|str| {
                     if let Ok(num) = str.parse() {
-                        if num > len {
+                        if num > self.db.total() {
                             Err(Some("Task does not exist."))
                         } else {
                             Ok(num)
