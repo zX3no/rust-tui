@@ -27,7 +27,7 @@ impl Default for Database {
     fn default() -> Self {
         let config = {
             if let Ok(home) = env::var("HOME") {
-                PathBuf::from(home)
+                PathBuf::from(home).join(".config")
             } else if let Ok(home) = env::var("APPDATA") {
                 PathBuf::from(home)
             } else if let Ok(home) = env::var("XDG_HOME") {
@@ -106,7 +106,7 @@ impl Database {
         for id in ids {
             self.conn
                 .execute(
-                    "UPDATE tasks SET checked = ((checked| 1) - (checked & 1)) WHERE rowid = ?",
+                    "UPDATE tasks SET checked = ((checked| 1) - (checked & 1)) WHERE rowid = ? AND note = '0'",
                     [id],
                 )
                 .unwrap();
