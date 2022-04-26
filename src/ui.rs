@@ -14,7 +14,7 @@ pub fn clear() {
     Command::new("/bin/sh")
         .args(["-c", "clear"])
         .status()
-        .unwrap()
+        .unwrap();
 }
 pub fn help_message() {
     queue!(
