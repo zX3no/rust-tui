@@ -190,7 +190,7 @@ impl Database {
     pub fn total_checked(&self) -> usize {
         let mut stmt = self
             .conn
-            .prepare("SELECT COUNT(*) FROM tasks WHERE checked = '1'")
+            .prepare("SELECT COUNT(*) FROM tasks WHERE checked = '1' AND note = '0'")
             .unwrap();
         stmt.query_row([], |row| row.get(0)).unwrap()
     }

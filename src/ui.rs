@@ -87,6 +87,7 @@ fn spacing(id: usize, total: usize) -> &'static str {
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     let note = if total_notes == 1 { "note" } else { "notes" };
+    dbg!(total_tasks, completed_tasks);
     queue!(
         stdout(),
         Print(format!("  {}% of all tasks complted\n  ", percent).dark_grey()),
