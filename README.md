@@ -33,7 +33,7 @@ cargo install --path .
 t
 ```
 
-#### Add some tasks:
+#### Add a task:
 
 ```
 t this is a task 
@@ -70,10 +70,6 @@ t old
 ```
 t help
 ```
-
-## TODO
-
-- [ ] Config file for color schemes 
 
 ## ❤️ Contributing
 
