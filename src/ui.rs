@@ -16,6 +16,7 @@ pub fn clear() {
         .status()
         .unwrap();
 }
+
 pub fn help_message() {
     queue!(
         stdout(),
@@ -24,6 +25,7 @@ pub fn help_message() {
         Print("t 'this⠀is⠀a⠀task'\n".cyan().italic()),
     );
 }
+
 //TODO: headers do not align with each other
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     queue!(
@@ -33,9 +35,11 @@ pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
         Print(format!(" [{}/{}]\n", completed_tasks, total_tasks).dark_grey())
     );
 }
+
 pub fn old_header() {
     queue!(stdout(), Print(format!(" {}\n", "Tasks:".underlined())),);
 }
+
 pub fn note(id: usize, text: &str, total_notes: usize) {
     let spacing = spacing(id, total_notes);
     queue!(
@@ -45,6 +49,7 @@ pub fn note(id: usize, text: &str, total_notes: usize) {
         Print(format!("{}\n", text)),
     );
 }
+
 pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
     let spacing = spacing(id, total_tasks);
     let days = if days > 0 && !checked {
@@ -65,6 +70,7 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
         Print(format!("{} {}{}\n", checked, text, days.dark_grey()))
     );
 }
+
 fn spacing(id: usize, total: usize) -> &'static str {
     if total < 10 {
         ". "
@@ -84,6 +90,7 @@ fn spacing(id: usize, total: usize) -> &'static str {
         ". "
     }
 }
+
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     let note = if total_notes == 1 { "note" } else { "notes" };
@@ -98,9 +105,11 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
         Print(format!(" {}\n", note).dark_grey()),
     );
 }
+
 pub fn new_line() {
     queue!(stdout(), Print("\n"));
 }
+
 pub fn help() {
     println!(
         "
@@ -116,8 +125,8 @@ Options
     d                       Delete a task
     cls                     Delete all checked tasks
     o, old                  Displays deleted tasks 
-    h, help                 Displays the help page
-    v, version              Displays version
+    -h, -help               Displays the help page
+    -v, -version            Displays version
 
 Examples                     
     t                       Displays tasks
