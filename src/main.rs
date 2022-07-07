@@ -95,14 +95,14 @@ fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static
             ));
         }
 
-        Ok((first..last + 1).collect())
+        Ok((first..=last).collect())
     } else {
         Err(None)
     }
 }
 
 fn add(args: &[String], conn: &Connection, is_note: bool) -> Result<(), &'static str> {
-    let args = if is_note { &args[1..] } else { &args };
+    let args = if is_note { &args[1..] } else { args };
     let mut board_name = None;
 
     let item = if args[0].contains('!') {
@@ -113,14 +113,14 @@ fn add(args: &[String], conn: &Connection, is_note: bool) -> Result<(), &'static
         } else {
             let input: Vec<&str> = args[0].split(' ').collect();
 
+            //t '!Tasks'
             if input.len() == 1 {
-                //t '!Tasks'
                 return Err("Missing task!");
-            } else {
-                //t '!Tasks sample task'
-                board_name = Some(input[0].replace('!', ""));
-                input[1..].join(" ")
             }
+
+            //t '!Tasks sample task'
+            board_name = Some(input[0].replace('!', ""));
+            input[1..].join(" ")
         }
     } else {
         //t 'sample task'
@@ -163,42 +163,41 @@ fn main() {
     )
     .unwrap();
 
-    match args.len() {
-        0 => print(&conn),
-        _ => {
-            match args[0].as_str() {
-                "-h" | "-help" => return ui::help(),
-                "-v" | "-version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
-                "n" | "d" if args.len() == 1 => return ui::missing_args(&args[0]),
-                "o" | "old" => return print_old(&conn),
-                "n" => {
-                    if let Err(err) = add(&args, &conn, true) {
-                        return println!("{}", err);
-                    }
+    if args.is_empty() {
+        print(&conn);
+    } else {
+        match args[0].as_str() {
+            "-h" | "-help" => return ui::help(),
+            "-v" | "-version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
+            "n" | "d" if args.len() == 1 => return ui::missing_args(&args[0]),
+            "o" | "old" => return print_old(&conn),
+            "n" => {
+                if let Err(err) = add(&args, &conn, true) {
+                    return println!("{}", err);
                 }
-                "d" => match ids(&args, &conn) {
-                    Ok(ids) => delete_tasks(&conn, &ids),
-                    Err(err) => return println!("{}", err.unwrap_or("")),
-                },
-                "cls" => clear_tasks(&conn),
-                _ if args[0].starts_with('-') => return println!("Invalid command."),
-                _ => match ids(&args, &conn) {
-                    Ok(ids) => check_tasks(&conn, &ids),
-                    //error with numbers or task?
-                    Err(err) => match err {
-                        Some(err) => return println!("{}", err),
-                        None => {
-                            //check for for input errors
-                            if let Err(err) = add(&args, &conn, false) {
-                                return println!("{}", err);
-                            }
-                        }
-                    },
-                },
             }
-
-            print(&conn);
+            "d" => match ids(&args, &conn) {
+                Ok(ids) => delete_tasks(&conn, &ids),
+                Err(err) => return println!("{}", err.unwrap_or("")),
+            },
+            "cls" => clear_tasks(&conn),
+            _ if args[0].starts_with('-') => return println!("Invalid command."),
+            _ => match ids(&args, &conn) {
+                Ok(ids) => check_tasks(&conn, &ids),
+                //error with numbers or task?
+                Err(err) => match err {
+                    Some(err) => return println!("{}", err),
+                    None => {
+                        //check for for input errors
+                        if let Err(err) = add(&args, &conn, false) {
+                            return println!("{}", err);
+                        }
+                    }
+                },
+            },
         }
+
+        print(&conn);
     }
 
     std::io::stdout().flush().unwrap();

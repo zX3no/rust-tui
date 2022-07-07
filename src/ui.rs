@@ -9,6 +9,7 @@ use std::{io::stdout, process::Command};
 pub fn clear() {
     Command::new("cmd").args(["/C", "cls"]).status().unwrap();
 }
+
 #[cfg(unix)]
 pub fn clear() {
     Command::new("/bin/sh")
@@ -26,7 +27,6 @@ pub fn help_message() {
     );
 }
 
-//TODO: headers do not align with each other
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
     queue!(
         stdout(),

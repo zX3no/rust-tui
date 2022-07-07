@@ -19,7 +19,7 @@ pub struct Task {
 }
 
 pub fn insert_task(conn: &Connection, task: &str, board: Option<String>) {
-    let board = board.unwrap_or(String::from("Tasks"));
+    let board = board.unwrap_or_else(|| String::from("Tasks"));
 
     conn.execute(
                 "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'utc'))",
@@ -29,7 +29,7 @@ pub fn insert_task(conn: &Connection, task: &str, board: Option<String>) {
 }
 
 pub fn insert_note(conn: &Connection, note: &str, board: Option<String>) {
-    let board = board.unwrap_or(String::from("Tasks"));
+    let board = board.unwrap_or_else(|| String::from("Tasks"));
 
     conn.execute(
                 "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'utc'))",
@@ -73,8 +73,8 @@ pub fn get_real_ids(conn: &Connection, ids: &[usize]) -> Vec<usize> {
         }
     }
     ids.iter()
-        .flat_map(|id| real_ids.get(id.saturating_sub(1)))
-        .cloned()
+        .filter_map(|id| real_ids.get(id.saturating_sub(1)))
+        .copied()
         .collect()
 }
 
