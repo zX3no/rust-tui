@@ -37,6 +37,7 @@ fn print(conn: &Connection) {
             }
             i += 1;
         }
+
         ui::new_line();
     }
 
@@ -180,6 +181,7 @@ fn main() {
                     Err(err) => return println!("{}", err.unwrap_or("")),
                 },
                 "cls" => clear_tasks(&conn),
+                _ if args[0].starts_with('-') => return println!("Invalid command."),
                 _ => match ids(&args, &conn) {
                     Ok(ids) => check_tasks(&conn, &ids),
                     //error with numbers or task?

@@ -141,6 +141,7 @@ Examples
     "
     );
 }
+
 pub fn missing_args(args: &str) {
     queue!(
         stdout(),
