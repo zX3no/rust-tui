@@ -2,7 +2,11 @@ use chrono::{TimeZone, Utc};
 use database::*;
 use regex::Regex;
 use rusqlite::Connection;
-use std::{env, fs, io::Write, path::PathBuf};
+use std::{
+    env, fs,
+    io::{StdoutLock, Write},
+    path::PathBuf,
+};
 
 mod database;
 mod ui;
@@ -38,7 +42,7 @@ fn print(conn: &Connection) {
             i += 1;
         }
 
-        ui::new_line();
+        queue!("\n");
     }
 
     ui::footer(total_checked, total_tasks, total_notes);
@@ -135,7 +139,32 @@ fn add(args: &[String], conn: &Connection, is_note: bool) -> Result<(), &'static
     Ok(())
 }
 
+static mut STDOUT: Option<StdoutLock> = None;
+
+#[macro_export]
+macro_rules! queue {
+    ($($arg:tt)*) => {
+        unsafe {
+            {
+                use std::io::Write;
+
+                let stdout = $crate::STDOUT.as_mut().unwrap();
+                let args = format_args!($($arg)*).to_string();
+                stdout
+                    .write_all(format!("{}\x1b[0m", args).as_bytes())
+                    .unwrap();
+            }
+        };
+    };
+}
+
 fn main() {
+    unsafe {
+        let stdout = std::io::stdout();
+        let handle = stdout.lock();
+        STDOUT = Some(handle);
+    }
+
     let args: Vec<String> = std::env::args().skip(1).collect();
     let t = if cfg!(windows) {
         PathBuf::from(&env::var("APPDATA").unwrap())

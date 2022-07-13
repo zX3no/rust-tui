@@ -1,9 +1,32 @@
-#![allow(unused_must_use)]
-use crossterm::{
-    queue,
-    style::{Print, Stylize},
-};
-use std::{io::stdout, process::Command};
+#![allow(dead_code)]
+use crate::queue;
+use std::process::Command;
+
+const RESET: &str = "\x1b[0m";
+
+const WHITE: &str = "\x1b[37m";
+const GREY: &str = "\x1b[90m";
+const BLACK: &str = "\x1b[30m";
+
+const RED: &str = "\x1b[31m";
+const GREEN: &str = "\x1b[32m";
+const BLUE: &str = "\x1b[34m";
+
+const YELLOW: &str = "\x1b[33m";
+const MAGENTA: &str = "\x1b[35m";
+const CYAN: &str = "\x1b[36m";
+
+const DIM: &str = "\x1b[2m";
+const BOLD: &str = "\x1b[1m";
+
+const ITALIC: &str = "\x1b[3m";
+const UNDERLINED: &str = "\x1b[4m";
+const BUNDERLINE: &str = "\x1B[1;4m";
+const STRICKEN: &str = "\x1B[9m";
+const UNDERSCORE: &str = "\x1b[4m";
+const BLINK: &str = "\x1b[5m";
+const REVERSE: &str = "\x1b[7m";
+const HIDDEN: &str = "\x1b[8m";
 
 #[cfg(windows)]
 pub fn clear() {
@@ -19,35 +42,25 @@ pub fn clear() {
 }
 
 pub fn help_message() {
-    queue!(
-        stdout(),
-        Print("You have no tasks!\n"),
-        Print("Try adding one with: "),
-        Print("t 'this⠀is⠀a⠀task'\n".cyan().italic()),
-    );
+    queue!("You have no tasks!\n");
+    queue!("Try adding one with: ");
+    queue!("{}{} {}", CYAN, ITALIC, "t 'this⠀is⠀a⠀task'\n");
 }
 
 pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
-    queue!(
-        stdout(),
-        Print(" "),
-        Print(format!("{}:", board.underlined())),
-        Print(format!(" [{}/{}]\n", completed_tasks, total_tasks).dark_grey())
-    );
+    queue!(" {}{}{}:", UNDERLINED, board, RESET);
+    queue!("{} [{}/{}]\n", GREY, completed_tasks, total_tasks);
 }
 
 pub fn old_header() {
-    queue!(stdout(), Print(format!(" {}\n", "Tasks:".underlined())),);
+    queue!("{} {}\n", UNDERLINED, "Tasks:");
 }
 
 pub fn note(id: usize, text: &str, total_notes: usize) {
     let spacing = spacing(id, total_notes);
-    queue!(
-        stdout(),
-        Print(format!("   {}{}", id, spacing).dark_grey()),
-        Print(" •  ".dark_magenta()),
-        Print(format!("{}\n", text)),
-    );
+    queue!("{}   {}{}", GREY, id, spacing);
+    queue!("{} •  ", MAGENTA);
+    queue!("{}\n", text);
 }
 
 pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
@@ -59,16 +72,13 @@ pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize)
     };
 
     let checked = if checked {
-        " √ ".green()
+        format!("{} √ {}", GREEN, RESET)
     } else {
-        "[ ]".dark_magenta()
+        format!("{}[ ]{}", MAGENTA, RESET)
     };
 
-    queue!(
-        stdout(),
-        Print(format!("   {}{}", id, spacing).dark_grey()),
-        Print(format!("{} {}{}\n", checked, text, days.dark_grey()))
-    );
+    queue!("{}   {}{}", GREY, id, spacing);
+    queue!("{} {}{}{}\n", checked, text, GREY, days);
 }
 
 fn spacing(id: usize, total: usize) -> &'static str {
@@ -94,24 +104,18 @@ fn spacing(id: usize, total: usize) -> &'static str {
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     let note = if total_notes == 1 { "note" } else { "notes" };
-    queue!(
-        stdout(),
-        Print(format!("  {}% of all tasks complted\n  ", percent).dark_grey()),
-        Print(completed_tasks.to_string().green()),
-        Print(" done · ".dark_grey()),
-        Print(format!("{}", total_tasks - completed_tasks).magenta()),
-        Print(" pending · ".dark_grey()),
-        Print(total_notes.to_string().blue()),
-        Print(format!(" {}\n", note).dark_grey()),
-    );
-}
 
-pub fn new_line() {
-    queue!(stdout(), Print("\n"));
+    queue!("{}  {}% of all tasks completed\n  ", GREY, percent);
+    queue!("{}{}", GREEN, completed_tasks);
+    queue!("{} done · ", GREY);
+    queue!("{}{}", MAGENTA, total_tasks - completed_tasks);
+    queue!("{} pending · ", GREY);
+    queue!("{}{}", BLUE, total_notes);
+    queue!("{} {}\n", GREY, note);
 }
 
 pub fn help() {
-    println!(
+    queue!(
         "
 Usage
     t [<options> <args>] 
@@ -143,9 +147,5 @@ Examples
 }
 
 pub fn missing_args(args: &str) {
-    queue!(
-        stdout(),
-        Print("Missing arguments for command: "),
-        Print(format!("'{}'\n", args).cyan()),
-    );
+    queue!("Missing arguments for command: {}'{}'\n", CYAN, args);
 }
