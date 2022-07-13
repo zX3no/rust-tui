@@ -14,7 +14,7 @@ pub struct Task {
     pub checked: bool,
     pub note: bool,
     pub board: String,
-    pub date: String,
+    pub date: u64,
     pub id: usize,
 }
 
@@ -22,7 +22,7 @@ pub fn insert_task(conn: &Connection, task: &str, board: Option<String>) {
     let board = board.unwrap_or_else(|| String::from("Tasks"));
 
     conn.execute(
-                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'utc'))",
+                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, unixepoch())",
                 params![task, false, false, board],
             )
             .unwrap();
@@ -32,7 +32,7 @@ pub fn insert_note(conn: &Connection, note: &str, board: Option<String>) {
     let board = board.unwrap_or_else(|| String::from("Tasks"));
 
     conn.execute(
-                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, datetime('now', 'utc'))",
+                "INSERT INTO tasks (content, checked, note, board, date) VALUES (?1, ?2, ?3, ?4, unixepoch())",
                 params![note, false, true, board],
             )
             .unwrap();

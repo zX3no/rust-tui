@@ -1,4 +1,3 @@
-use chrono::{TimeZone, Utc};
 use database::*;
 use regex::Regex;
 use rusqlite::Connection;
@@ -6,6 +5,7 @@ use std::{
     env, fs,
     io::{StdoutLock, Write},
     path::PathBuf,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 mod database;
@@ -26,6 +26,11 @@ fn print(conn: &Connection) {
 
     ui::clear();
 
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
     for board in boards {
         ui::header(board.checked, board.total, &board.name);
 
@@ -33,10 +38,7 @@ fn print(conn: &Connection) {
             if task.note {
                 ui::note(i, &task.content, total);
             } else {
-                let date = Utc
-                    .datetime_from_str(&task.date, "%Y-%m-%d %H:%M:%S")
-                    .unwrap();
-                let days = (Utc::now() - date).num_days();
+                let days = ((now - task.date) as f64 * 0.000011574).round() as u64;
                 ui::task(i, task.checked, &task.content, days, total);
             }
             i += 1;
@@ -183,7 +185,7 @@ fn main() {
                 checked BOOL NOT NULL,
                 note BOOL NOT NULL,
                 board TEXT NOT NULL,
-                date TEXT NOT NULL
+                date INTEGER NOT NULL
             );
             CREATE TABLE IF NOT EXISTS old(
                 content TEXT NOT NULL

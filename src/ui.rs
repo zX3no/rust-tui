@@ -63,7 +63,7 @@ pub fn note(id: usize, text: &str, total_notes: usize) {
     queue!("{}\n", text);
 }
 
-pub fn task(id: usize, checked: bool, text: &str, days: i64, total_tasks: usize) {
+pub fn task(id: usize, checked: bool, text: &str, days: u64, total_tasks: usize) {
     let spacing = spacing(id, total_tasks);
     let days = if days > 0 && !checked {
         format!(" {}d", days)
