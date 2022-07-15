@@ -1,5 +1,4 @@
 use database::*;
-use regex::Regex;
 use rusqlite::Connection;
 use std::{
     env, fs,
@@ -64,6 +63,59 @@ fn print_old(conn: &Connection) {
     }
 }
 
+fn is_row_of_numbers(input: &str) -> bool {
+    for char in input.chars() {
+        match char {
+            ' ' => (),
+            _ if char.is_numeric() => (),
+            _ => return false,
+        }
+    }
+    true
+}
+
+fn get_range(input: &str) -> Option<(usize, usize)> {
+    let mut start_str = String::new();
+    let mut start = None;
+
+    let mut end_str = String::new();
+    let mut end = None;
+
+    if !input.contains('-') {
+        return None;
+    }
+
+    for char in input.chars() {
+        match char {
+            '-' | ' ' => {
+                if !start_str.is_empty() && start.is_none() {
+                    start = Some(start_str.parse::<usize>().unwrap());
+                }
+
+                if !end_str.is_empty() && end.is_none() {
+                    end = Some(end_str.parse::<usize>().unwrap());
+                }
+            }
+            _ if char.is_numeric() => {
+                if start.is_none() {
+                    start_str.push(char);
+                } else if end.is_none() {
+                    end_str.push(char);
+                } else {
+                    return None;
+                }
+            }
+            _ => return None,
+        }
+    }
+
+    if end.is_none() {
+        end = Some(end_str.parse::<usize>().unwrap());
+    }
+
+    Some((start.unwrap(), end.unwrap()))
+}
+
 fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static str>> {
     let args = if args.iter().any(|arg| arg == &String::from('d')) {
         &args[1..]
@@ -74,10 +126,7 @@ fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static
     .trim()
     .to_string();
 
-    let nums = Regex::new("^[0-9 ]*$").unwrap();
-    let range = Regex::new(r"^(?x)(?P<first>\d+)(\s+)?-(\s+)?(?P<last>\d+)$").unwrap();
-
-    if nums.captures(&args).is_some() {
+    if is_row_of_numbers(&args) {
         args.split(' ')
             .map(|str| {
                 if let Ok(num) = str.parse() {
@@ -91,17 +140,16 @@ fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static
                 }
             })
             .collect()
-    } else if let Some(caps) = range.captures(&args) {
-        let first: usize = caps["first"].parse().unwrap();
-        let last: usize = caps["last"].parse().unwrap();
-
+    } else if let Some((first, last)) = get_range(&args) {
         if first > last {
-            return Err(Some(
+            Err(Some(
                 "Invalid range! First number must be smaller than last.",
-            ));
+            ))
+        } else if last > total_tasks(conn) {
+            Err(Some("Task does not exist."))
+        } else {
+            Ok((first..=last).collect())
         }
-
-        Ok((first..=last).collect())
     } else {
         Err(None)
     }
