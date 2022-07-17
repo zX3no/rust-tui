@@ -59,12 +59,6 @@ t d 1
 t cls
 ```
 
-#### View your old tasks:
-
-```
-t old
-```
-
 #### List commands:
 
 ```
