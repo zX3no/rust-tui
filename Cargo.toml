@@ -15,6 +15,3 @@ panic = "abort"
 [[bin]]
 name = "t"
 path = "src/main.rs"
-
-[dependencies]
-rusqlite = { version = "0.28.0", features = ["bundled"] }

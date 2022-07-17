@@ -47,9 +47,10 @@ pub fn help_message() {
     queue!("{}{} {}", CYAN, ITALIC, "t 'this⠀is⠀a⠀task'\n");
 }
 
-pub fn header(completed_tasks: usize, total_tasks: usize, board: &str) {
+pub fn header(total_checked: usize, total_tasks: usize, board: &str) {
+    let board = if board.is_empty() { "Tasks" } else { board };
     queue!(" {}{}{}:", UNDERLINED, board, RESET);
-    queue!("{} [{}/{}]\n", GREY, completed_tasks, total_tasks);
+    queue!("{} [{}/{}]\n", GREY, total_checked, total_tasks);
 }
 
 pub fn old_header() {
@@ -81,7 +82,7 @@ pub fn task(id: usize, checked: bool, text: &str, days: u64, total_tasks: usize)
     queue!("{} {}{}{}\n", checked, text, GREY, days);
 }
 
-fn spacing(id: usize, total: usize) -> &'static str {
+pub fn spacing(id: usize, total: usize) -> &'static str {
     if total < 10 {
         ". "
     } else if total < 100 {
@@ -105,6 +106,7 @@ pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
     let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
     let note = if total_notes == 1 { "note" } else { "notes" };
 
+    queue!("\n");
     queue!("{}  {}% of all tasks completed\n  ", GREY, percent);
     queue!("{}{}", GREEN, completed_tasks);
     queue!("{} done · ", GREY);

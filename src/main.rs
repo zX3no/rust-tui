@@ -1,66 +1,153 @@
-use database::*;
-use rusqlite::Connection;
 use std::{
-    env, fs,
     io::{StdoutLock, Write},
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 
-mod database;
 mod ui;
 
-fn print(conn: &Connection) {
-    let total_tasks = total_tasks(conn);
-    let total_notes = total_notes(conn);
-    let total = total(conn);
+static mut STDOUT: Option<StdoutLock> = None;
+
+#[derive(Debug)]
+pub enum Item {
+    Task(Task),
+    Note(Note),
+}
+
+impl Item {
+    pub fn board(&self) -> &str {
+        match self {
+            Item::Task(task) => &task.board,
+            Item::Note(note) => &note.board,
+        }
+    }
+}
+
+impl ToString for Item {
+    fn to_string(&self) -> String {
+        match self {
+            Item::Task(task) => task.to_string(),
+            Item::Note(note) => note.to_string(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Task {
+    pub board: String,
+    pub text: String,
+    pub checked: bool,
+    pub date: u64,
+}
+
+impl ToString for Task {
+    fn to_string(&self) -> String {
+        let board = if self.board.is_empty() {
+            String::new()
+        } else {
+            format!(".{}", self.board)
+        };
+        format!(
+            "[task{}]\n{}\n{}\n{}\n",
+            board, self.text, self.checked, self.date
+        )
+    }
+}
+
+#[derive(Debug)]
+pub struct Note {
+    pub text: String,
+    pub board: String,
+    pub date: u64,
+}
+
+impl ToString for Note {
+    fn to_string(&self) -> String {
+        let board = if self.board.is_empty() {
+            String::new()
+        } else {
+            format!(".{}", self.board)
+        };
+        format!("[note{}]\n{}\n{}\n", board, self.text, self.date)
+    }
+}
+
+fn now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
+fn total_tasks(config: &[Item]) -> usize {
+    config
+        .iter()
+        .filter(|item| matches!(item, Item::Task(_)))
+        .count()
+}
+
+pub fn print(config: &[Item]) {
+    let total = config.len();
 
     if total == 0 {
         return ui::help_message();
     }
 
-    let total_checked = total_checked(conn);
-    let boards = get_boards(conn);
-    let mut i = 1;
+    let total_tasks = total_tasks(config);
+
+    let total_notes = config
+        .iter()
+        .filter(|item| matches!(item, Item::Note(_)))
+        .count();
+
+    let total_checked = config
+        .iter()
+        .filter(|item| match item {
+            Item::Task(task) => task.checked,
+            Item::Note(_) => false,
+        })
+        .count();
+
+    let now = now();
+
+    let mut current_board = None;
 
     ui::clear();
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-
-    for board in boards {
-        ui::header(board.checked, board.total, &board.name);
-
-        for task in board.tasks {
-            if task.note {
-                ui::note(i, &task.content, total);
-            } else {
-                let days = ((now - task.date) as f64 * 0.000011574).round() as u64;
-                ui::task(i, task.checked, &task.content, days, total);
+    for (i, item) in config.iter().enumerate() {
+        if current_board.is_none() || current_board != Some(item.board()) {
+            if current_board.is_some() {
+                queue!("\n");
             }
-            i += 1;
-        }
 
-        queue!("\n");
+            current_board = Some(item.board());
+            let total_tasks = config
+                .iter()
+                .filter(|item| Some(item.board()) == current_board)
+                .filter(|item| matches!(item, Item::Task(_)))
+                .count();
+
+            let total_checked = config
+                .iter()
+                .filter(|item| Some(item.board()) == current_board)
+                .filter(|item| match item {
+                    Item::Task(task) => task.checked,
+                    Item::Note(_) => false,
+                })
+                .count();
+
+            ui::header(total_checked, total_tasks, item.board());
+        }
+        match item {
+            Item::Task(task) => {
+                let days = ((now - task.date) as f64 * 0.000011574).round() as u64;
+                ui::task(i + 1, task.checked, &task.text, days, total);
+            }
+            Item::Note(note) => ui::note(i + 1, &note.text, total_notes),
+        }
     }
 
     ui::footer(total_checked, total_tasks, total_notes);
-}
-
-fn print_old(conn: &Connection) {
-    let old_tasks = get_old(conn);
-    if old_tasks.is_empty() {
-        return println!("No old tasks.");
-    }
-
-    ui::clear();
-    ui::old_header();
-
-    for (i, task) in old_tasks.iter().enumerate() {
-        ui::note(i + 1, task, old_tasks.len());
-    }
 }
 
 fn is_row_of_numbers(input: &str) -> bool {
@@ -110,13 +197,17 @@ fn get_range(input: &str) -> Option<(usize, usize)> {
     }
 
     if end.is_none() {
-        end = Some(end_str.parse::<usize>().unwrap());
+        if let Ok(num) = end_str.parse() {
+            end = Some(num);
+        } else {
+            return None;
+        }
     }
 
     Some((start.unwrap(), end.unwrap()))
 }
 
-fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static str>> {
+fn ids(config: &[Item], args: &[String]) -> Result<Vec<usize>, Option<&'static str>> {
     let args = if args.iter().any(|arg| arg == &String::from('d')) {
         &args[1..]
     } else {
@@ -130,7 +221,7 @@ fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static
         args.split(' ')
             .map(|str| {
                 if let Ok(num) = str.parse() {
-                    if num > total(conn) {
+                    if num > config.len() || num == 0 {
                         Err(Some("Task does not exist."))
                     } else {
                         Ok(num)
@@ -145,24 +236,25 @@ fn ids(args: &[String], conn: &Connection) -> Result<Vec<usize>, Option<&'static
             Err(Some(
                 "Invalid range! First number must be smaller than last.",
             ))
-        } else if last > total_tasks(conn) {
+        } else if last > total_tasks(config) || first == 0 {
             Err(Some("Task does not exist."))
         } else {
             Ok((first..=last).collect())
         }
     } else {
+        //TODO: 't d -' doesn't show any error
         Err(None)
     }
 }
 
-fn add(args: &[String], conn: &Connection, is_note: bool) -> Result<(), &'static str> {
+fn add(config: &mut Vec<Item>, args: &[String], is_note: bool) -> Result<(), &'static str> {
     let args = if is_note { &args[1..] } else { args };
-    let mut board_name = None;
+    let mut board = String::new();
 
-    let item = if args[0].contains('!') {
+    let text = if args[0].contains('!') {
         if args.len() >= 2 {
             //t !Task 'sample task'
-            board_name = Some(args[0].replace('!', ""));
+            board = args[0].replace('!', "");
             args[1..].join(" ")
         } else {
             let input: Vec<&str> = args[0].split(' ').collect();
@@ -173,7 +265,7 @@ fn add(args: &[String], conn: &Connection, is_note: bool) -> Result<(), &'static
             }
 
             //t '!Tasks sample task'
-            board_name = Some(input[0].replace('!', ""));
+            board = input[0].replace('!', "");
             input[1..].join(" ")
         }
     } else {
@@ -182,14 +274,30 @@ fn add(args: &[String], conn: &Connection, is_note: bool) -> Result<(), &'static
     };
 
     if is_note {
-        insert_note(conn, &item, board_name);
+        config.push(Item::Note(Note {
+            text,
+            board,
+            date: now(),
+        }));
     } else {
-        insert_task(conn, &item, board_name);
+        config.push(Item::Task(Task {
+            text,
+            board,
+            checked: false,
+            date: now(),
+        }));
     }
     Ok(())
 }
 
-static mut STDOUT: Option<StdoutLock> = None;
+fn remove_ids(config: &mut Vec<Item>, ids: Vec<usize>) {
+    for id in ids {
+        if id == 0 {
+            continue;
+        }
+        config.remove(id - 1);
+    }
+}
 
 #[macro_export]
 macro_rules! queue {
@@ -216,59 +324,150 @@ fn main() {
     }
 
     let args: Vec<String> = std::env::args().skip(1).collect();
+
     let t = if cfg!(windows) {
-        PathBuf::from(&env::var("APPDATA").unwrap())
+        PathBuf::from(&std::env::var("APPDATA").unwrap())
     } else {
-        PathBuf::from(&env::var("HOME").unwrap()).join(".config")
+        PathBuf::from(&std::env::var("HOME").unwrap()).join(".config")
     }
     .join("t");
+    std::fs::create_dir_all(&t).unwrap();
 
-    fs::create_dir_all(&t).unwrap();
-    let db = t.join("t.db");
-    let conn = Connection::open(db).unwrap();
-    conn.execute_batch(
-        "
-            CREATE TABLE IF NOT EXISTS tasks(
-                content TEXT NOT NULL,
-                checked BOOL NOT NULL,
-                note BOOL NOT NULL,
-                board TEXT NOT NULL,
-                date INTEGER NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS old(
-                content TEXT NOT NULL
-            );
-        ",
-    )
-    .unwrap();
+    let config_path = t.join("t.ini");
+    let config_string = match std::fs::read_to_string(&config_path) {
+        Ok(config) => config,
+        Err(_) => String::new(),
+    };
+
+    //Parse config string into Vec<Item>
+    let mut config = {
+        let mut items = Vec::new();
+        for item in config_string.split('[') {
+            let mut lines = item.split('\n');
+
+            let mut task = true;
+
+            let mut content = String::new();
+            let mut board = String::new();
+            let mut checked = false;
+            let mut date = 0;
+
+            //Get the type of item and board name.
+            if let Some(line) = lines.next() {
+                if line.contains("task") {
+                    task = true;
+                } else if line.contains("note") {
+                    task = false;
+                } else {
+                    continue;
+                }
+
+                let header: String = line.split(']').collect();
+                let mut temp_board = header.split('.');
+                temp_board.next();
+                if let Some(temp_board) = temp_board.next() {
+                    board = temp_board.to_string();
+                }
+            }
+
+            //The content of the item.
+            if let Some(line) = lines.next() {
+                content = line.to_string();
+            }
+
+            //Check if the task is checked.
+            if task {
+                if let Some(line) = lines.next() {
+                    if line == "false" {
+                        checked = false;
+                    } else if line == "true" {
+                        checked = true;
+                    } else {
+                        continue;
+                    }
+                }
+            }
+
+            //Get the items timestamp.
+            if let Some(line) = lines.next() {
+                if let Ok(num) = line.parse::<u64>() {
+                    date = num;
+                } else {
+                    continue;
+                }
+            }
+
+            if task {
+                items.push(Item::Task(Task {
+                    board,
+                    text: content,
+                    checked,
+                    date,
+                }));
+            } else {
+                items.push(Item::Note(Note {
+                    board,
+                    text: content,
+                    date,
+                }));
+            }
+        }
+        items.sort_by(|a, b| a.board().cmp(b.board()));
+        items
+    };
 
     if args.is_empty() {
-        print(&conn);
+        print(&config);
     } else {
         match args[0].as_str() {
             "-h" | "-help" => return ui::help(),
-            "-v" | "-version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
+            "-v" | "-version" => return println!("t 0.4.0"),
             "n" | "d" if args.len() == 1 => return ui::missing_args(&args[0]),
-            "o" | "old" => return print_old(&conn),
             "n" => {
-                if let Err(err) = add(&args, &conn, true) {
+                if let Err(err) = add(&mut config, &args, true) {
                     return println!("{}", err);
                 }
             }
-            "d" => match ids(&args, &conn) {
-                Ok(ids) => delete_tasks(&conn, &ids),
+            "d" => match ids(&config, &args) {
+                Ok(ids) => remove_ids(&mut config, ids),
                 Err(err) => return println!("{}", err.unwrap_or("")),
             },
-            "cls" => clear_tasks(&conn),
+            "cls" => {
+                let ids: Vec<usize> = config
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, item)| {
+                        if let Item::Task(task) = item {
+                            if task.checked {
+                                return Some(i);
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+
+                remove_ids(&mut config, ids);
+            }
             _ if args[0].starts_with('-') => return println!("Invalid command."),
-            _ => match ids(&args, &conn) {
-                Ok(ids) => check_tasks(&conn, &ids),
+            _ => match ids(&config, &args) {
+                Ok(ids) => {
+                    for id in ids {
+                        if id == 0 {
+                            continue;
+                        }
+                        let item = config.get_mut(id - 1).unwrap();
+                        match item {
+                            Item::Task(task) => task.checked = !task.checked,
+                            Item::Note(_) => (),
+                        }
+                    }
+                }
                 //error with numbers or task?
                 Err(err) => match err {
                     Some(err) => return println!("{}", err),
                     None => {
                         //check for for input errors
-                        if let Err(err) = add(&args, &conn, false) {
+                        if let Err(err) = add(&mut config, &args, false) {
                             return println!("{}", err);
                         }
                     }
@@ -276,7 +475,20 @@ fn main() {
             },
         }
 
-        print(&conn);
+        config.sort_by(|a, b| a.board().cmp(b.board()));
+        print(&config);
+
+        //Save config
+        {
+            let mut output = String::new();
+            for item in config {
+                output.push_str(&item.to_string());
+                output.push('\n');
+            }
+            output.pop();
+            output.pop();
+            std::fs::write(config_path, &output).unwrap();
+        }
     }
 
     std::io::stdout().flush().unwrap();
