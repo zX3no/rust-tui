@@ -262,6 +262,7 @@ fn add(config: &mut Vec<Item>, args: &[String], is_note: bool) -> Result<(), &'s
     };
 
     let text = text.replace('\n', "");
+    let board = board.replace('\n', "");
 
     if is_note {
         config.push(Item::Note(Note {
