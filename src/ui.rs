@@ -28,6 +28,20 @@ const BLINK: &str = "\x1b[5m";
 const REVERSE: &str = "\x1b[7m";
 const HIDDEN: &str = "\x1b[8m";
 
+#[macro_export]
+macro_rules! queue {
+    ($($arg:tt)*) => {
+        unsafe {
+            use std::io::Write;
+            let stdout = $crate::STDOUT.as_mut().unwrap();
+            let args = format_args!($($arg)*).to_string();
+            stdout
+                .write_all(format!("{}\x1b[0m", args).as_bytes())
+                .unwrap();
+        };
+    };
+}
+
 #[cfg(windows)]
 pub fn clear() {
     Command::new("cmd").args(["/C", "cls"]).status().unwrap();

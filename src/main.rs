@@ -299,23 +299,7 @@ fn remove_ids(config: &mut Vec<Item>, ids: Vec<usize>) {
     }
 }
 
-#[macro_export]
-macro_rules! queue {
-    ($($arg:tt)*) => {
-        unsafe {
-            {
-                use std::io::Write;
-
-                let stdout = $crate::STDOUT.as_mut().unwrap();
-                let args = format_args!($($arg)*).to_string();
-                stdout
-                    .write_all(format!("{}\x1b[0m", args).as_bytes())
-                    .unwrap();
-            }
-        };
-    };
-}
-
+//TODO: Rework error messages
 fn main() {
     unsafe {
         let stdout = std::io::stdout();
@@ -421,7 +405,7 @@ fn main() {
     } else {
         match args[0].as_str() {
             "-h" | "-help" => return ui::help(),
-            "-v" | "-version" => return println!("t 0.4.0"),
+            "-v" | "-version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
             "n" | "d" if args.len() == 1 => return ui::missing_args(&args[0]),
             "n" => {
                 if let Err(err) = add(&mut config, &args, true) {
@@ -462,7 +446,6 @@ fn main() {
                         }
                     }
                 }
-                //error with numbers or task?
                 Err(err) => match err {
                     Some(err) => return println!("{}", err),
                     None => {
