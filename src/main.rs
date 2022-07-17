@@ -90,7 +90,7 @@ pub fn print(config: &[Item]) {
     let total = config.len();
 
     if total == 0 {
-        return ui::help_message();
+        return ui::empty_tasks();
     }
 
     let total_tasks = total_tasks(config);
@@ -207,7 +207,7 @@ fn get_range(input: &str) -> Option<(usize, usize)> {
     Some((start.unwrap(), end.unwrap()))
 }
 
-fn ids(config: &[Item], args: &[String]) -> Result<Vec<usize>, Option<&'static str>> {
+fn ids(config: &[Item], args: &[String]) -> Result<Vec<usize>, String> {
     let args = if args.iter().any(|arg| arg == &String::from('d')) {
         &args[1..]
     } else {
@@ -218,32 +218,29 @@ fn ids(config: &[Item], args: &[String]) -> Result<Vec<usize>, Option<&'static s
     .to_string();
 
     if is_row_of_numbers(&args) {
-        args.split(' ')
-            .map(|str| {
-                if let Ok(num) = str.parse() {
-                    if num > config.len() || num == 0 {
-                        Err(Some("Task does not exist."))
-                    } else {
-                        Ok(num)
-                    }
-                } else {
-                    Err(Some("Invalid number."))
-                }
-            })
-            .collect()
+        let mut ids: Vec<usize> = Vec::new();
+        for num in args.split(' ') {
+            let num = num.parse().unwrap();
+            if num > config.len() || num == 0 {
+                return Err(format!("Task '{}' doesn't exist!", num));
+            } else {
+                ids.push(num);
+            }
+        }
+        ids.sort();
+        Ok(ids)
     } else if let Some((first, last)) = get_range(&args) {
         if first > last {
-            Err(Some(
-                "Invalid range! First number must be smaller than last.",
-            ))
-        } else if last > total_tasks(config) || first == 0 {
-            Err(Some("Task does not exist."))
+            Err(format!("'{}' must be smaller than '{}'!", first, last))
+        } else if last > total_tasks(config) {
+            Err(format!("Task '{}' doesn't exist!", last))
+        } else if first == 0 {
+            Err(format!("Task '{}' doesn't exist!", first))
         } else {
             Ok((first..=last).collect())
         }
     } else {
-        //TODO: 't d -' doesn't show any error
-        Err(None)
+        Ok(Vec::new())
     }
 }
 
@@ -252,24 +249,15 @@ fn add(config: &mut Vec<Item>, args: &[String], is_note: bool) -> Result<(), &'s
     let mut board = String::new();
 
     let text = if args[0].contains('!') {
-        if args.len() >= 2 {
-            //t !Task 'sample task'
+        if args.len() > 1 {
+            //A task with a board.
             board = args[0].replace('!', "");
             args[1..].join(" ")
         } else {
-            let input: Vec<&str> = args[0].split(' ').collect();
-
-            //t '!Tasks'
-            if input.len() == 1 {
-                return Err("Missing task!");
-            }
-
-            //t '!Tasks sample task'
-            board = input[0].replace('!', "");
-            input[1..].join(" ")
+            return Err("Entered a board without a task!");
         }
     } else {
-        //t 'sample task'
+        //A task without a board.
         args[0..].join(" ")
     };
 
@@ -290,24 +278,132 @@ fn add(config: &mut Vec<Item>, args: &[String], is_note: bool) -> Result<(), &'s
     Ok(())
 }
 
-fn remove_ids(config: &mut Vec<Item>, ids: Vec<usize>) {
-    for id in ids {
-        if id == 0 {
-            continue;
+fn parse_config(config_string: &str) -> Vec<Item> {
+    let mut items = Vec::new();
+    for item in config_string.split('[') {
+        let mut lines = item.split('\n');
+
+        let mut task = true;
+
+        let mut content = String::new();
+        let mut board = String::new();
+        let mut checked = false;
+        let mut date = 0;
+
+        //Get the type of item and board name.
+        if let Some(line) = lines.next() {
+            if line.contains("task") {
+                task = true;
+            } else if line.contains("note") {
+                task = false;
+            } else {
+                continue;
+            }
+
+            let header: String = line.split(']').collect();
+            let mut temp_board = header.split('.');
+            temp_board.next();
+            if let Some(temp_board) = temp_board.next() {
+                board = temp_board.to_string();
+            }
         }
-        config.remove(id - 1);
+
+        //The content of the item.
+        if let Some(line) = lines.next() {
+            content = line.to_string();
+        }
+
+        //Check if the task is checked.
+        if task {
+            if let Some(line) = lines.next() {
+                if line == "false" {
+                    checked = false;
+                } else if line == "true" {
+                    checked = true;
+                } else {
+                    continue;
+                }
+            }
+        }
+
+        //Get the items timestamp.
+        if let Some(line) = lines.next() {
+            if let Ok(num) = line.parse::<u64>() {
+                date = num;
+            } else {
+                continue;
+            }
+        }
+
+        if task {
+            items.push(Item::Task(Task {
+                board,
+                text: content,
+                checked,
+                date,
+            }));
+        } else {
+            items.push(Item::Note(Note {
+                board,
+                text: content,
+                date,
+            }));
+        }
     }
+    items.sort_by(|a, b| a.board().cmp(b.board()));
+    items
 }
 
-//TODO: Rework error messages
+fn handle_arguments(args: Vec<String>, config: &mut Vec<Item>) -> Result<(), String> {
+    match args[0].as_str() {
+        "-h" | "-help" => return Err(ui::HELP.to_string()),
+        "-v" | "-version" => return Err(format!("t {}", env!("CARGO_PKG_VERSION"))),
+        "n" | "d" if args.len() == 1 => {
+            ui::missing_args(&args[0]);
+            return Ok(());
+        }
+        "n" => add(config, &args, true)?,
+        "d" => {
+            let ids = ids(config, &args)?;
+            if ids.is_empty() {
+                return Err(format!("Task '{}' does not exist!", args[1..].join(" ")));
+            }
+            for id in ids.into_iter().rev() {
+                if id == 0 {
+                    continue;
+                }
+                config.remove(id - 1);
+            }
+        }
+        "cls" => config.retain(|item| match item {
+            Item::Task(task) => !task.checked,
+            Item::Note(_) => true,
+        }),
+        _ if args[0].starts_with('-') => return Err("Invalid command.".to_string()),
+        _ => {
+            let ids = ids(config, &args)?;
+            if ids.is_empty() {
+                add(config, &args, false)?
+            } else {
+                for id in ids {
+                    let item = config.get_mut(id - 1).unwrap();
+                    match item {
+                        Item::Task(task) => task.checked = !task.checked,
+                        Item::Note(_) => (),
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 fn main() {
     unsafe {
         let stdout = std::io::stdout();
         let handle = stdout.lock();
         STDOUT = Some(handle);
     }
-
-    let args: Vec<String> = std::env::args().skip(1).collect();
 
     let t = if cfg!(windows) {
         PathBuf::from(&std::env::var("APPDATA").unwrap())
@@ -322,156 +418,30 @@ fn main() {
         Ok(config) => config,
         Err(_) => String::new(),
     };
-
-    //Parse config string into Vec<Item>
-    let mut config = {
-        let mut items = Vec::new();
-        for item in config_string.split('[') {
-            let mut lines = item.split('\n');
-
-            let mut task = true;
-
-            let mut content = String::new();
-            let mut board = String::new();
-            let mut checked = false;
-            let mut date = 0;
-
-            //Get the type of item and board name.
-            if let Some(line) = lines.next() {
-                if line.contains("task") {
-                    task = true;
-                } else if line.contains("note") {
-                    task = false;
-                } else {
-                    continue;
-                }
-
-                let header: String = line.split(']').collect();
-                let mut temp_board = header.split('.');
-                temp_board.next();
-                if let Some(temp_board) = temp_board.next() {
-                    board = temp_board.to_string();
-                }
-            }
-
-            //The content of the item.
-            if let Some(line) = lines.next() {
-                content = line.to_string();
-            }
-
-            //Check if the task is checked.
-            if task {
-                if let Some(line) = lines.next() {
-                    if line == "false" {
-                        checked = false;
-                    } else if line == "true" {
-                        checked = true;
-                    } else {
-                        continue;
-                    }
-                }
-            }
-
-            //Get the items timestamp.
-            if let Some(line) = lines.next() {
-                if let Ok(num) = line.parse::<u64>() {
-                    date = num;
-                } else {
-                    continue;
-                }
-            }
-
-            if task {
-                items.push(Item::Task(Task {
-                    board,
-                    text: content,
-                    checked,
-                    date,
-                }));
-            } else {
-                items.push(Item::Note(Note {
-                    board,
-                    text: content,
-                    date,
-                }));
-            }
-        }
-        items.sort_by(|a, b| a.board().cmp(b.board()));
-        items
-    };
+    let mut config = parse_config(&config_string);
+    let args: Vec<String> = std::env::args().skip(1).collect();
 
     if args.is_empty() {
         print(&config);
     } else {
-        match args[0].as_str() {
-            "-h" | "-help" => return ui::help(),
-            "-v" | "-version" => return println!("t {}", env!("CARGO_PKG_VERSION")),
-            "n" | "d" if args.len() == 1 => return ui::missing_args(&args[0]),
-            "n" => {
-                if let Err(err) = add(&mut config, &args, true) {
-                    return println!("{}", err);
-                }
-            }
-            "d" => match ids(&config, &args) {
-                Ok(ids) => remove_ids(&mut config, ids),
-                Err(err) => return println!("{}", err.unwrap_or("")),
-            },
-            "cls" => {
-                let ids: Vec<usize> = config
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(i, item)| {
-                        if let Item::Task(task) = item {
-                            if task.checked {
-                                return Some(i);
-                            }
-                        }
-                        None
-                    })
-                    .collect();
-
-                remove_ids(&mut config, ids);
-            }
-            _ if args[0].starts_with('-') => return println!("Invalid command."),
-            _ => match ids(&config, &args) {
-                Ok(ids) => {
-                    for id in ids {
-                        if id == 0 {
-                            continue;
-                        }
-                        let item = config.get_mut(id - 1).unwrap();
-                        match item {
-                            Item::Task(task) => task.checked = !task.checked,
-                            Item::Note(_) => (),
-                        }
-                    }
-                }
-                Err(err) => match err {
-                    Some(err) => return println!("{}", err),
-                    None => {
-                        //check for for input errors
-                        if let Err(err) = add(&mut config, &args, false) {
-                            return println!("{}", err);
-                        }
-                    }
-                },
-            },
-        }
-
+        let result = handle_arguments(args, &mut config);
         config.sort_by(|a, b| a.board().cmp(b.board()));
-        print(&config);
+
+        if let Err(err) = result {
+            queue!("{}", err);
+        } else {
+            print(&config);
+        }
 
         //Save config
-        {
-            let mut output = String::new();
-            for item in config {
-                output.push_str(&item.to_string());
-                output.push('\n');
-            }
-            output.pop();
-            output.pop();
-            std::fs::write(config_path, &output).unwrap();
+        let mut output = String::new();
+        for item in config {
+            output.push_str(&item.to_string());
+            output.push('\n');
         }
+        output.pop();
+        output.pop();
+        std::fs::write(config_path, &output).unwrap();
     }
 
     std::io::stdout().flush().unwrap();
