@@ -113,7 +113,7 @@ pub fn task(id: usize, checked: bool, text: &str, days: u64, total_tasks: usize)
     queue!("{} {}{}{}\n", checked, text, GREY, days);
 }
 
-pub fn spacing(id: usize, total: usize) -> &'static str {
+const fn spacing(id: usize, total: usize) -> &'static str {
     if total < 10 {
         ". "
     } else if total < 100 {
@@ -134,7 +134,7 @@ pub fn spacing(id: usize, total: usize) -> &'static str {
 }
 
 pub fn footer(completed_tasks: usize, total_tasks: usize, total_notes: usize) {
-    let percent: usize = (completed_tasks as f32 / total_tasks as f32 * 100.0) as usize;
+    let percent = (completed_tasks as f64 / total_tasks as f64 * 100.0).round() as usize;
     let note = if total_notes == 1 { "note" } else { "notes" };
 
     queue!("\n");

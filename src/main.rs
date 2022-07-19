@@ -162,15 +162,14 @@ fn is_row_of_numbers(input: &str) -> bool {
 }
 
 fn get_range(input: &str) -> Option<(usize, usize)> {
-    let mut start_str = String::new();
-    let mut start = None;
-
-    let mut end_str = String::new();
-    let mut end = None;
-
     if !input.contains('-') {
         return None;
     }
+
+    let mut start_str = String::new();
+    let mut start = None;
+    let mut end_str = String::new();
+    let mut end = None;
 
     for char in input.chars() {
         match char {
@@ -208,28 +207,26 @@ fn get_range(input: &str) -> Option<(usize, usize)> {
 }
 
 fn ids(config: &[Item], args: &[String]) -> Result<Vec<usize>, String> {
-    let args = if args.iter().any(|arg| arg == &String::from('d')) {
+    let args = if &*args[0] == "d" {
         &args[1..]
     } else {
         &args[0..]
     }
-    .join(" ")
-    .trim()
-    .to_string();
+    .join(" ");
+    let args = args.trim();
 
-    if is_row_of_numbers(&args) {
+    if is_row_of_numbers(args) {
         let mut ids: Vec<usize> = Vec::new();
         for num in args.split(' ') {
             let num = num.parse().unwrap();
             if num > config.len() || num == 0 {
                 return Err(format!("Task '{}' doesn't exist!", num));
-            } else {
-                ids.push(num);
             }
+            ids.push(num);
         }
-        ids.sort();
+        ids.sort_unstable();
         Ok(ids)
-    } else if let Some((first, last)) = get_range(&args) {
+    } else if let Some((first, last)) = get_range(args) {
         if first > last {
             Err(format!("'{}' must be smaller than '{}'!", first, last))
         } else if last > total_tasks(config) {
@@ -285,11 +282,9 @@ fn parse_config(config_string: &str) -> Vec<Item> {
     let mut items = Vec::new();
     for item in config_string.split('[') {
         let mut lines = item.split('\n');
-
-        let mut task = true;
-
         let mut content = String::new();
         let mut board = String::new();
+        let mut task = true;
         let mut checked = false;
         let mut date = 0;
 
@@ -357,7 +352,7 @@ fn parse_config(config_string: &str) -> Vec<Item> {
     items
 }
 
-fn handle_arguments(args: Vec<String>, config: &mut Vec<Item>) -> Result<(), String> {
+fn handle_arguments(args: &[String], config: &mut Vec<Item>) -> Result<(), String> {
     match args[0].as_str() {
         "-h" | "-help" => return Err(ui::HELP.to_string()),
         "-v" | "-version" => return Err(format!("t {}", env!("CARGO_PKG_VERSION"))),
@@ -365,9 +360,9 @@ fn handle_arguments(args: Vec<String>, config: &mut Vec<Item>) -> Result<(), Str
             ui::missing_args(&args[0]);
             return Ok(());
         }
-        "n" => add(config, &args, true)?,
+        "n" => add(config, args, true)?,
         "d" => {
-            let ids = ids(config, &args)?;
+            let ids = ids(config, args)?;
             if ids.is_empty() {
                 return Err(format!("Task '{}' does not exist!", args[1..].join(" ")));
             }
@@ -384,9 +379,9 @@ fn handle_arguments(args: Vec<String>, config: &mut Vec<Item>) -> Result<(), Str
         }),
         _ if args[0].starts_with('-') => return Err("Invalid command.".to_string()),
         _ => {
-            let ids = ids(config, &args)?;
+            let ids = ids(config, args)?;
             if ids.is_empty() {
-                add(config, &args, false)?
+                add(config, args, false)?;
             } else {
                 for id in ids {
                     let item = config.get_mut(id - 1).unwrap();
@@ -427,7 +422,7 @@ fn main() {
     if args.is_empty() {
         print(&config);
     } else {
-        let result = handle_arguments(args, &mut config);
+        let result = handle_arguments(&args, &mut config);
         config.sort_by(|a, b| a.board().cmp(b.board()));
 
         if let Err(err) = result {
@@ -437,14 +432,14 @@ fn main() {
         }
 
         //Save config
-        let mut output = String::new();
+        let mut new_config = String::new();
         for item in config {
-            output.push_str(&item.to_string());
-            output.push('\n');
+            new_config.push_str(&item.to_string());
+            new_config.push('\n');
         }
-        output.pop();
-        output.pop();
-        std::fs::write(config_path, &output).unwrap();
+        new_config.pop();
+        new_config.pop();
+        std::fs::write(config_path, &new_config).unwrap();
     }
 
     std::io::stdout().flush().unwrap();
