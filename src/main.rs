@@ -245,7 +245,7 @@ fn add(config: &mut Vec<Item>, args: &[String], is_note: bool) -> Result<(), &'s
     let args = if is_note { &args[1..] } else { args };
     let mut board = String::new();
 
-    let text = if args[0].contains('!') {
+    let text = if args[0].starts_with('!') {
         if args.len() > 1 {
             //A task with a board.
             board = args[0].replace('!', "");
